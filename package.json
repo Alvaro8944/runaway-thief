@@ -1,8 +1,8 @@
 {
-    "name": "plantillaphaser",
+    "name": "runaway-thief",
     "version": "1.0.0",
     "main": "./main.js",
-    "description": "Plantilla para juegos con Phaser",
+    "description": "Juego de runaway-thief",
     "scripts": {
         "build:win": "npm run electron && npx electron-builder --win --config",
         "build:mac": "npm run electron && npx electron-builder --mac --config",
@@ -19,9 +19,9 @@
     "author": "Carlos León <cleon@ucm.es>",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/cleongh/plantillaphaser/issues"
+        "url": "https://github.com/Alvaro8944/runaway-thief/issues"
     },
-    "homepage": "https://github.com/cleongh/plantillaphaser#readme",
+    "homepage": "https://github.com/Alvaro8944/runaway-thief#readme",
     "type": "module",
     "devDependencies": {
         "electron": "^34.0.1",

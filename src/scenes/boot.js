@@ -1,6 +1,8 @@
 import Phaser from 'phaser'
 
-import player from '../../assets/players/player_sprite.png'
+import player_run from '../../assets/players/main_character/Biker_run.png'
+import player_jump from '../../assets/players/main_character/Biker_jump.png'
+import player_idle from '../../assets/players/main_character/Biker_idle.png'
 
 import Tileset from '../../assets/tiled/Tileset.png'
 import MainScene from '../../assets/tiled/MainScene.json'
@@ -21,45 +23,61 @@ export default class Boot extends Phaser.Scene {
 
   preload() {
     this.load.image('tiles', Tileset)
-
     this.load.tilemapTiledJSON('map', MainScene)
 
 
     
     // Cargar spritesheet del jugador
-    this.load.spritesheet('player', player, {
-      frameWidth: 100,
-      frameHeight: 100
+    this.load.spritesheet('player_idle', player_idle, {
+      frameWidth: 48,
+      frameHeight: 48
     });
+  
+
+     // Cargar spritesheet del jugador
+     this.load.spritesheet('player_run', player_run, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+  
+
+
+     // Cargar spritesheet del jugador
+     this.load.spritesheet('player_jump', player_jump, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+  
 
   }
-
+   
 
   create() {
     this.anims.create({
       key: "run",
-      frames: this.anims.generateFrameNumbers("player", { start: 1, end: 2 }),
+      frames: this.anims.generateFrameNumbers("player_run", { start: 0, end: 5}),
       frameRate: 10,
       repeat: -1
     });
     this.anims.create({
       key: "idle",
-      frames: [{ key: "player", frame: 0 }],
+      frames: this.anims.generateFrameNumbers("player_idle", { start: 0, end: 3}),
       frameRate: 10
     });
     this.anims.create({
       key: "idle_jump",
-      frames: [{ key: "player", frame: 3 }],
+      frames: this.anims.generateFrameNumbers("player_jump", { start: 0, end: 3}),
       frameRate: 10
     });
     this.anims.create({
       key: "jump",
-      frames: [{ key: "player", frame: 2 }],
+      frames: this.anims.generateFrameNumbers("player_jump", { start: 0, end: 3}),
       frameRate: 10
     });
+
     this.anims.create({
       key: "crawl",
-      frames: [{ key: "player", frame: 4 }],
+      frames: [{ key: "player_jump", frame: 3 }],
       frameRate: 10
     });
     // Iniciar la escena del juego (Level)

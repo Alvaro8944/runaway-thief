@@ -20,7 +20,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.setCollideWorldBounds();
       this.setBounce(0.1);
   
-      this.setScale(0.5)
+     this.setSize(this.width,this.height);
+     this.setOffset(0, 16);
+     this.setScale(1.25);
       this.speed = 180;         // Velocidad de movimiento horizontal
       this.jumpSpeed = -240;    // Velocidad de salto
       this.score = 0;           // Puntuación del jugador
@@ -34,7 +36,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       // Variables para la mecánica de "crawl"
       this.crawlTime = 0;
       this.restarcrawl = 0;
-      this.maxCrawlTime = 30;
+      this.maxCrawlTime = 70;
     }
   
     /**

@@ -10,6 +10,8 @@ function createWindow() {
     mainWindow.setMenu(null);
     // Vite dev server URL
     // mainWindow.loadURL('http://localhost:5173');
+    mainWindow.webContents.openDevTools();
+
     mainWindow.loadFile("out/renderer/index.electron.html");
     mainWindow.on('closed', () => mainWindow = null);
 }

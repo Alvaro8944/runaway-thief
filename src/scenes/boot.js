@@ -21,6 +21,9 @@ import hand5 from '../../assets/players/main_character_shoot_hands/5.png'
 
 
 
+//WEAPON
+import weapon from '../../assets/Guns/4_1.png'
+
 
 
 
@@ -69,6 +72,66 @@ export default class Boot extends Phaser.Scene {
     });
   
 
+
+
+
+    //SHOOT BODY--------------------------------------------------------------------------------------------------------
+
+      this.load.spritesheet('player_run_shoot', player_run_shoot, {
+        frameWidth: 48,
+        frameHeight: 48
+      });
+
+
+      this.load.spritesheet('player_jump_shoot', player_jump_shoot, {
+        frameWidth: 48,
+        frameHeight: 48
+      });
+
+
+      this.load.spritesheet('player_idle_shoot', player_idle_shoot, {
+        frameWidth: 48,
+        frameHeight: 48
+      });
+
+
+
+
+
+      //SHOOT HANDS-----------------------------------------------------------------------------------------
+
+      this.load.spritesheet('hand1', hand1, {
+        frameWidth: 32,
+        frameHeight: 32
+      });
+      this.load.spritesheet('hand2', hand2, {
+        frameWidth: 32,
+        frameHeight: 32
+      });
+      this.load.spritesheet('hand3', hand3, {
+        frameWidth: 32,
+        frameHeight: 32
+      });
+      this.load.spritesheet('hand4', hand4, {
+        frameWidth: 32,
+        frameHeight: 32
+      });
+      this.load.spritesheet('hand5', hand5, {
+        frameWidth: 32,
+        frameHeight: 32
+      });
+
+
+
+      //WEAPON---------------------------------------------------------------------------
+
+      this.load.spritesheet('weapon', weapon, {
+        frameWidth: 29,
+        frameHeight: 11
+      });
+
+
+
   }
    
 
@@ -82,27 +145,111 @@ export default class Boot extends Phaser.Scene {
       frameRate: 10,
       repeat: -1
     });
+
+
+  
     this.anims.create({
       key: "idle",
       frames: this.anims.generateFrameNumbers("player_idle", { start: 0, end: 3}),
       frameRate: 10
     });
+
+
     this.anims.create({
       key: "idle_jump",
       frames: this.anims.generateFrameNumbers("player_jump", { start: 0, end: 3}),
       frameRate: 10
     });
+
+
     this.anims.create({
       key: "jump",
       frames: this.anims.generateFrameNumbers("player_jump", { start: 0, end: 3}),
       frameRate: 10
     });
 
+
     this.anims.create({
       key: "crawl",
       frames: [{ key: "player_jump", frame: 3 }],
       frameRate: 10
     });
+
+
+
+
+    //SHOOT BODY-----------------------------------------------------------------------------------------
+    this.anims.create({
+      key: "run_shoot",
+      frames: this.anims.generateFrameNumbers("player_run_shoot", { start: 0, end: 5}),
+      frameRate: 10,
+      repeat: -1
+    });
+
+
+    this.anims.create({
+      key: "idle_shoot",
+      frames: this.anims.generateFrameNumbers("player_idle_shoot", { start: 0, end: 3}),
+      frameRate: 10
+    });
+
+
+    
+    this.anims.create({
+      key: "jump_shoot",
+      frames: this.anims.generateFrameNumbers("player_jump_shoot", { start: 0, end: 3}),
+      frameRate: 10
+    });
+
+
+
+
+ //SHOOT HANDS-----------------------------------------------------------------------------------------
+
+
+ this.anims.create({
+  key: "hand1",
+  frames: [{ key: "hand1", frame: 0 }],
+  frameRate: 10
+});
+
+this.anims.create({
+  key: "hand2",
+  frames: [{ key: "hand2", frame: 0 }],
+  frameRate: 10
+});
+
+this.anims.create({
+  key: "hand3",
+  frames: [{ key: "hand3", frame: 0 }],
+  frameRate: 10
+});
+
+this.anims.create({
+  key: "hand4",
+  frames: [{ key: "hand4", frame: 0 }],
+  frameRate: 10
+});
+
+this.anims.create({
+  key: "hand5",
+  frames: [{ key: "hand5", frame: 0 }],
+  frameRate: 10
+});
+
+
+
+
+//WEAPON---------------------------------------------------------------------------
+
+this.anims.create({
+  key: "weapon",
+  frames: [{ key: "weapon", frame: 0 }],
+  frameRate: 10
+});
+
+
+
     // Iniciar la escena del juego (Level)
     this.scene.start('level');
   }

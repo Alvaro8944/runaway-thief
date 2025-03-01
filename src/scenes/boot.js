@@ -1,8 +1,28 @@
 import Phaser from 'phaser'
 
+//PLAYER MOVE
 import player_run from '../../assets/players/main_character/Biker_run.png'
 import player_jump from '../../assets/players/main_character/Biker_jump.png'
 import player_idle from '../../assets/players/main_character/Biker_idle.png'
+
+
+//PLAYER SHOOT BODY
+import player_run_shoot from '../../assets/players/main_character_shoot_body/Run1.png'
+import player_jump_shoot from '../../assets/players/main_character_shoot_body/Jump1.png'
+import player_idle_shoot from '../../assets/players/main_character_shoot_body/Idle1.png'
+
+
+//PLAYER SHOOT HAND
+import hand1 from '../../assets/players/main_character_shoot_hands/1.png'
+import hand2 from '../../assets/players/main_character_shoot_hands/2.png'
+import hand3 from '../../assets/players/main_character_shoot_hands/3.png'
+import hand4 from '../../assets/players/main_character_shoot_hands/4.png'
+import hand5 from '../../assets/players/main_character_shoot_hands/5.png'
+
+
+
+
+
 
 import Tileset from '../../assets/tiled/Tileset.png'
 import MainScene from '../../assets/tiled/MainScene.json'
@@ -53,6 +73,7 @@ export default class Boot extends Phaser.Scene {
    
 
   create() {
+
 
 
     this.anims.create({

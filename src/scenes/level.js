@@ -49,7 +49,7 @@ export default class Level extends Phaser.Scene {
         up: Phaser.Input.Keyboard.KeyCodes.W,
         left: Phaser.Input.Keyboard.KeyCodes.A,
         down: Phaser.Input.Keyboard.KeyCodes.S,
-        right: Phaser.Input.Keyboard.KeyCodes.D
+        right: Phaser.Input.Keyboard.KeyCodes.D,
         jump: Phaser.Input.Keyboard.KeyCodes.SPACE
     });
     

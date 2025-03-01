@@ -23,6 +23,8 @@ export default class Level extends Phaser.Scene {
      * Creación de los elementos de la escena principal de juego
      */
     create() {
+
+
       var map = this.make.tilemap({key: 'map'});
       var tiles = map.addTilesetImage('tileset', 'tiles');
 
@@ -40,6 +42,22 @@ export default class Level extends Phaser.Scene {
       this.cameras.main.centerOn(map.widthInPixels / 2, map.heightInPixels / 2);
       this.cameras.main.startFollow(this.player);
       this.cameras.main.setLerp(1, 0);
+
+
+
+      this.keys = this.input.keyboard.addKeys({
+        up: Phaser.Input.Keyboard.KeyCodes.W,
+        left: Phaser.Input.Keyboard.KeyCodes.A,
+        down: Phaser.Input.Keyboard.KeyCodes.S,
+        right: Phaser.Input.Keyboard.KeyCodes.D
+        jump: Phaser.Input.Keyboard.KeyCodes.SPACE
+    });
+    
+
+      
+      
+      
+
     }
     
 }

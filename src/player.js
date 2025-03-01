@@ -5,6 +5,7 @@ import Phaser from 'phaser';
  * También almacena la puntuación o número de estrellas que ha recogido hasta el momento.
  */
 export default class Player extends Phaser.Physics.Arcade.Sprite {
+
     /**
      * Constructor del jugador.
      * @param {Phaser.Scene} scene Escena a la que pertenece el jugador.
@@ -39,6 +40,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.maxCrawlTime = 70;
     }
   
+
+
+
+
     /**
      * Método preUpdate llamado en cada frame para gestionar el movimiento y las animaciones.
      * @param {number} time Tiempo actual.
@@ -46,13 +51,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
      */
     preUpdate(time, delta) {
       super.preUpdate(time, delta);
-  
+
+
+      if (!this.scene.keys) return; // Previene errores
+      
       // Movimiento horizontal y animaciones
-      if (this.cursors.left.isDown) {
+      if (this.scene.keys.left.isDown) {
         this.setVelocityX(-this.speed);
         this.anims.play("run", true);
         this.setFlipX(true);
-      } else if (this.cursors.right.isDown) {
+      } else if (this.scene.keys.right.isDown) {
         this.setVelocityX(this.speed);
         this.anims.play("run", true);
         this.setFlipX(false);
@@ -62,7 +70,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
   
       // Salto
-      if (this.cursors.up.isDown && this.body.onFloor()) {
+      if (this.scene.keys.jump.isDown && this.body.onFloor()) {
         this.setVelocityY(this.jumpSpeed);
         if (this.body.velocity.x !== 0) {
           this.anims.play("jump", true);
@@ -72,7 +80,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
   
       // Acción de "crawl" (agacharse)
-      if (this.cursors.down.isDown && this.crawlTime <= this.maxCrawlTime) {
+      if (this.scene.keys.down.isDown && this.crawlTime <= this.maxCrawlTime) {
         this.anims.play("crawl", true);
         this.crawlTime++;
       }
@@ -96,4 +104,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       // Actualizar la UI de la puntuación
       this.label.setText("Score: " + this.score);
     }
+
+
+    
   } 

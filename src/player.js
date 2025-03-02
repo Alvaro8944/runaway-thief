@@ -33,11 +33,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // **Crear la mano separada**
     this.hand = scene.add.sprite(x, y, 'hand3');
-    this.hand.setOrigin(1, 0.40);
+    this.hand.setOrigin(0.5, 0.5);
     this.hand.setDepth(this.depth - 1); // Poner la mano por debajo del jugador
 
     this.weapon = this.scene.add.sprite(this.x, this.y, 'weapon');
-    this.weapon.setOrigin(0.4, 0.40);
+    this.weapon.setOrigin(1.2, 0.5);
     this.weapon.setDepth(this.hand.depth + 1); // Asegurar que el arma está encima de la mano
 
   }
@@ -109,48 +109,52 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   updateHand() {
     let pointer = this.scene.input.activePointer;
 
-    // Calcular el ángulo entre el jugador y el puntero del ratón
+    // Calcular el ángulo entre el hombro (jugador) y el puntero
     let angle = Phaser.Math.Angle.Between(this.x, this.y, pointer.x, pointer.y);
 
-    // Longitud base del brazo (distancia entre hombro y mano)
-    let baseLength = 12;
 
-    // Ajuste de la longitud según el ángulo:
-    let dynamicLength = baseLength;
 
-    // Si el brazo apunta hacia arriba (entre -90 y 0 grados)
-    if (angle < 0) {
-        // A medida que el ángulo se acerque a -90, la longitud se reducirá
-        dynamicLength = baseLength * (1 - angle / Math.PI);  // Reducir a medida que se acerca a -90 grados
-    }
-    // Si el brazo apunta hacia abajo (0 a 90 grados), la longitud aumenta
-    else {
-        dynamicLength = baseLength * (1 + angle / Math.PI);  // Aumentar a medida que se acerca a 90 grados
-    }
+    // Longitud del brazo desde el origen del sprite del cuerpo hasta el hombro
+    let shoulderOffsetX = -5;  // Ajusta esto según la posición del hombro en el sprite
+    let shoulderOffsetY = 1.5; // Ajusta esto según la posición del hombro en el sprite
 
-    // Calcular la nueva posición de la mano usando trigonometría
-    let handX = this.x + Math.cos(angle) * dynamicLength;
-    let handY = this.y + Math.sin(angle) * dynamicLength;
+    // Posición real del hombro
+    let shoulderX = this.x + shoulderOffsetX * (this.flipX ? -1 : 1);
+    let shoulderY = this.y + shoulderOffsetY;
 
-    // Aplicar la posición y la rotación de la mano
-    this.hand.setPosition(handX, handY);
+    // Aplicar la posición al brazo
+    this.hand.setPosition(shoulderX, shoulderY);
     this.hand.setRotation(angle);
 
-    // Si el personaje está volteado, ajustar la rotación de la mano
-    if (this.flipX) {
-        this.hand.setRotation(angle + Math.PI); // Invertir la rotación si está volteado
-    }
+    // Si el personaje está volteado, invertir la rotación
+    this.hand.setRotation(!this.flipX ? angle : angle + Math.PI);
+ 
 
-    // Actualizar la posición del arma
+    // Actualizar el arma
     this.updateWeapon();
+    this.ajustarDireccion();
 }
-
 
 
 updateWeapon() {
     // Mantener el arma en la mano y con la misma rotación
     this.weapon.setPosition(this.hand.x, this.hand.y);
     this.weapon.setRotation(this.hand.rotation);
+
+
+    
 }
+
+
+
+ajustarDireccion(){
+
+
+  this.hand.setScale(!this.flipX ? -1 : 1, 1);
+  this.weapon.setScale(!this.flipX ? -1 : 1, 1);
+
+}
+
+
 
 }

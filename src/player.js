@@ -38,7 +38,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.weapon = this.scene.add.sprite(this.x, this.y, 'weapon');
     this.weapon.setOrigin(1.2, 0.5);
-    this.weapon.setDepth(this.hand.depth + 1); // Asegurar que el arma está encima de la mano
+    this.weapon.setDepth(this.hand.depth - 1); // Asegurar que el arma está encima de la mano
 
   }
 
@@ -96,10 +96,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.label.setText("Score: " + this.score);
 
+
+
+
     // **Actualizar la posición y animación de la mano**
     if (this.hasWeapon) {
       this.updateHand();
     }
+
+   
   }
 
 
@@ -108,9 +113,28 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   updateHand() {
     let pointer = this.scene.input.activePointer;
+    let worldPointer = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
 
-    // Calcular el ángulo entre el hombro (jugador) y el puntero
-    let angle = Phaser.Math.Angle.Between(this.x, this.y, pointer.x, pointer.y);
+    let angle = Phaser.Math.Angle.Between(this.x, this.y, worldPointer.x, worldPointer.y);
+
+    // Si el personaje está volteado, ajustar el ángulo
+    if (this.flipX) {
+        angle += Math.PI; // Invertimos el ángulo porque el personaje está volteado
+    }
+    
+    // Normalizar el ángulo entre -π y π para evitar valores extraños
+    angle = Phaser.Math.Angle.Wrap(angle);
+    
+    // Definir los límites de rotación (siempre en base al mundo, no a flipX)
+    let minAngle = -Math.PI / 2;  // -90° (Abajo)
+    let maxAngle = Math.PI / 2;   //  90° (Arriba)
+    
+    // Aplicar los límites correctamente
+    angle = Phaser.Math.Clamp(angle, minAngle, maxAngle);
+
+
+
+
 
 
 
@@ -126,10 +150,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.hand.setPosition(shoulderX, shoulderY);
     this.hand.setRotation(angle);
 
-    // Si el personaje está volteado, invertir la rotación
-    this.hand.setRotation(!this.flipX ? angle : angle + Math.PI);
- 
-
     // Actualizar el arma
     this.updateWeapon();
     this.ajustarDireccion();
@@ -139,10 +159,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 updateWeapon() {
     // Mantener el arma en la mano y con la misma rotación
     this.weapon.setPosition(this.hand.x, this.hand.y);
-    this.weapon.setRotation(this.hand.rotation);
-
-
-    
+    this.weapon.setRotation(this.hand.rotation);  
 }
 
 

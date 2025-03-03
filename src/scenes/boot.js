@@ -13,16 +13,20 @@ import player_idle_shoot from '../../assets/players/main_character_shoot_body/Id
 
 
 //PLAYER SHOOT HAND
-import hand1 from '../../assets/players/main_character_shoot_hands/1.png'
-import hand2 from '../../assets/players/main_character_shoot_hands/2.png'
 import hand3 from '../../assets/players/main_character_shoot_hands/3.png'
-import hand4 from '../../assets/players/main_character_shoot_hands/4.png'
-import hand5 from '../../assets/players/main_character_shoot_hands/5.png'
 
 
 
 //WEAPON
 import weapon from '../../assets/Guns/4_1.png'
+
+
+//BULLET
+import bullet from '../../assets/Bullets/5.png'
+
+
+//SHOOT EFFECT
+import effect from '../../assets/Shoot_effects/9_1.png'
 
 
 
@@ -99,24 +103,7 @@ export default class Boot extends Phaser.Scene {
 
 
       //SHOOT HANDS-----------------------------------------------------------------------------------------
-
-      this.load.spritesheet('hand1', hand1, {
-        frameWidth: 32,
-        frameHeight: 32
-      });
-      this.load.spritesheet('hand2', hand2, {
-        frameWidth: 32,
-        frameHeight: 32
-      });
       this.load.spritesheet('hand3', hand3, {
-        frameWidth: 32,
-        frameHeight: 32
-      });
-      this.load.spritesheet('hand4', hand4, {
-        frameWidth: 32,
-        frameHeight: 32
-      });
-      this.load.spritesheet('hand5', hand5, {
         frameWidth: 32,
         frameHeight: 32
       });
@@ -131,9 +118,27 @@ export default class Boot extends Phaser.Scene {
       });
 
 
+      //BULLET---------------------------------------------------------------------------
+
+      this.load.spritesheet('bullet', bullet, {
+        frameWidth: 15,
+        frameHeight: 4
+      });
+
+
+      //EFFECT---------------------------------------------------------------------------
+
+      this.load.spritesheet('effect', effect, {
+        frameWidth: 288,
+        frameHeight: 48
+      });
+
 
   }
    
+
+
+
 
   create() {
 
@@ -206,36 +211,12 @@ export default class Boot extends Phaser.Scene {
 
  //SHOOT HANDS-----------------------------------------------------------------------------------------
 
-
- this.anims.create({
-  key: "hand1",
-  frames: [{ key: "hand1", frame: 0 }],
-  frameRate: 10
-});
-
-this.anims.create({
-  key: "hand2",
-  frames: [{ key: "hand2", frame: 0 }],
-  frameRate: 10
-});
-
 this.anims.create({
   key: "hand3",
   frames: [{ key: "hand3", frame: 0 }],
   frameRate: 10
 });
 
-this.anims.create({
-  key: "hand4",
-  frames: [{ key: "hand4", frame: 0 }],
-  frameRate: 10
-});
-
-this.anims.create({
-  key: "hand5",
-  frames: [{ key: "hand5", frame: 0 }],
-  frameRate: 10
-});
 
 
 
@@ -247,6 +228,27 @@ this.anims.create({
   frames: [{ key: "weapon", frame: 0 }],
   frameRate: 10
 });
+
+
+
+//BULLET---------------------------------------------------------------------------
+
+this.anims.create({
+  key: "bullet",
+  frames: [{ key: "bullet", frame: 0 }],
+  frameRate: 10
+});
+
+//EFFECT---------------------------------------------------------------------------
+
+this.anims.create({
+  key: "effect",
+  frames: this.anims.generateFrameNumbers("effect", { start: 0, end: 5}),
+  frameRate: 10
+});
+
+
+
 
 
 

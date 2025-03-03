@@ -23,7 +23,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.label = scene.add.text(10, 10, "Score: 0", { fontSize: '20px', fill: '#fff' });
 
+
     this.cursors = scene.input.keyboard.createCursorKeys();
+    this.scene.input.on("pointerdown", () => this.shoot(), this);
 
     this.crawlTime = 0;
     this.restarcrawl = 0;
@@ -171,6 +173,56 @@ ajustarDireccion(){
   this.weapon.setScale(!this.flipX ? -1 : 1, 1);
 
 }
+
+
+
+shoot() {
+  let bulletSpeed = 1500;
+  let angle = this.weapon.rotation;
+
+  if (this.flipX) {
+      angle += Math.PI;
+  }
+
+  let bullet = this.scene.physics.add.sprite(
+      this.weapon.x + Math.cos(angle) * 20,
+      this.weapon.y + Math.sin(angle) * 20,
+      "bullet"
+  );
+  bullet.setRotation(this.weapon.rotation);
+
+  let velocityX = Math.cos(angle) * bulletSpeed;
+  let velocityY = Math.sin(angle) * bulletSpeed;
+
+  bullet.setVelocity(velocityX, velocityY);
+
+  // **Efecto de disparo que sigue el cañón**
+  let cannonOffset = 125;
+  let effect = this.scene.add.sprite(this.weapon.x + Math.cos(angle) * cannonOffset, this.weapon.y + Math.sin(angle) * cannonOffset, "effect");
+
+  effect.setRotation(this.flipX ? this.weapon.rotation + Math.PI : this.weapon.rotation);
+  effect.setDepth(this.weapon.depth + 1); // Poner el efecto por debajo del arma y el jugador
+  effect.play("effect");
+
+  // Hacer que el efecto siga la posición del arma hasta que termine la animación
+  this.scene.time.addEvent({
+      delay: 16, // 60FPS -> cada frame
+      callback: () => {
+          if (effect.anims.currentFrame) {
+              effect.setPosition(
+                  this.weapon.x + Math.cos(angle) * cannonOffset,
+                  this.weapon.y + Math.sin(angle) * cannonOffset
+              );
+          }
+      },
+      repeat: effect.anims.getTotalFrames() // Se repite hasta que termine la animación
+  });
+
+  effect.once("animationcomplete", () => effect.destroy());
+}
+
+
+
 
 
 

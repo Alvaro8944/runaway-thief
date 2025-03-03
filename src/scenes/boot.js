@@ -32,7 +32,9 @@ import effect from '../../assets/Shoot_effects/9_1.png'
 
 
 import Tileset from '../../assets/tiled/Tileset.png'
+import Tileset2 from '../../assets/tiled/Tileset2.png'
 import MainScene from '../../assets/tiled/MainScene.json'
+import ladder from '../../assets/tiled/Objects/Other/Ladder2.png'
 
 /**
  * Escena para la precarga de los assets que se usarán en el juego.
@@ -50,6 +52,9 @@ export default class Boot extends Phaser.Scene {
 
   preload() {
     this.load.image('tiles', Tileset)
+    this.load.image('tiles2', Tileset2)
+    this.load.image('ladder2', ladder)
+
     this.load.tilemapTiledJSON('map', MainScene)
 
 

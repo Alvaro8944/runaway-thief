@@ -8,6 +8,7 @@ export default class Level extends Phaser.Scene {
   }
 
   create() {
+    
     const map = this.make.tilemap({ key: 'map' });
     const tileset = map.addTilesetImage('Tileset', 'tiles');
     const tilesetObjetos = map.addTilesetImage('TilesetObjetos', 'tiles2');
@@ -26,8 +27,11 @@ export default class Level extends Phaser.Scene {
     // Crear escaleras desde el tilemap
     const escalerasLayer = map.getObjectLayer('Escaleras');
     escalerasLayer.objects.forEach(escalera => {
-      const escaleraSprite = this.ladders.create(escalera.x + 16, escalera.y - 16, 'ladder2');
-      escaleraSprite.body.setSize(20, 32); // Ajustar el hitbox
+      const escaleraSprite = this.ladders.create(escalera.x + escalera.width/2, escalera.y - escalera.height/2, 'ladder2');
+      escaleraSprite.body.setSize(20, escalera.height); // Ajustar el hitbox para que sea un poco más ancho
+      escaleraSprite.setDisplaySize(32, escalera.height); // Mantener el tamaño visual original
+      escaleraSprite.setOrigin(0.5, 0.5); // Centrar el punto de origen
+      escaleraSprite.setImmovable(true); // Asegurar que la escalera no se mueva
     });
 
     // Crear pinchos desde el tilemap
@@ -35,7 +39,9 @@ export default class Level extends Phaser.Scene {
     pinchosLayer.objects.forEach(pincho => {
       let spriteName = pincho.gid === 82 ? 'pichos_abajo' : 'pichos_arriba';
       const spikeSprite = this.spikes.create(pincho.x + 16, pincho.y - 16, spriteName);
-      spikeSprite.body.setSize(28, 16); // Ajustar el hitbox
+      spikeSprite.body.setSize(24, 12); // Ajustar el hitbox para que sea más preciso
+      spikeSprite.setDisplaySize(32, 32); // Mantener el tamaño visual original
+      spikeSprite.setOrigin(0.5, 0.5); // Centrar el punto de origen
     });
 
     // Crear zona de final del nivel
@@ -116,8 +122,33 @@ export default class Level extends Phaser.Scene {
     });
 
     // Crear jugador y enemigos
-    this.player = new Player(this, 2800, 400);
+    this.player = new Player(this, 0, 0);
     
+    // Añadir colisión con escaleras
+    this.physics.add.overlap(
+        this.player,
+        this.ladders,
+        (player, ladder) => {
+            player.canClimb = true;
+            player.currentLadder = ladder;
+        },
+        null,
+        this
+    );
+
+    // Añadir colisión con pinchos
+    this.physics.add.overlap(
+        this.player,
+        this.spikes,
+        (player, spike) => {
+            if (!player.isInvulnerable) {
+                player.takeDamage(1, spike);
+            }
+        },
+        null,
+        this
+    );
+
     // Grupo para todos los enemigos
     this.enemies = this.add.group();
     
@@ -178,22 +209,15 @@ export default class Level extends Phaser.Scene {
     // Configurar colisiones
     this.physics.add.collider(this.player, layerSuelo);
 
-    // Colisión con pinchos
-    this.physics.add.overlap(this.player, this.spikes, (player, spike) => {
-      player.hurt();
-    });
-
-    // Overlap con escaleras (para detectar cuando el jugador puede subir)
-    this.physics.add.overlap(this.player, this.ladders, (player, ladder) => {
-      player.canClimb = true;
-      player.currentLadder = ladder;
-    }, null, this);
-
     // Eventos de muerte
     this.events.on('playerDeath', () => {
+      // Aquí puedes añadir la lógica de game over
       console.log('Game Over - Player died');
       this.scene.restart();
     });
+
+    // Posiciones iniciales
+    this.player.setPosition(2800, 400);
 
     // Configuración de los límites del mundo y la cámara
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);

@@ -18,7 +18,7 @@ export default class Level2 extends Phaser.Scene {
     console.log('Level2: Creando nivel');
     // Crear el mapa y sus capas
     const map = this.make.tilemap({ key: 'map2' });
-    const tileset = map.addTilesetImage('Tileset2', 'tiles');
+    const tileset = map.addTilesetImage('Tileset2', 'tiles2');
     const tilesetObjetos = map.addTilesetImage('TilesetObjetos', 'tiles2');
 
     // Crear las capas
@@ -120,6 +120,9 @@ export default class Level2 extends Phaser.Scene {
       this
     );
 
+    // Configurar colisiones
+    this.physics.add.collider(this.player, layerSuelo);
+
     // Colisión con pinchos
     this.physics.add.overlap(
       this.player,
@@ -132,6 +135,12 @@ export default class Level2 extends Phaser.Scene {
       null,
       this
     );
+
+    // Posiciones iniciales
+    this.player.setPosition(100, 200);
+
+    // Configuración de los límites del mundo y la cámara
+    this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     // Configurar la cámara
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);

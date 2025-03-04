@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import Player from '../player.js';
-import Enemy, { STATE } from '../enemy1.js';
+import Enemy, { STATE, PatrollingEnemy } from '../enemy1.js';
 
 export default class Level extends Phaser.Scene {
   constructor() {
@@ -15,6 +15,17 @@ export default class Level extends Phaser.Scene {
 
     const layerSuelo = map.createLayer('Suelo', [tiles1, tiles2], 0, 0);
     map.createLayer('Vegetacion', [tiles1, tiles2], 0, 0);
+
+    // Crear zona de final del nivel
+    const finNivelLayer = map.getObjectLayer('FinNivel');
+    if (finNivelLayer) {
+        this.finNivel = this.add.zone(0, 0, 32, 32);
+        this.physics.world.enable(this.finNivel);
+        const finNivelObj = finNivelLayer.objects[0];
+        this.finNivel.setPosition(finNivelObj.x, finNivelObj.y);
+        this.finNivel.body.setAllowGravity(false);
+        this.finNivel.body.moves = false;
+    }
 
     // Configurar colisiones para las rampas
     const propiedadesRampas = {
@@ -42,9 +53,21 @@ export default class Level extends Phaser.Scene {
     const escaleraLayer = map.getObjectLayer('Escalera');
     if (escaleraLayer) {
       this.ladders = this.physics.add.staticGroup();
-      escaleraLayer.objects.forEach(obj => {
-        if (obj.gid === 238) {
-          this.ladders.create(obj.x, obj.y - 15, 'ladder2');
+      const escaleraObjects = escaleraLayer.objects.filter(obj => obj.gid === 238);
+      
+      // Encontrar la escalera más alta (última escalera)
+      const ultimaEscalera = escaleraObjects.reduce((highest, current) => {
+        return (!highest || current.y < highest.y) ? current : highest;
+      }, null);
+
+      escaleraObjects.forEach(obj => {
+        const escalera = this.ladders.create(obj.x, obj.y - 15, 'ladder2');
+        
+        // Si es la última escalera, marcarla como zona de fin de nivel
+        if (obj === ultimaEscalera) {
+          this.finNivel = escalera;
+          // Hacer la última escalera un poco visible diferente si quieres (opcional)
+          escalera.setTint(0xffff00); // Color dorado
         }
       });
     }
@@ -92,48 +115,65 @@ export default class Level extends Phaser.Scene {
         }
     });
 
-    // Crear jugador y enemigo
+    // Crear jugador y enemigos
     this.player = new Player(this, 0, 0);
-    this.enemy1 = new Enemy(this, 0, 0);
-    // Asignar referencia del jugador al enemigo
-    this.enemy1.player = this.player;
+    
+    // Grupo para todos los enemigos
+    this.enemies = this.add.group();
+    
+    // Crear enemigos en posiciones específicas
+    const enemyPositions = [
+        { x: 650, y: 790, type: 'normal' },     // Enemigo normal en plataforma baja
+        { x: 1600, y: 500, type: 'patrolling' }
+    ];
+
+    enemyPositions.forEach(pos => {
+        const enemy = pos.type === 'patrolling' 
+            ? new PatrollingEnemy(this, pos.x, pos.y)
+            : new Enemy(this, pos.x, pos.y);
+            
+        enemy.player = this.player;
+        enemy.map = map; // Añadir referencia al mapa
+        this.enemies.add(enemy);
+        
+        // Configurar colisiones para cada enemigo
+        this.physics.add.collider(enemy, layerSuelo);
+        
+        // Colisión entre jugador y este enemigo
+        this.physics.add.overlap(
+            this.player,
+            enemy,
+            (player, enemySprite) => {
+                if (enemySprite.state !== STATE.DEAD && 
+                    enemySprite.state !== STATE.HURT && 
+                    !player.isInvulnerable) {
+                    if (enemySprite.state === STATE.ATTACKING && !enemySprite.attackDamageDealt) {
+                        player.takeDamage(enemySprite.damage, enemySprite);
+                        enemySprite.attackDamageDealt = true;
+                    }
+                }
+            },
+            null,
+            this
+        );
+
+        // Colisión para detectar disparos sobre este enemigo
+        this.physics.add.overlap(
+            enemy,
+            this.bullets,
+            (enemySprite, bullet) => {
+                if (enemySprite.state !== STATE.DEAD) {
+                    enemySprite.takeDamage(bullet.damage);
+                    bullet.destroy();
+                }
+            },
+            null,
+            this
+        );
+    });
 
     // Configurar colisiones
     this.physics.add.collider(this.player, layerSuelo);
-    this.physics.add.collider(this.enemy1, layerSuelo);
-    
-    // Colisión entre jugador y enemigo
-    this.physics.add.overlap(
-      this.player,
-      this.enemy1,
-      (player, enemy) => {
-        if (enemy.state !== STATE.DEAD && 
-            enemy.state !== STATE.HURT && 
-            !player.isInvulnerable) {
-          // Solo si el enemigo está atacando y el jugador no está invulnerable
-          if (enemy.state === STATE.ATTACKING && !enemy.attackDamageDealt) {
-            player.takeDamage(enemy.damage, enemy);
-            enemy.attackDamageDealt = true;
-          }
-        }
-      },
-      null,
-      this
-    );
-
-    // Colisión para detectar disparos sobre el enemigo
-    this.physics.add.overlap(
-      this.enemy1,
-      this.bullets,
-      (enemy, bullet) => {
-        if (enemy.state !== STATE.DEAD) {
-          enemy.takeDamage(bullet.damage);
-          bullet.destroy();
-        }
-      },
-      null,
-      this
-    );
 
     // Eventos de muerte
     this.events.on('playerDeath', () => {
@@ -143,15 +183,19 @@ export default class Level extends Phaser.Scene {
     });
 
     // Posiciones iniciales
-    this.player.setPosition(50, 700);
-    this.enemy1.setPosition(650, 790);
+    this.player.setPosition(1250, 400);
 
+    // Configuración de los límites del mundo y la cámara
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    
+    // Configurar la cámara principal
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-    this.cameras.main.centerOn(map.widthInPixels / 2, map.heightInPixels / 2);
-    this.cameras.main.startFollow(this.player);
-    this.cameras.main.setLerp(1, 0);
+    this.cameras.main.startFollow(this.player, true);
+    this.cameras.main.setZoom(1); // Zoom 1:1
+    this.cameras.main.setLerp(0.1, 0.1); // Suavizado del movimiento
+    this.cameras.main.setDeadzone(100, 100); // Zona muerta para movimiento más suave
 
+    // Configurar controles
     this.keys = this.input.keyboard.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
       left: Phaser.Input.Keyboard.KeyCodes.A,
@@ -159,5 +203,22 @@ export default class Level extends Phaser.Scene {
       right: Phaser.Input.Keyboard.KeyCodes.D,
       jump: Phaser.Input.Keyboard.KeyCodes.SPACE
     });
+
+    // Añadir colisión con la última escalera para fin de nivel
+    if (this.finNivel) {
+        this.physics.add.overlap(
+            this.player,
+            this.finNivel,
+            () => {
+                // Transición suave al siguiente nivel
+                this.cameras.main.fadeOut(1000, 0, 0, 0);
+                this.time.delayedCall(1000, () => {
+                    this.scene.start('boot2');
+                });
+            },
+            null,
+            this
+        );
+    }
   }
 }

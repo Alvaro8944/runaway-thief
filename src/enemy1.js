@@ -183,7 +183,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   patrol() {
     this.state = STATE.PATROLLING;
     this.setVelocityX(this.speed * this.direction);
-    this.play('enemy1_walk', true);
+    this.setFlipX(this.direction === -1);
+    this.setOffset(this.direction === -1 ? 23 : 0, 13);
   }
 
   takeDamage(amount) {
@@ -212,5 +213,54 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.once('animationcomplete-enemy1_die', () => {
       this.destroy();
     });
+  }
+}
+
+// Clase especializada para enemigos que detectan bordes
+export class PatrollingEnemy extends Enemy {
+  constructor(scene, x, y) {
+    super(scene, x, y);
+    this.edgeDetectionEnabled = true;
+    this.edgeDetectionDistance = 50;  // Aumentado de 30 a 50
+    this.groundCheckDistance = 60;    // Aumentado de 40 a 60
+    this.lastDirectionChange = 0;     // Tiempo del último cambio de dirección
+    this.directionChangeDelay = 500;  // Mínimo tiempo entre cambios de dirección (ms)
+  }
+
+  patrol() {
+    this.state = STATE.PATROLLING;
+    
+    if (this.edgeDetectionEnabled && this.map) {
+      const currentTime = this.scene.time.now;
+      
+      // Solo comprobar el borde si ha pasado suficiente tiempo desde el último cambio
+      if (currentTime - this.lastDirectionChange >= this.directionChangeDelay) {
+        // Detectar si hay suelo adelante
+        const groundCheck = {
+          x: this.x + (this.direction * this.edgeDetectionDistance),
+          y: this.y + this.groundCheckDistance
+        };
+
+        const bounds = this.scene.physics.world.bounds;
+        const tiles = this.map.getTilesWithinShape({
+          x: groundCheck.x,
+          y: groundCheck.y,
+          width: 8,  // Aumentado de 2 a 8 para mejor detección
+          height: 8  // Aumentado de 2 a 8 para mejor detección
+        }, { isColliding: true }, this.scene.cameras.main, 'Suelo');
+
+        // Si no hay suelo adelante o llegamos a los límites del mundo, cambiar dirección
+        if (tiles.length === 0 || 
+            this.x <= bounds.x + 50 || 
+            this.x >= bounds.width - 50) {
+          this.direction *= -1;
+          this.lastDirectionChange = currentTime;
+        }
+      }
+    }
+
+    this.setVelocityX(this.speed * this.direction);
+    this.setFlipX(this.direction === -1);
+    this.setOffset(this.direction === -1 ? 23 : 0, 13);
   }
 }

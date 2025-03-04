@@ -26,12 +26,33 @@ export default class Level extends Phaser.Scene {
 
     // Crear escaleras desde el tilemap
     const escalerasLayer = map.getObjectLayer('Escaleras');
+    
+    // Encontrar la escalera más alta (Y más pequeña)
+    let escaleraMasAlta = escalerasLayer.objects[0];
+    escalerasLayer.objects.forEach(escalera => {
+      if (escalera.y < escaleraMasAlta.y) {
+        escaleraMasAlta = escalera;
+      }
+    });
+
+    // Crear todas las escaleras
     escalerasLayer.objects.forEach(escalera => {
       const escaleraSprite = this.ladders.create(escalera.x + escalera.width/2, escalera.y - escalera.height/2, 'ladder2');
-      escaleraSprite.body.setSize(32, escalera.height); // Aumentar el ancho del hitbox para mejor detección
-      escaleraSprite.setDisplaySize(32, escalera.height); // Mantener el tamaño visual original
-      escaleraSprite.setOrigin(0.5, 0.5); // Centrar el punto de origen
-      escaleraSprite.setImmovable(true); // Asegurar que la escalera no se mueva
+      escaleraSprite.body.setSize(32, escalera.height);
+      escaleraSprite.setDisplaySize(32, escalera.height);
+      escaleraSprite.setOrigin(0.5, 0.5);
+      escaleraSprite.setImmovable(true);
+      
+      // Si es la escalera más alta, marcarla como punto de transición
+      if (escalera === escaleraMasAlta) {
+        escaleraSprite.isTransitionPoint = true;
+        
+        // Debug visual para la escalera de transición
+        const graphics = this.add.graphics();
+        graphics.lineStyle(2, 0x00ff00);
+        graphics.strokeRect(escalera.x, escalera.y - escalera.height, escalera.width, escalera.height);
+        console.log('Escalera de transición en Y:', escalera.y);
+      }
     });
 
     // Crear pinchos desde el tilemap
@@ -47,12 +68,19 @@ export default class Level extends Phaser.Scene {
     // Crear zona de final del nivel
     const finNivelLayer = map.getObjectLayer('FinNivel');
     if (finNivelLayer) {
-        this.finNivel = this.add.zone(0, 0, 32, 32);
+        this.finNivel = this.add.zone(0, 0, 32, 64); // Hacemos la zona más alta para mejor detección
         this.physics.world.enable(this.finNivel);
         const finNivelObj = finNivelLayer.objects[0];
         this.finNivel.setPosition(finNivelObj.x, finNivelObj.y);
         this.finNivel.body.setAllowGravity(false);
         this.finNivel.body.moves = false;
+
+        // Debug visual para la zona
+        const graphics = this.add.graphics();
+        graphics.lineStyle(2, 0x00ff00);
+        graphics.strokeRect(finNivelObj.x, finNivelObj.y, 32, 64);
+    } else {
+        console.warn('No se encontró la capa FinNivel en el mapa');
     }
 
     // Configurar colisiones para las rampas
@@ -131,6 +159,38 @@ export default class Level extends Phaser.Scene {
         (player, ladder) => {
             player.canClimb = true;
             player.currentLadder = ladder;
+
+            // Si es la escalera de transición y el jugador está cerca de la parte superior
+            if (ladder.isTransitionPoint) {
+                // Calcular la distancia a la parte superior de la escalera
+                const distanciaAlTope = Math.abs(player.y - (ladder.y - ladder.height));
+                console.log('Distancia al tope de la escalera:', distanciaAlTope);
+                
+                // Zona más amplia de detección y más abajo
+                if (distanciaAlTope < 50 && this.keys.up.isDown) {
+                    console.log('Detectada colisión con escalera de transición');
+                    // Evitar múltiples transiciones
+                    if (this.isTransitioning) return;
+                    this.isTransitioning = true;
+                    console.log('Iniciando transición al nivel 2');
+
+                    // Desactivar controles del jugador
+                    this.player.body.setVelocity(0, 0);
+                    this.player.body.allowGravity = false;
+                    
+                    // Efecto de fade out
+                    this.cameras.main.fadeOut(1000, 0, 0, 0);
+                    
+                    // Transición al boot2 (que cargará los assets del nivel 2)
+                    this.time.delayedCall(1000, () => {
+                        console.log('Cambiando a escena boot2');
+                        this.scene.start('boot2', { 
+                            playerHealth: this.player.health,
+                            playerScore: this.player.score 
+                        });
+                    });
+                }
+            }
         },
         null,
         this
@@ -217,7 +277,7 @@ export default class Level extends Phaser.Scene {
     });
 
     // Posiciones iniciales
-    this.player.setPosition(2800, 400);
+    this.player.setPosition(2800, 200);
 
     // Configuración de los límites del mundo y la cámara
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
@@ -244,10 +304,26 @@ export default class Level extends Phaser.Scene {
             this.player,
             this.finNivel,
             () => {
-                // Transición suave al siguiente nivel
+                console.log('Detectada colisión con zona fin de nivel');
+                // Evitar múltiples transiciones
+                if (this.isTransitioning) return;
+                this.isTransitioning = true;
+                console.log('Iniciando transición al nivel 2');
+
+                // Desactivar controles del jugador
+                this.player.body.setVelocity(0, 0);
+                this.player.body.allowGravity = false;
+                
+                // Efecto de fade out
                 this.cameras.main.fadeOut(1000, 0, 0, 0);
+                
+                // Transición al boot2 (que cargará los assets del nivel 2)
                 this.time.delayedCall(1000, () => {
-                    this.scene.start('boot2');
+                    console.log('Cambiando a escena boot2');
+                    this.scene.start('boot2', { 
+                        playerHealth: this.player.health,
+                        playerScore: this.player.score 
+                    });
                 });
             },
             null,

@@ -1,6 +1,8 @@
 import Boot from './scenes/boot.js';
+import Boot2 from './scenes/boot2.js';
 import End from './scenes/end.js';
 import Level from './scenes/level.js';
+import Level2 from './scenes/level2.js';
 import Phaser from 'phaser';
 
 /**
@@ -9,20 +11,20 @@ import Phaser from 'phaser';
  */
 let config = {
     type: Phaser.AUTO,
-    width: 1000,
-    height: 500,
+    width: 750,
+    height: 550,
     parent: 'juego',
     scale: {
-        //mode: Phaser.Scale.FIT,  
-        autoCenter: Phaser.Scale.CENTER_HORIZONTALLY
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
     },
     pixelArt: true,
-    scene: [Boot, Level, End],
+    scene: [Boot, Boot2, Level, Level2, End],
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 400 },
-            debug: true 
+            gravity: { y: 420 },
+            debug: false 
         }
     }
 };

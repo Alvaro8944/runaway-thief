@@ -4,26 +4,22 @@ import Phaser from 'phaser';
 import player_run from '../../assets/players/main_character/Biker_run.png';
 import player_jump from '../../assets/players/main_character/Biker_jump.png';
 import player_idle from '../../assets/players/main_character/Biker_idle.png';
+import player_hurt from '../../assets/players/main_character/Biker_hurt.png';
+import player_death from '../../assets/players/main_character/Biker_death.png';
+import player_doublejump from '../../assets/players/main_character/Biker_doublejump.png';
+import player_climb from '../../assets/players/main_character/Biker_climb.png';
 
 //PLAYER SHOOT BODY
 import player_run_shoot from '../../assets/players/main_character_shoot_body/Run1.png';
 import player_jump_shoot from '../../assets/players/main_character_shoot_body/Jump1.png';
 import player_idle_shoot from '../../assets/players/main_character_shoot_body/Idle1.png';
 
-//ENEMY 1 IDLE
+//ENEMY 1
 import enemy1_idle from '../../assets/Enemies/1/Idle.png';
-
-//ENEMY 1 WALK
 import enemy1_walk from '../../assets/Enemies/1/Walk.png';
-
-//ENEMY 1 HURT
-import enemy1_hurt from '../../assets/Enemies/1/Hurt.png'
-
-//ENEMY 1 ATTACK
-import enemy1_attack from '../../assets/Enemies/1/Attack.png'
-
-//ENEMY 1 DEATH
-import enemy1_die from '../../assets/Enemies/1/Death.png'
+import enemy1_hurt from '../../assets/Enemies/1/Hurt.png';
+import enemy1_attack from '../../assets/Enemies/1/Attack.png';
+import enemy1_die from '../../assets/Enemies/1/Death.png';
 
 //PLAYER SHOOT HAND
 import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
@@ -40,40 +36,85 @@ import effect from '../../assets/Shoot_effects/9_1.png';
 // TILEMAP
 import Tileset from '../../assets/tiled/Tileset.png';
 import Tileset2 from '../../assets/tiled/Tileset2.png';
-import MainScene from '../../assets/tiled/MainScene.json';
-import seccion2 from '../../assets/tiled/seccion2.json';
+import MainScene2 from '../../assets/tiled/MainScene2.json';
 
 // MAP OBJECTS
-import arbol from '../../assets/tiled/Objects/resized/arbol.png';
-import arbol2 from '../../assets/tiled/Objects/resized/arbol2.png';
-import bush from '../../assets/tiled/Objects/resized/bush.png';
-import ladder from '../../assets/tiled/Objects/resized/escalera.png';
-import downspikes from '../../assets/tiled/Objects/resized/pinchos_grandes_abajo.png';
-import upspikes from '../../assets/tiled/Objects/resized/pinchos_grandes_arriba.png';
+import arbol from '../../assets/tiled/Objects/Resized/arbol.png';
+import arbol2 from '../../assets/tiled/Objects/Resized/arbol2.png';
+import bush from '../../assets/tiled/Objects/Resized/bush.png';
+import ladder from '../../assets/tiled/Objects/Resized/escalera.png';
+import pichos_arriba from '../../assets/tiled/Objects/Resized/pinchos_grandes_arriba.png';
+import pichos_abajo from '../../assets/tiled/Objects/Resized/pinchos_grandes_abajo.png';
 
-/**
- * Escena para la precarga de los assets que se usarán en el juego.
- * Aquí también creamos todas las animaciones (player y enemy).
- */
 export default class Boot2 extends Phaser.Scene {
   constructor() {
     super({ key: 'boot2' });
   }
 
+  init(data) {
+    // Guardar los datos del jugador
+    this.playerData = data;
+  }
+
   preload() {
-    // ---- TILEMAPS & TILESETS ----
+    console.log('Boot2: Iniciando carga de assets');
+    
+    // TILEMAPS & TILESETS
     this.load.image('tiles', Tileset);
     this.load.image('tiles2', Tileset2);
     this.load.image('arbol', arbol);
     this.load.image('arbol2', arbol2);
     this.load.image('bush', bush);
     this.load.image('ladder2', ladder);
-    this.load.image('downspikes', downspikes);
-    this.load.image('upspikes', upspikes);
-    this.load.tilemapTiledJSON('map', MainScene);
-    this.load.tilemapTiledJSON('map2', seccion2);
+    this.load.image('pichos_arriba', pichos_arriba);
+    this.load.image('pichos_abajo', pichos_abajo);
+    this.load.tilemapTiledJSON('map2', MainScene2);
 
-    // ---- ENEMY ----
+    // PLAYER
+    this.load.spritesheet('player_idle', player_idle, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('player_run', player_run, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('player_jump', player_jump, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('player_hurt', player_hurt, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('player_death', player_death, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('player_doublejump', player_doublejump, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('player_climb', player_climb, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+
+    // PLAYER SHOOT BODY
+    this.load.spritesheet('player_run_shoot', player_run_shoot, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('player_jump_shoot', player_jump_shoot, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('player_idle_shoot', player_idle_shoot, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+
+    // ENEMY
     this.load.spritesheet('enemy1_idle', enemy1_idle, {
       frameWidth: 48,
       frameHeight: 48
@@ -94,37 +135,8 @@ export default class Boot2 extends Phaser.Scene {
       frameWidth: 48,
       frameHeight: 48
     });
-    
 
-    // ---- PLAYER ----
-    this.load.spritesheet('player_idle', player_idle, {
-      frameWidth: 48,
-      frameHeight: 48
-    });
-    this.load.spritesheet('player_run', player_run, {
-      frameWidth: 48,
-      frameHeight: 48
-    });
-    this.load.spritesheet('player_jump', player_jump, {
-      frameWidth: 48,
-      frameHeight: 48
-    });
-
-    // ---- PLAYER SHOOT BODY ----
-    this.load.spritesheet('player_run_shoot', player_run_shoot, {
-      frameWidth: 48,
-      frameHeight: 48
-    });
-    this.load.spritesheet('player_jump_shoot', player_jump_shoot, {
-      frameWidth: 48,
-      frameHeight: 48
-    });
-    this.load.spritesheet('player_idle_shoot', player_idle_shoot, {
-      frameWidth: 48,
-      frameHeight: 48
-    });
-
-    // ---- HAND, WEAPON, BULLET, EFFECT ----
+    // HAND, WEAPON, BULLET, EFFECT
     this.load.spritesheet('hand3', hand3, { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('weapon', weapon, { frameWidth: 29, frameHeight: 11 });
     this.load.spritesheet('bullet', bullet, { frameWidth: 15, frameHeight: 4 });
@@ -132,17 +144,16 @@ export default class Boot2 extends Phaser.Scene {
   }
 
   create() {
+    console.log('Boot2: Assets cargados, creando animaciones');
     this.createPlayerAnimations();
     this.createEnemyAnimations();
     this.createWeaponAnimations();
 
-    // Iniciar la escena del juego
-    this.scene.start('level2');
+    console.log('Boot2: Iniciando nivel 2 con datos:', this.playerData);
+    // Iniciar el nivel 2 pasando los datos del jugador
+    this.scene.start('level2', this.playerData);
   }
 
-  // ---------------------------------------------
-  //         Animaciones de PLAYER
-  // ---------------------------------------------
   createPlayerAnimations() {
     // Run
     this.anims.create({
@@ -172,13 +183,39 @@ export default class Boot2 extends Phaser.Scene {
       frameRate: 10
     });
 
+    // Climb
     this.anims.create({
-      key: 'crawl',
-      frames: [{ key: 'player_jump', frame: 3 }],
-      frameRate: 10
+      key: 'climb',
+      frames: this.anims.generateFrameNumbers('player_climb', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: -1
     });
 
-    // ---- SHOOT BODY ----
+    // Double Jump
+    this.anims.create({
+      key: 'doublejump',
+      frames: this.anims.generateFrameNumbers('player_doublejump', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    // Hurt
+    this.anims.create({
+      key: 'player_hurt',
+      frames: this.anims.generateFrameNumbers('player_hurt', { start: 0, end: 1 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    // Death
+    this.anims.create({
+      key: 'player_death',
+      frames: this.anims.generateFrameNumbers('player_death', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    // Shoot animations
     this.anims.create({
       key: 'run_shoot',
       frames: this.anims.generateFrameNumbers('player_run_shoot', { start: 0, end: 5 }),
@@ -199,9 +236,6 @@ export default class Boot2 extends Phaser.Scene {
     });
   }
 
-  // ---------------------------------------------
-  //         Animaciones de ENEMY
-  // ---------------------------------------------
   createEnemyAnimations() {
     this.anims.create({
       key: 'enemy1_idle',
@@ -216,22 +250,21 @@ export default class Boot2 extends Phaser.Scene {
       frameRate: 10,
       repeat: -1
     });
-    this.anims.create({
-      key: 'enemy1_attack',
-      frames: this.anims.generateFrameNumbers('enemy1_attack', { start: 0, end: 5 }),
-      frameRate: 10,
-      repeat: 0
-    });
-    
-    // Animación de recibir daño (hurt)
+
     this.anims.create({
       key: 'enemy1_hurt',
       frames: this.anims.generateFrameNumbers('enemy1_hurt', { start: 0, end: 1 }),
       frameRate: 10,
       repeat: 0
     });
-    
-    // Animación de muerte
+
+    this.anims.create({
+      key: 'enemy1_attack',
+      frames: this.anims.generateFrameNumbers('enemy1_attack', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
     this.anims.create({
       key: 'enemy1_die',
       frames: this.anims.generateFrameNumbers('enemy1_die', { start: 0, end: 5 }),
@@ -240,36 +273,29 @@ export default class Boot2 extends Phaser.Scene {
     });
   }
 
-  // ---------------------------------------------
-  //         Animaciones de armas / efectos
-  // ---------------------------------------------
   createWeaponAnimations() {
-    // Hand
     this.anims.create({
       key: 'hand3',
       frames: [{ key: 'hand3', frame: 0 }],
       frameRate: 10
     });
 
-    // Weapon
     this.anims.create({
       key: 'weapon',
       frames: [{ key: 'weapon', frame: 0 }],
       frameRate: 10
     });
 
-    // Bullet
     this.anims.create({
       key: 'bullet',
       frames: [{ key: 'bullet', frame: 0 }],
       frameRate: 10
     });
 
-    // Effect
     this.anims.create({
       key: 'effect',
       frames: this.anims.generateFrameNumbers('effect', { start: 0, end: 5 }),
       frameRate: 10
     });
   }
-}
+} 

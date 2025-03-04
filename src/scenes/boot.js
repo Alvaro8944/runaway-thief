@@ -43,8 +43,10 @@ import effect from '../../assets/Shoot_effects/9_1.png';
 // TILEMAP
 import Tileset from '../../assets/tiled/Tileset.png';
 import Tileset2 from '../../assets/tiled/Tileset2.png';
-import MainScene from '../../assets/tiled/MainScene2.json';
+import MainScene from '../../assets/tiled/MainScene.json';
 import ladder from '../../assets/tiled/Objects/Resized/escalera.png';
+import pichos_arriba from '../../assets/tiled/Objects/Resized/pinchos_grandes_arriba.png';
+import pichos_abajo from '../../assets/tiled/Objects/Resized/pinchos_grandes_abajo.png';
 
 /**
  * Escena para la precarga de los assets que se usarán en el juego.
@@ -60,6 +62,8 @@ export default class Boot extends Phaser.Scene {
     this.load.image('tiles', Tileset);
     this.load.image('tiles2', Tileset2);
     this.load.image('ladder2', ladder);
+    this.load.image('pichos_arriba', pichos_arriba);
+    this.load.image('pichos_abajo', pichos_abajo);
     this.load.tilemapTiledJSON('map', MainScene);
 
     // ---- ENEMY ----

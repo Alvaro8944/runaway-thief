@@ -8,12 +8,35 @@ export default class Level extends Phaser.Scene {
   }
 
   create() {
-    
     const map = this.make.tilemap({ key: 'map' });
-    const tiles1 = map.addTilesetImage('Tileset', 'tiles');
+    const tileset = map.addTilesetImage('Tileset', 'tiles');
+    const tilesetObjetos = map.addTilesetImage('TilesetObjetos', 'tiles2');
 
-    const layerSuelo = map.createLayer('Suelo', tiles1, 0, 0);
-    map.createLayer('Vegetacion', tiles1, 0, 0);
+    // Crear las capas
+    const layerSuelo = map.createLayer('Suelo', tileset);
+    const layerVegetacion = map.createLayer('Vegetacion', tileset);
+
+    // Configurar colisiones con el suelo
+    layerSuelo.setCollisionByProperty({ colision: true });
+
+    // Crear grupos para objetos
+    this.ladders = this.physics.add.staticGroup();
+    this.spikes = this.physics.add.staticGroup();
+
+    // Crear escaleras desde el tilemap
+    const escalerasLayer = map.getObjectLayer('Escaleras');
+    escalerasLayer.objects.forEach(escalera => {
+      const escaleraSprite = this.ladders.create(escalera.x + 16, escalera.y - 16, 'ladder2');
+      escaleraSprite.body.setSize(20, 32); // Ajustar el hitbox
+    });
+
+    // Crear pinchos desde el tilemap
+    const pinchosLayer = map.getObjectLayer('Pinchos');
+    pinchosLayer.objects.forEach(pincho => {
+      let spriteName = pincho.gid === 82 ? 'pichos_abajo' : 'pichos_arriba';
+      const spikeSprite = this.spikes.create(pincho.x + 16, pincho.y - 16, spriteName);
+      spikeSprite.body.setSize(28, 16); // Ajustar el hitbox
+    });
 
     // Crear zona de final del nivel
     const finNivelLayer = map.getObjectLayer('FinNivel');
@@ -48,28 +71,6 @@ export default class Level extends Phaser.Scene {
     }
 
     layerSuelo.setCollisionByExclusion([-1], true);
-
-    const escaleraLayer = map.getObjectLayer('Escalera');
-    if (escaleraLayer) {
-      this.ladders = this.physics.add.staticGroup();
-      const escaleraObjects = escaleraLayer.objects.filter(obj => obj.gid === 238);
-      
-      // Encontrar la escalera más alta (última escalera)
-      const ultimaEscalera = escaleraObjects.reduce((highest, current) => {
-        return (!highest || current.y < highest.y) ? current : highest;
-      }, null);
-
-      escaleraObjects.forEach(obj => {
-        const escalera = this.ladders.create(obj.x, obj.y - 15, 'ladder2');
-        
-        // Si es la última escalera, marcarla como zona de fin de nivel
-        if (obj === ultimaEscalera) {
-          this.finNivel = escalera;
-          // Hacer la última escalera un poco visible diferente si quieres (opcional)
-          escalera.setTint(0xffff00); // Color dorado
-        }
-      });
-    }
 
     this.bullets = this.physics.add.group({
         allowGravity: false,
@@ -115,7 +116,7 @@ export default class Level extends Phaser.Scene {
     });
 
     // Crear jugador y enemigos
-    this.player = new Player(this, 0, 0);
+    this.player = new Player(this, 2800, 400);
     
     // Grupo para todos los enemigos
     this.enemies = this.add.group();
@@ -177,15 +178,22 @@ export default class Level extends Phaser.Scene {
     // Configurar colisiones
     this.physics.add.collider(this.player, layerSuelo);
 
+    // Colisión con pinchos
+    this.physics.add.overlap(this.player, this.spikes, (player, spike) => {
+      player.hurt();
+    });
+
+    // Overlap con escaleras (para detectar cuando el jugador puede subir)
+    this.physics.add.overlap(this.player, this.ladders, (player, ladder) => {
+      player.canClimb = true;
+      player.currentLadder = ladder;
+    }, null, this);
+
     // Eventos de muerte
     this.events.on('playerDeath', () => {
-      // Aquí puedes añadir la lógica de game over
       console.log('Game Over - Player died');
       this.scene.restart();
     });
-
-    // Posiciones iniciales
-    this.player.setPosition(2800, 400);
 
     // Configuración de los límites del mundo y la cámara
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
@@ -221,6 +229,17 @@ export default class Level extends Phaser.Scene {
             null,
             this
         );
+    }
+  }
+
+  update() {
+    if (this.player) {
+      // Resetear la capacidad de escalar en cada frame
+      this.player.canClimb = false;
+      this.player.currentLadder = null;
+      
+      // Actualizar al jugador
+      this.player.update(this.keys);
     }
   }
 }

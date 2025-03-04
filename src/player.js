@@ -6,7 +6,8 @@ export const PLAYER_STATE = {
   JUMPING: 'JUMPING',
   HURT: 'HURT',
   DEAD: 'DEAD',
-  ATTACKING: 'ATTACKING'
+  ATTACKING: 'ATTACKING',
+  CLIMBING: 'CLIMBING'
 };
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
@@ -25,6 +26,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Atributos de movimiento y salud
     this.speed = 180;
     this.jumpSpeed = -240;
+    this.climbSpeed = 100;
     this.score = 0;
     this.health = 100;      // Salud del jugador
     this.damage = 20;       // Daño de sus disparos
@@ -38,6 +40,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.currentJumps = 0;
     this.isDoubleJumping = false;
     this.doubleJumpParticles = null;
+
+    // Atributos para escaleras
+    this.canClimb = false;
+    this.isClimbing = false;
+    this.currentLadder = null;
 
     // Etiqueta de puntuación y salud (opcional)
     this.label = scene.add.text(10, 10, 'Score: 0 | Health: 100', { fontSize: '20px', fill: '#fff' });
@@ -95,6 +102,32 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const idleAnim = this.hasWeapon ? 'idle_shoot' : 'idle';
     const jumpAnim = this.hasWeapon ? 'jump_shoot' : 'jump';
     const idleJumpAnim = this.hasWeapon ? 'idle_jump_shoot' : 'idle_jump';
+
+    // Lógica de escaleras
+    if (this.canClimb) {
+      if (this.scene.keys.up.isDown) {
+        this.isClimbing = true;
+        this.body.allowGravity = false;
+        this.setVelocityY(-this.climbSpeed);
+        this.play('climb', true);
+      } else if (this.scene.keys.down.isDown) {
+        this.isClimbing = true;
+        this.body.allowGravity = false;
+        this.setVelocityY(this.climbSpeed);
+        this.play('climb', true);
+      } else if (this.isClimbing) {
+        this.setVelocityY(0);
+      }
+    } else {
+      this.isClimbing = false;
+      this.body.allowGravity = true;
+    }
+
+    // Si está escalando, no procesar otros movimientos
+    if (this.isClimbing) {
+      this.setVelocityX(0);
+      return;
+    }
 
     // Resetear saltos disponibles cuando toca el suelo
     if (this.body.onFloor()) {
@@ -299,5 +332,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       // Emitir evento de muerte para que la escena lo maneje
       this.scene.events.emit('playerDeath');
     });
+  }
+
+  hurt() {
+    if (this.isInvulnerable || this.state === PLAYER_STATE.DEAD) return;
+    
+    this.takeDamage(20); // Los pinchos hacen 20 de daño
   }
 }

@@ -43,8 +43,8 @@ import effect from '../../assets/Shoot_effects/9_1.png';
 // TILEMAP
 import Tileset from '../../assets/tiled/Tileset.png';
 import Tileset2 from '../../assets/tiled/Tileset2.png';
-import MainScene from '../../assets/tiled/MainScene.json';
-import ladder from '../../assets/tiled/Objects/Other/Ladder2.png';
+import MainScene from '../../assets/tiled/MainScene2.json';
+import ladder from '../../assets/tiled/Objects/Resized/escalera.png';
 
 /**
  * Escena para la precarga de los assets que se usarán en el juego.

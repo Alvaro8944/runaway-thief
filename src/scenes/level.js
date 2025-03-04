@@ -10,8 +10,8 @@ export default class Level extends Phaser.Scene {
   create() {
     
     const map = this.make.tilemap({ key: 'map' });
-    const tiles1 = map.addTilesetImage('tileset', 'tiles');
-    const tiles2 = map.addTilesetImage('tileset2', 'tiles2');
+    const tiles1 = map.addTilesetImage('Tileset', 'tiles');
+    const tiles2 = map.addTilesetImage('Tileset2', 'ttles2');
 
     const layerSuelo = map.createLayer('Suelo', [tiles1, tiles2], 0, 0);
     map.createLayer('Vegetacion', [tiles1, tiles2], 0, 0);

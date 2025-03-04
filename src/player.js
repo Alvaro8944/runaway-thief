@@ -104,77 +104,52 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const jumpAnim = this.hasWeapon ? 'jump_shoot' : 'jump';
     const idleJumpAnim = this.hasWeapon ? 'idle_jump_shoot' : 'idle_jump';
 
-    // Verificar si el jugador NO está en contacto con ninguna escalera
-    if (!this.scene.physics.overlap(this, this.scene.ladders)) {
-      this.canClimb = false;
-      this.currentLadder = null;
-      if (this.isClimbing) {
-        this.isClimbing = false;
-        this.body.allowGravity = true;
-      }
-    }
-
-    // Lógica de escaleras
+    // Lógica de escalada
     if (this.canClimb) {
-      const isUpOrDownPressed = this.scene.keys.up.isDown || this.scene.keys.down.isDown;
-      
-      if (isUpOrDownPressed) {
-        // Iniciar escalada solo si no estábamos escalando antes
-        if (!this.isClimbing) {
-          this.isClimbing = true;
-          this.body.allowGravity = false;
-          this.setVelocityY(0); // Detener caída vertical
-        }
-        
-        // Centrar suavemente al jugador en la escalera
-        if (this.currentLadder && !this.isClimbingCentered) {
-          const targetX = this.currentLadder.x;
-          const diffX = targetX - this.x;
-          this.x += diffX * 0.2; // Movimiento suave hacia el centro
-          if (Math.abs(diffX) < 1) {
-            this.x = targetX;
-            this.isClimbingCentered = true;
-          }
-        }
+      const isUpPressed = this.scene.keys.up.isDown;
+      const isDownPressed = this.scene.keys.down.isDown;
 
+      if ((isUpPressed || isDownPressed) && !this.isClimbing) {
+        // Iniciar escalada
+        this.isClimbing = true;
+        this.body.allowGravity = false;
+        this.setVelocityY(0);
+        if (this.currentLadder) {
+          this.x = this.currentLadder.x;
+        }
+      }
+
+      if (this.isClimbing) {
         // Movimiento vertical en la escalera
-        if (this.scene.keys.up.isDown) {
+        if (isUpPressed) {
           this.setVelocityY(-this.climbSpeed);
           this.play('climb', true);
-        } else if (this.scene.keys.down.isDown) {
+        } else if (isDownPressed) {
           this.setVelocityY(this.climbSpeed);
           this.play('climb', true);
-        }
-      } else if (this.isClimbing) {
-        // Mantener al jugador en la escalera cuando no se presiona ninguna tecla
-        this.setVelocityY(0);
-        if (this.anims.currentAnim && this.anims.currentAnim.key === 'climb') {
+        } else {
+          this.setVelocityY(0);
           this.anims.pause();
         }
-      }
 
-      // Permitir saltar desde la escalera
-      if (Phaser.Input.Keyboard.JustDown(this.scene.keys.jump)) {
-        this.isClimbing = false;
-        this.isClimbingCentered = false;
-        this.body.allowGravity = true;
-        this.setVelocityY(this.jumpSpeed);
-        this.currentJumps = 1;
-      }
-
-      // Movimiento horizontal limitado mientras escala
-      if (this.isClimbing) {
-        if (this.scene.keys.left.isDown) {
-          this.setVelocityX(-this.speed * 0.3);
-          this.setFlipX(true);
-        } else if (this.scene.keys.right.isDown) {
-          this.setVelocityX(this.speed * 0.3);
-          this.setFlipX(false);
-        } else {
-          this.setVelocityX(0);
+        // Saltar desde la escalera
+        if (Phaser.Input.Keyboard.JustDown(this.scene.keys.jump)) {
+          this.isClimbing = false;
+          this.body.allowGravity = true;
+          this.setVelocityY(this.jumpSpeed);
+          this.currentJumps = 1;
+          return;
         }
-        return; // Evitar que se ejecute la lógica de movimiento normal
+
+        // No permitir movimiento horizontal mientras escala
+        this.setVelocityX(0);
+        return;
       }
+    } else if (this.isClimbing) {
+      // Dejar de escalar si no está en contacto con una escalera
+      this.isClimbing = false;
+      this.body.allowGravity = true;
+      this.play(idleAnim);
     }
 
     // Resetear saltos disponibles cuando toca el suelo

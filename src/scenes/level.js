@@ -28,7 +28,7 @@ export default class Level extends Phaser.Scene {
     const escalerasLayer = map.getObjectLayer('Escaleras');
     escalerasLayer.objects.forEach(escalera => {
       const escaleraSprite = this.ladders.create(escalera.x + escalera.width/2, escalera.y - escalera.height/2, 'ladder2');
-      escaleraSprite.body.setSize(20, escalera.height); // Ajustar el hitbox para que sea un poco más ancho
+      escaleraSprite.body.setSize(32, escalera.height); // Aumentar el ancho del hitbox para mejor detección
       escaleraSprite.setDisplaySize(32, escalera.height); // Mantener el tamaño visual original
       escaleraSprite.setOrigin(0.5, 0.5); // Centrar el punto de origen
       escaleraSprite.setImmovable(true); // Asegurar que la escalera no se mueva
@@ -258,12 +258,16 @@ export default class Level extends Phaser.Scene {
 
   update() {
     if (this.player) {
-      // Resetear la capacidad de escalar en cada frame
-      this.player.canClimb = false;
-      this.player.currentLadder = null;
+      // Verificar la superposición con las escaleras antes de resetear
+      const isOnLadder = this.physics.overlap(this.player, this.ladders);
+      
+      if (!isOnLadder) {
+        this.player.canClimb = false;
+        this.player.currentLadder = null;
+      }
       
       // Actualizar al jugador
-      this.player.update(this.keys);
+      this.player.update();
     }
   }
 }

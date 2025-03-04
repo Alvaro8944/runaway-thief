@@ -235,7 +235,7 @@ export default class Boot extends Phaser.Scene {
     // Animación de escalada
     this.anims.create({
       key: 'climb',
-      frames: this.anims.generateFrameNumbers('player_climb', { start: 0, end: 3 }),
+      frames: this.anims.generateFrameNumbers('player_climb', { start: 0, end: 5 }),
       frameRate: 10,
       repeat: -1
     });

@@ -12,6 +12,14 @@ import player_jump_shoot from '../../assets/players/main_character_shoot_body/Ju
 import player_idle_shoot from '../../assets/players/main_character_shoot_body/Idle1.png'
 
 
+//ENEMY 1 IDLE
+import enemy1_idle from '../../assets/Enemies/1/Idle.png'
+
+
+//ENEMY 1 WALK
+import enemy1_walk from '../../assets/Enemies/1/Walk.png'
+
+
 //PLAYER SHOOT HAND
 import hand3 from '../../assets/players/main_character_shoot_hands/3.png'
 
@@ -33,8 +41,10 @@ import effect from '../../assets/Shoot_effects/9_1.png'
 
 import Tileset from '../../assets/tiled/Tileset.png'
 import Tileset2 from '../../assets/tiled/Tileset2.png'
+//import MainScene2 from '../../assets/tiled/MainScene2.json'
 import MainScene from '../../assets/tiled/MainScene.json'
 import ladder from '../../assets/tiled/Objects/Other/Ladder2.png'
+
 
 /**
  * Escena para la precarga de los assets que se usarán en el juego.
@@ -57,6 +67,16 @@ export default class Boot extends Phaser.Scene {
 
     this.load.tilemapTiledJSON('map', MainScene)
 
+    this.load.spritesheet('enemy1_idle', enemy1_idle, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+
+     // Cargar spritesheet del jugador
+     this.load.spritesheet('enemy1_walk', enemy1_walk, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
 
     
     // Cargar spritesheet del jugador
@@ -64,6 +84,7 @@ export default class Boot extends Phaser.Scene {
       frameWidth: 48,
       frameHeight: 48
     });
+    
   
 
      // Cargar spritesheet del jugador
@@ -146,6 +167,12 @@ export default class Boot extends Phaser.Scene {
 
 
   create() {
+
+    this.anims.create({
+      key: "enemy1_idle",
+      frames: this.anims.generateFrameNumbers("enemy1_idle", { start: 0, end: 3}),
+      frameRate: 10
+    });
 
 
 

@@ -1,4 +1,4 @@
-
+import Enemy from '../enemy1.js'
 import Player from '../player.js'
 import Phaser from 'phaser';
 
@@ -29,6 +29,7 @@ export default class Level extends Phaser.Scene {
       var tiles2 = map.addTilesetImage('tileset2', 'tiles2');
 
       var layerSuelo = map.createLayer('Suelo', [tiles1, tiles2], 0, 0)
+      var layerVegetacion = map.createLayer('Vegetacion', [tiles1, tiles2], 0, 0)
       layerSuelo.setCollisionByExclusion([-1], true)
 
       var escaleraLayer = map.getObjectLayer('Escalera');
@@ -43,11 +44,15 @@ export default class Level extends Phaser.Scene {
         });
       }
         
-  
+      this.enemy1 = new Enemy(this, 50, 0);
       // Instanciar al jugador usando la clase Player
       this.player = new Player(this, 0, 0);
       this.physics.add.collider(this.player, layerSuelo);
-      this.player.setPosition(50,1380);
+      this.physics.add.collider(this.enemy1, layerSuelo);
+      //this.player.setPosition(50,1380);
+      this.player.setPosition(50,700);
+      this.enemy1.setPosition(100,700);
+      
 
       // Configurar límites del mundo y la cámara
       this.physics.world.setBounds(0, 0, 10000, 1500);
@@ -65,12 +70,5 @@ export default class Level extends Phaser.Scene {
         right: Phaser.Input.Keyboard.KeyCodes.D,
         jump: Phaser.Input.Keyboard.KeyCodes.SPACE
     });
-    
-
-      
-      
-      
-
     }
-    
 }

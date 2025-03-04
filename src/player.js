@@ -1,5 +1,14 @@
 import Phaser from 'phaser';
 
+export const PLAYER_STATE = {
+  IDLE: 'IDLE',
+  RUNNING: 'RUNNING',
+  JUMPING: 'JUMPING',
+  HURT: 'HURT',
+  DEAD: 'DEAD',
+  ATTACKING: 'ATTACKING'
+};
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, 'player');
@@ -24,6 +33,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.restarcrawl = 0;
     this.maxCrawlTime = 70;
 
+    // Atributos para el doble salto
+    this.jumpsAvailable = 2; // Número máximo de saltos permitidos
+    this.currentJumps = 0;   // Contador de saltos realizados
+
     // Etiqueta de puntuación y salud (opcional)
     this.label = scene.add.text(10, 10, 'Score: 0 | Health: 100', { fontSize: '20px', fill: '#fff' });
 
@@ -36,10 +49,29 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.hand.setDepth(this.depth - 1);
     this.weapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.2, 0.5);
     this.weapon.setDepth(this.hand.depth - 1);
+
+    // Nuevos atributos
+    this.state = PLAYER_STATE.IDLE;
+    this.invulnerableTime = 1000; // 1 segundo de invulnerabilidad después de recibir daño
+    this.lastHitTime = 0;
+    this.isInvulnerable = false;
+    this.knockbackForce = 200;
+    this.knockbackDuration = 200;
+    this.isKnockedBack = false;
   }
 
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
+
+    if (this.state === PLAYER_STATE.DEAD) return;
+
+    // Actualizar invulnerabilidad
+    if (this.isInvulnerable && time - this.lastHitTime >= this.invulnerableTime) {
+      this.isInvulnerable = false;
+      this.alpha = 1;
+    }
+
+    if (this.isKnockedBack) return;
 
     if (!this.scene.keys) return;
     const runAnim = this.hasWeapon ? 'run_shoot' : 'run';
@@ -47,25 +79,54 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const jumpAnim = this.hasWeapon ? 'jump_shoot' : 'jump';
     const idleJumpAnim = this.hasWeapon ? 'idle_jump_shoot' : 'idle_jump';
 
+    // Resetear saltos disponibles cuando toca el suelo
+    if (this.body.onFloor()) {
+      this.currentJumps = 0;
+    }
+
+    // Lógica de movimiento horizontal
     if (this.scene.keys.left.isDown) {
       this.setVelocityX(-this.speed);
-      this.anims.play(runAnim, true);
+      if (this.body.onFloor()) {
+        this.anims.play(runAnim, true);
+      }
       this.setFlipX(true);
     } else if (this.scene.keys.right.isDown) {
       this.setVelocityX(this.speed);
-      this.anims.play(runAnim, true);
+      if (this.body.onFloor()) {
+        this.anims.play(runAnim, true);
+      }
       this.setFlipX(false);
     } else {
       this.setVelocityX(0);
-      this.anims.play(idleAnim, true);
+      if (this.body.onFloor()) {
+        this.anims.play(idleAnim, true);
+      }
     }
 
-    if (this.scene.keys.jump.isDown && this.body.onFloor()) {
+    // Lógica de salto mejorada
+    const justPressedJump = Phaser.Input.Keyboard.JustDown(this.scene.keys.jump);
+    if (justPressedJump && this.currentJumps < this.jumpsAvailable) {
       this.setVelocityY(this.jumpSpeed);
+      this.currentJumps++;
+      
+      // Reproducir animación de salto
       if (this.body.velocity.x !== 0) {
         this.anims.play(jumpAnim, true);
       } else {
         this.anims.play(idleJumpAnim, true);
+      }
+
+      // Efecto visual para el doble salto
+      if (this.currentJumps > 1) {
+        // Crear efecto de partículas o animación para el doble salto
+        this.scene.add.particles(this.x, this.y + 20, 'effect', {
+          speed: 100,
+          scale: { start: 0.2, end: 0 },
+          alpha: { start: 0.5, end: 0 },
+          lifespan: 200,
+          quantity: 5
+        });
       }
     }
 
@@ -174,13 +235,55 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     effect.once('animationcomplete', () => effect.destroy());
   }
 
-  takeDamage(amount) {
+  takeDamage(amount, attacker = null) {
+    if (this.isInvulnerable || this.state === PLAYER_STATE.DEAD) return;
+
     this.health -= amount;
-    console.log(this.health)
-    if (this.health <= 0) {
-      this.health = 0;
-      this.destroy();
-      // Aquí puedes agregar lógica de "game over"
+    this.isInvulnerable = true;
+    this.lastHitTime = this.scene.time.now;
+    this.state = PLAYER_STATE.HURT;
+
+    // Efecto de parpadeo
+    this.scene.tweens.add({
+      targets: this,
+      alpha: 0.5,
+      duration: 100,
+      yoyo: true,
+      repeat: 5
+    });
+
+    // Knockback
+    if (attacker) {
+      const direction = Math.sign(this.x - attacker.x);
+      this.isKnockedBack = true;
+      this.setVelocityX(direction * this.knockbackForce);
+      this.setVelocityY(-this.knockbackForce / 2);
+
+      this.scene.time.delayedCall(this.knockbackDuration, () => {
+        this.isKnockedBack = false;
+      });
     }
+
+    // Reproducir animación de daño
+    this.play('player_hurt', true);
+    this.once('animationcomplete-player_hurt', () => {
+      if (this.health <= 0) {
+        this.die();
+      } else {
+        this.state = PLAYER_STATE.IDLE;
+      }
+    });
+  }
+
+  die() {
+    this.state = PLAYER_STATE.DEAD;
+    this.play('player_death', true);
+    this.setVelocity(0);
+    this.body.setAllowGravity(false);
+    
+    this.once('animationcomplete-player_death', () => {
+      // Emitir evento de muerte para que la escena lo maneje
+      this.scene.events.emit('playerDeath');
+    });
   }
 }

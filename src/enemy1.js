@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-const STATE = {
+export const STATE = {
   PATROLLING: 'PATROLLING',
   CHASING: 'CHASING',
   ATTACKING: 'ATTACKING',
@@ -31,63 +31,70 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityX(this.speed * this.direction);
     this.body.setGravityY(500);
 
-    // Rango de detección y ataque
-    this.detectionRange = 200;
+    // Rangos de detección y ataque
+    this.detectionRange = 150; // Reducido para que sólo se active en distancias cortas
     this.attackRange = 50;
-    this.attackCooldown = 1000; // milisegundos
+    this.attackCooldown = 1000; // ms
     this.lastAttackTime = 0;
+
+    // Tolerancia vertical (en píxeles) para que el enemigo solo persiga/ataque si están a la misma altura
+    this.verticalTolerance = 20;
 
     // Referencia al jugador (se asigna desde Level.js)
     this.player = null;
 
-    // Iniciar animación de patrulla
+    // Inicia con la animación de patrulla
     this.play('enemy1_walk');
+
+    // Mejoras en los atributos de combate
+    this.attackDuration = 400; // Duración de la animación de ataque
+    this.isAttacking = false;
+    this.attackHitbox = null;
+    this.attackDamageDealt = false;
+    
+    // Crear hitbox de ataque
+    this.attackHitbox = scene.add.rectangle(0, 0, 40, 40);
+    scene.physics.add.existing(this.attackHitbox, true);
+    this.attackHitbox.body.enable = false;
   }
 
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
-    // Si está muerto, no hace nada
     if (this.state === STATE.DEAD) return;
 
-    // Si hay jugador, evaluar distancia para cambiar de estado
-    if (this.player) {
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, this.player.x, this.player.y);
-      if (dist < this.attackRange) {
-        // Ataca si ha pasado el cooldown
-        if (time - this.lastAttackTime > this.attackCooldown) {
-          this.state = STATE.ATTACKING;
-          this.attack();
-          this.lastAttackTime = time;
-        }
-      } else if (dist < this.detectionRange) {
-        this.state = STATE.CHASING;
-        // Persigue al jugador
-        if (this.player.x < this.x) {
-          this.direction = -1;
-          this.setVelocityX(-this.speed);
-          this.setFlipX(true);
-          this.setOffset(23, 13);
-        } else {
-          this.direction = 1;
-          this.setVelocityX(this.speed);
-          this.setFlipX(false);
-          this.setOffset(0, 13);
-        }
-      } else {
-        // Si el jugador está fuera del rango de detección, patrulla
-        this.state = STATE.PATROLLING;
+    // Actualizar posición del hitbox de ataque
+    if (this.attackHitbox) {
+      const offsetX = this.flipX ? -30 : 30;
+      this.attackHitbox.setPosition(this.x + offsetX, this.y);
+    }
+
+    // Solo si hay jugador y no está atacando:
+    if (this.player && !this.isAttacking) {
+      const horizontalDist = Math.abs(this.x - this.player.x);
+      const verticalDiff = Math.abs(this.y - this.player.y);
+      const withinVerticalTolerance = verticalDiff < this.verticalTolerance;
+
+      if (horizontalDist < this.attackRange && withinVerticalTolerance && 
+          time - this.lastAttackTime > this.attackCooldown && 
+          this.state !== STATE.HURT) {
+        this.attack();
+      } else if (horizontalDist < this.detectionRange && withinVerticalTolerance && 
+                 this.state !== STATE.HURT) {
+        this.chase();
+      } else if (this.state !== STATE.HURT) {
+        this.patrol();
       }
     }
 
-    // Estado de patrulla: se invierte la dirección si choca con una pared
-    if (this.state === STATE.PATROLLING) {
+    // Si el enemigo está en PATROLLING o CHASING y se bloquea contra la pared, invertir la dirección
+    if ((this.state === STATE.PATROLLING || this.state === STATE.CHASING) && (this.body.blocked.left || this.body.blocked.right)) {
       if (this.body.blocked.left) {
         this.direction = 1;
         this.setVelocityX(this.speed);
         this.setFlipX(false);
         this.setOffset(0, 13);
-        this.x += 3; // Empuja ligeramente para salir de la pared
+        this.x += 3; // Despegarse de la pared
       } else if (this.body.blocked.right) {
         this.direction = -1;
         this.setVelocityX(-this.speed);
@@ -97,7 +104,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    // Si no está atacando ni recibiendo daño, se reproducen las animaciones de movimiento
+    // Si no está atacando ni en estado hurt, reproducir la animación de movimiento
     if (this.state !== STATE.ATTACKING && this.state !== STATE.HURT) {
       if (this.body.velocity.x !== 0) {
         this.play('enemy1_walk', true);
@@ -108,39 +115,101 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   attack() {
-    // Cambia a estado de ataque y reproduce la animación de ataque
+    if (this.state === STATE.DEAD || this.isAttacking) return;
+
+    this.isAttacking = true;
     this.state = STATE.ATTACKING;
-    this.play('enemy1_attack');
-    // Al finalizar la animación de ataque, aplica daño al jugador y vuelve a perseguirlo
-    this.once('animationcomplete', () => {
-      if (this.player) {
-        this.player.takeDamage(this.damage);
+    this.attackDamageDealt = false;
+    this.setVelocityX(0);
+    
+    // Activar hitbox de ataque
+    this.attackHitbox.body.enable = true;
+    
+    // Reproducir animación de ataque
+    this.play('enemy1_attack', true);
+    
+    // Timer para el daño en medio de la animación
+    this.scene.time.delayedCall(this.attackDuration / 2, () => {
+      if (this.state === STATE.ATTACKING && !this.attackDamageDealt) {
+        this.checkAttackHit();
       }
-      this.state = STATE.CHASING;
     });
+
+    // Timer para finalizar el ataque
+    this.scene.time.delayedCall(this.attackDuration, () => {
+      this.finishAttack();
+    });
+  }
+
+  checkAttackHit() {
+    if (!this.player || this.attackDamageDealt) return;
+
+    const hitboxBounds = this.attackHitbox.getBounds();
+    const playerBounds = this.player.getBounds();
+
+    if (Phaser.Geom.Rectangle.Overlaps(hitboxBounds, playerBounds)) {
+      this.player.takeDamage(this.damage, this);
+      this.attackDamageDealt = true;
+    }
+  }
+
+  finishAttack() {
+    this.isAttacking = false;
+    this.attackHitbox.body.enable = false;
+    this.lastAttackTime = this.scene.time.now;
+    
+    if (this.state !== STATE.HURT && this.state !== STATE.DEAD) {
+      const horizontalDist = this.player ? Math.abs(this.x - this.player.x) : Infinity;
+      const verticalDiff = this.player ? Math.abs(this.y - this.player.y) : Infinity;
+      const withinVertical = verticalDiff < this.verticalTolerance;
+      
+      if (horizontalDist < this.detectionRange && withinVertical) {
+        this.chase();
+      } else {
+        this.patrol();
+      }
+    }
+  }
+
+  chase() {
+    this.state = STATE.CHASING;
+    const direction = this.player.x < this.x ? -1 : 1;
+    this.setVelocityX(this.speed * direction);
+    this.setFlipX(direction === -1);
+    this.setOffset(direction === -1 ? 23 : 0, 13);
+    this.play('enemy1_walk', true);
+  }
+
+  patrol() {
+    this.state = STATE.PATROLLING;
+    this.setVelocityX(this.speed * this.direction);
+    this.play('enemy1_walk', true);
   }
 
   takeDamage(amount) {
     if (this.state === STATE.DEAD) return;
-    console.log(this.health)
     this.health -= amount;
-    this.state = STATE.HURT;
-    this.play('enemy1_hurt');
-    this.once('animationcomplete', () => {
-      if (this.health <= 0) {
-        this.die();
-      } else {
-        // Después de recibir daño, si el jugador está cerca, sigue persiguiéndolo
-        this.state = this.player && Phaser.Math.Distance.Between(this.x, this.y, this.player.x, this.player.y) < this.detectionRange ? STATE.CHASING : STATE.PATROLLING;
-      }
-    });
+    // Si no está ya en estado HURT, entra en ese estado y reproduce la animación correspondiente.
+    if (this.state !== STATE.HURT) {
+      this.state = STATE.HURT;
+      this.play('enemy1_hurt');
+      this.once('animationcomplete-enemy1_hurt', () => {
+        if (this.health <= 0) {
+          this.die();
+        } else {
+          const horizontalDist = this.player ? Math.abs(this.x - this.player.x) : Infinity;
+          const verticalDiff = this.player ? Math.abs(this.y - this.player.y) : Infinity;
+          const withinVertical = verticalDiff < this.verticalTolerance;
+          this.state = (horizontalDist < this.detectionRange && withinVertical) ? STATE.CHASING : STATE.PATROLLING;
+        }
+      });
+    }
   }
 
   die() {
     this.state = STATE.DEAD;
-    // Reproducir animación de muerte (asegúrate de tenerla cargada, por ejemplo 'enemy_die')
     this.play('enemy1_die');
-    this.once('animationcomplete', () => {
+    this.once('animationcomplete-enemy1_die', () => {
       this.destroy();
     });
   }

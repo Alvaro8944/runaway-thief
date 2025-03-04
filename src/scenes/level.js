@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import Enemy from '../enemy1.js';
 import Player from '../player.js';
+import Enemy, { STATE } from '../enemy1.js';
 
 export default class Level extends Phaser.Scene {
   constructor() {
@@ -40,32 +40,46 @@ export default class Level extends Phaser.Scene {
     // Configurar colisiones
     this.physics.add.collider(this.player, layerSuelo);
     this.physics.add.collider(this.enemy1, layerSuelo);
+    
+    // Colisión entre jugador y enemigo
+    this.physics.add.overlap(
+      this.player,
+      this.enemy1,
+      (player, enemy) => {
+        if (enemy.state !== STATE.DEAD && 
+            enemy.state !== STATE.HURT && 
+            !player.isInvulnerable) {
+          // Solo si el enemigo está atacando y el jugador no está invulnerable
+          if (enemy.state === STATE.ATTACKING && !enemy.attackDamageDealt) {
+            player.takeDamage(enemy.damage, enemy);
+            enemy.attackDamageDealt = true;
+          }
+        }
+      },
+      null,
+      this
+    );
 
     // Colisión para detectar disparos sobre el enemigo
-    // Asumimos que cada bala creada tiene la propiedad bullet.damage
     this.physics.add.overlap(
-        this.enemy1,
-        this.bullets,
-        (enemy, bullet) => {
+      this.enemy1,
+      this.bullets,
+      (enemy, bullet) => {
+        if (enemy.state !== STATE.DEAD) {
           enemy.takeDamage(bullet.damage);
           bullet.destroy();
         }
-      );
-      
-      
+      },
+      null,
+      this
+    );
 
-    // Colisión para detectar ataque cuerpo a cuerpo del enemigo
-    this.physics.add.overlap(
-        this.player,
-        this.enemy1,
-        () => {
-          // Puedes usar un temporizador para evitar ataques continuos
-          this.enemy1.attack();
-        },
-        null,
-        this
-      );
-      
+    // Eventos de muerte
+    this.events.on('playerDeath', () => {
+      // Aquí puedes añadir la lógica de game over
+      console.log('Game Over - Player died');
+      this.scene.restart();
+    });
 
     // Posiciones iniciales
     this.player.setPosition(50, 700);

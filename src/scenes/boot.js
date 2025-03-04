@@ -4,6 +4,8 @@ import Phaser from 'phaser';
 import player_run from '../../assets/players/main_character/Biker_run.png';
 import player_jump from '../../assets/players/main_character/Biker_jump.png';
 import player_idle from '../../assets/players/main_character/Biker_idle.png';
+import player_hurt from '../../assets/players/main_character/Biker_hurt.png';
+import player_death from '../../assets/players/main_character/Biker_death.png';
 
 //PLAYER SHOOT BODY
 import player_run_shoot from '../../assets/players/main_character_shoot_body/Run1.png';
@@ -95,6 +97,14 @@ export default class Boot extends Phaser.Scene {
       frameWidth: 48,
       frameHeight: 48
     });
+    this.load.spritesheet('player_hurt', player_hurt, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('player_death', player_death, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
 
     // ---- PLAYER SHOOT BODY ----
     this.load.spritesheet('player_run_shoot', player_run_shoot, {
@@ -182,6 +192,22 @@ export default class Boot extends Phaser.Scene {
       key: 'jump_shoot',
       frames: this.anims.generateFrameNumbers('player_jump_shoot', { start: 0, end: 3 }),
       frameRate: 10
+    });
+
+    // Animación de daño
+    this.anims.create({
+      key: 'player_hurt',
+      frames: this.anims.generateFrameNumbers('player_hurt', { start: 0, end: 1 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    // Animación de muerte
+    this.anims.create({
+      key: 'player_death',
+      frames: this.anims.generateFrameNumbers('player_death', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
     });
   }
 

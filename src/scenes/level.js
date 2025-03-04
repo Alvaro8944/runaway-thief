@@ -44,14 +44,14 @@ export default class Level extends Phaser.Scene {
         });
       }
         
-      this.enemy1 = new Enemy(this, 50, 0);
+      this.enemy1 = new Enemy(this, 0, 0);
       // Instanciar al jugador usando la clase Player
       this.player = new Player(this, 0, 0);
       this.physics.add.collider(this.player, layerSuelo);
       this.physics.add.collider(this.enemy1, layerSuelo);
       //this.player.setPosition(50,1380);
       this.player.setPosition(50,700);
-      this.enemy1.setPosition(100,700);
+      this.enemy1.setPosition(650,790);
       
 
       // Configurar límites del mundo y la cámara

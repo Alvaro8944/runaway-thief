@@ -168,14 +168,7 @@ export default class Boot extends Phaser.Scene {
 
   create() {
 
-    this.anims.create({
-      key: "enemy1_idle",
-      frames: this.anims.generateFrameNumbers("enemy1_idle", { start: 0, end: 3}),
-      frameRate: 10
-    });
-
-
-
+    
     this.anims.create({
       key: "run",
       frames: this.anims.generateFrameNumbers("player_run", { start: 0, end: 5}),

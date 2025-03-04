@@ -13,8 +13,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.setCollideWorldBounds();
     this.setBounce(0.1);
-    this.setSize(this.width, this.height);
-    this.setOffset(0, 16);
+    
+    this.setSize(20, 35);  // Reducimos el alto de la hitbox
+    this.setOffset(14, 13); // Movemos la hitbox hacia abajo para centrarla
+
     this.setScale(1.25);
 
     this.speed = 180;

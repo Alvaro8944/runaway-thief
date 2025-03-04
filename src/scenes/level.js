@@ -124,7 +124,10 @@ export default class Level extends Phaser.Scene {
     // Crear enemigos en posiciones específicas
     const enemyPositions = [
         { x: 650, y: 790, type: 'normal' },     // Enemigo normal en plataforma baja
-        { x: 1600, y: 500, type: 'patrolling' }
+        { x: 1600, y: 500, type: 'patrolling' },
+        { x: 2200, y: 500, type: 'patrolling' },
+        { x: 2800, y: 400, type: 'patrolling' },
+        { x: 2800, y: 0, type: 'normal' }
     ];
 
     enemyPositions.forEach(pos => {
@@ -183,7 +186,7 @@ export default class Level extends Phaser.Scene {
     });
 
     // Posiciones iniciales
-    this.player.setPosition(1250, 400);
+    this.player.setPosition(2800, 400);
 
     // Configuración de los límites del mundo y la cámara
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);

@@ -6,6 +6,7 @@ import player_jump from '../../assets/players/main_character/Biker_jump.png';
 import player_idle from '../../assets/players/main_character/Biker_idle.png';
 import player_hurt from '../../assets/players/main_character/Biker_hurt.png';
 import player_death from '../../assets/players/main_character/Biker_death.png';
+import player_doublejump from '../../assets/players/main_character/Biker_doublejump.png';
 
 //PLAYER SHOOT BODY
 import player_run_shoot from '../../assets/players/main_character_shoot_body/Run1.png';
@@ -102,6 +103,10 @@ export default class Boot extends Phaser.Scene {
       frameHeight: 48
     });
     this.load.spritesheet('player_death', player_death, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('player_doublejump', player_doublejump, {
       frameWidth: 48,
       frameHeight: 48
     });
@@ -206,6 +211,14 @@ export default class Boot extends Phaser.Scene {
     this.anims.create({
       key: 'player_death',
       frames: this.anims.generateFrameNumbers('player_death', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    // Double Jump
+    this.anims.create({
+      key: 'doublejump',
+      frames: this.anims.generateFrameNumbers('player_doublejump', { start: 0, end: 5 }),
       frameRate: 10,
       repeat: 0
     });

@@ -34,8 +34,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.maxCrawlTime = 70;
 
     // Atributos para el doble salto
-    this.jumpsAvailable = 2; // Número máximo de saltos permitidos
-    this.currentJumps = 0;   // Contador de saltos realizados
+    this.jumpsAvailable = 2;
+    this.currentJumps = 0;
+    this.isDoubleJumping = false;
+    this.doubleJumpParticles = null;
 
     // Etiqueta de puntuación y salud (opcional)
     this.label = scene.add.text(10, 10, 'Score: 0 | Health: 100', { fontSize: '20px', fill: '#fff' });
@@ -52,12 +54,27 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Nuevos atributos
     this.state = PLAYER_STATE.IDLE;
-    this.invulnerableTime = 1000; // 1 segundo de invulnerabilidad después de recibir daño
+    this.invulnerableTime = 1000;
     this.lastHitTime = 0;
     this.isInvulnerable = false;
     this.knockbackForce = 200;
     this.knockbackDuration = 200;
     this.isKnockedBack = false;
+
+    // Iniciar con la animación idle
+    const initialAnim = this.hasWeapon ? 'idle_shoot' : 'idle';
+    this.play(initialAnim);
+
+    // Crear el emisor de partículas una sola vez
+    this.doubleJumpEmitter = this.scene.add.particles(0, 0, 'effect', {
+      speed: 100,
+      scale: { start: 0.2, end: 0 },
+      alpha: { start: 0.5, end: 0 },
+      lifespan: 200,
+      quantity: 1,
+      frequency: -1 // -1 significa que no emite automáticamente
+    });
+    this.doubleJumpEmitter.stop(); // Asegurarse de que está detenido inicialmente
   }
 
   preUpdate(time, delta) {
@@ -81,7 +98,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Resetear saltos disponibles cuando toca el suelo
     if (this.body.onFloor()) {
-      this.currentJumps = 0;
+      if (this.currentJumps > 0) {
+        this.currentJumps = 0;
+        // Asegurarse de que el emisor está detenido al tocar el suelo
+        this.doubleJumpEmitter.stop();
+      }
     }
 
     // Lógica de movimiento horizontal
@@ -110,23 +131,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.setVelocityY(this.jumpSpeed);
       this.currentJumps++;
       
-      // Reproducir animación de salto
-      if (this.body.velocity.x !== 0) {
-        this.anims.play(jumpAnim, true);
+      if (this.currentJumps === 2) {
+        // Solo en el segundo salto cambiamos al sprite de doble salto
+        this.play('doublejump', true);
+        // Emitir partículas
+        this.doubleJumpEmitter.setPosition(this.x, this.y + 20);
+        this.doubleJumpEmitter.explode(10);
       } else {
-        this.anims.play(idleJumpAnim, true);
-      }
-
-      // Efecto visual para el doble salto
-      if (this.currentJumps > 1) {
-        // Crear efecto de partículas o animación para el doble salto
-        this.scene.add.particles(this.x, this.y + 20, 'effect', {
-          speed: 100,
-          scale: { start: 0.2, end: 0 },
-          alpha: { start: 0.5, end: 0 },
-          lifespan: 200,
-          quantity: 5
-        });
+        // Primer salto normal
+        const anim = this.body.velocity.x !== 0 ? jumpAnim : idleJumpAnim;
+        this.play(anim, true);
       }
     }
 
@@ -142,11 +156,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    if (!this.body.onFloor()) {
-      if (this.body.velocity.x !== 0) {
-        this.anims.play(jumpAnim, true);
-      } else {
-        this.anims.play(idleJumpAnim, true);
+    // Actualizar animaciones en el aire
+    if (!this.body.onFloor() && this.currentJumps !== 2) {
+      const anim = this.body.velocity.x !== 0 ? jumpAnim : idleJumpAnim;
+      if (!this.anims.isPlaying || this.anims.currentAnim.key !== anim) {
+        this.play(anim, true);
       }
     }
 
@@ -189,7 +203,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   shoot() {
-    const bulletSpeed = 1500;
+    const bulletSpeed = 800;
     let angle = this.weapon.rotation;
     if (this.flipX) {
       angle += Math.PI;

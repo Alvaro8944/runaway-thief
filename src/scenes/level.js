@@ -15,6 +15,28 @@ export default class Level extends Phaser.Scene {
 
     const layerSuelo = map.createLayer('Suelo', [tiles1, tiles2], 0, 0);
     map.createLayer('Vegetacion', [tiles1, tiles2], 0, 0);
+
+    // Configurar colisiones para las rampas
+    const propiedadesRampas = {
+      33: { // ID del tile de rampa izquierda
+        slope: 'left'
+      },
+      32: { // ID del tile de rampa derecha
+        slope: 'right'
+      }
+    };
+
+    // Aplicar propiedades de colisión a las rampas
+    for (const [tileId, props] of Object.entries(propiedadesRampas)) {
+      map.setCollision(parseInt(tileId));
+      const tiles = layerSuelo.filterTiles(tile => tile.index === parseInt(tileId));
+      tiles.forEach(tile => {
+        tile.properties = { ...tile.properties, ...props };
+        tile.faceLeft = props.slope === 'left';
+        tile.faceRight = props.slope === 'right';
+      });
+    }
+
     layerSuelo.setCollisionByExclusion([-1], true);
 
     const escaleraLayer = map.getObjectLayer('Escalera');
@@ -28,7 +50,46 @@ export default class Level extends Phaser.Scene {
     }
 
     this.bullets = this.physics.add.group({
-        allowGravity: false
+        allowGravity: false,
+        collideWorldBounds: true,
+        bounceX: 0,
+        bounceY: 0
+    });
+
+    // Configurar el tamaño del hitbox de las balas cuando se crean
+    this.bullets.createCallback = (bullet) => {
+        bullet.setSize(4, 4); // Hitbox más pequeño y preciso
+        bullet.setOffset(6, 0);
+        
+        // Añadir un tiempo de vida máximo a la bala
+        bullet.lifespan = 1000; // 1 segundo
+        bullet.createTime = this.time.now;
+    };
+
+    // Actualizar y comprobar las balas cada frame
+    this.events.on('update', () => {
+        this.bullets.children.each(bullet => {
+            if (!bullet || !bullet.active) return;
+
+            // Destruir balas que han superado su tiempo de vida
+            if (this.time.now - bullet.createTime > bullet.lifespan) {
+                bullet.destroy();
+                return;
+            }
+
+            // Comprobar colisiones con tiles
+            const tiles = layerSuelo.getTilesWithinShape(bullet.body);
+            if (tiles.some(tile => tile.index !== -1)) {
+                bullet.destroy();
+            }
+        });
+    });
+
+    // Añadir colisión entre balas y suelo
+    this.physics.add.collider(this.bullets, layerSuelo, (bullet) => {
+        if (bullet.active) {
+            bullet.destroy();
+        }
     });
 
     // Crear jugador y enemigo

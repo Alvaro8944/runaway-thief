@@ -19,11 +19,9 @@ export default class Level2 extends Phaser.Scene {
     // Crear el mapa y sus capas
     const map = this.make.tilemap({ key: 'map2' });
     const tileset = map.addTilesetImage('Tileset2', 'tiles2');
-    const tilesetObjetos = map.addTilesetImage('TilesetObjetos', 'tiles2');
 
     // Crear las capas
     const layerSuelo = map.createLayer('Suelo', tileset);
-    const layerVegetacion = map.createLayer('Vegetacion', [tileset, tilesetObjetos]);
 
     // Configurar colisiones con el suelo
     layerSuelo.setCollisionByProperty({ colision: true });
@@ -63,6 +61,8 @@ export default class Level2 extends Phaser.Scene {
         spikeSprite.setOrigin(0.5, 0.5);
       });
     }
+
+    layerSuelo.setCollisionByExclusion([-1], true);
 
     // Configurar el grupo de balas
     this.bullets = this.physics.add.group({

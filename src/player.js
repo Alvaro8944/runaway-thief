@@ -33,7 +33,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.hasWeapon = true;
     this.crawlTime = 0;
     this.restarcrawl = 0;
-    this.maxCrawlTime = 70;
+    this.maxCrawlTime = 90;
 
     // Atributos para el doble salto
     this.jumpsAvailable = 2;
@@ -210,9 +210,26 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     if (this.scene.keys.down.isDown && this.crawlTime <= this.maxCrawlTime) {
-      this.anims.play("crawl", true);
+
+      if (this.weapon) {
+        this.anims.play("sit_shoot", true);
+        this.body.setSize(20, 28); // 🔹 Ajusta la hitbox para que coincida
+        this.body.offset.y = 20;
+
+      } else {
+        this.anims.play("crawl", true);
+      }
+
       this.crawlTime++;
     }
+    else{
+
+      this.setSize(20, 35);
+      this.setOffset(14, 13);
+
+    }
+
+
     if (this.crawlTime >= this.maxCrawlTime) {
       this.restarcrawl++;
       if (this.restarcrawl >= this.maxCrawlTime) {

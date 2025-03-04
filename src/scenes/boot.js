@@ -13,6 +13,8 @@ import player_climb from '../../assets/players/main_character/Biker_climb.png';
 import player_run_shoot from '../../assets/players/main_character_shoot_body/Run1.png';
 import player_jump_shoot from '../../assets/players/main_character_shoot_body/Jump1.png';
 import player_idle_shoot from '../../assets/players/main_character_shoot_body/Idle1.png';
+import player_sit_shoot from '../../assets/players/main_character_shoot_body/Sitdown1.png';
+
 
 //ENEMY 1 IDLE
 import enemy1_idle from '../../assets/Enemies/1/Idle.png';
@@ -48,6 +50,9 @@ import MainScene from '../../assets/tiled/MainScene.json';
 import ladder from '../../assets/tiled/Objects/Resized/escalera.png';
 import pichos_arriba from '../../assets/tiled/Objects/Resized/pinchos_grandes_arriba.png';
 import pichos_abajo from '../../assets/tiled/Objects/Resized/pinchos_grandes_abajo.png';
+
+
+
 
 /**
  * Escena para la precarga de los assets que se usarán en el juego.
@@ -134,6 +139,13 @@ export default class Boot extends Phaser.Scene {
       frameHeight: 48
     });
 
+    this.load.spritesheet('player_sit_shoot', player_sit_shoot, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+
+
+
     // ---- HAND, WEAPON, BULLET, EFFECT ----
     this.load.spritesheet('hand3', hand3, { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('weapon', weapon, { frameWidth: 29, frameHeight: 11 });
@@ -188,6 +200,7 @@ export default class Boot extends Phaser.Scene {
       frameRate: 10
     });
 
+
     // ---- SHOOT BODY ----
     this.anims.create({
       key: 'run_shoot',
@@ -202,11 +215,21 @@ export default class Boot extends Phaser.Scene {
       frameRate: 10
     });
 
+
+    this.anims.create({
+      key: 'sit_shoot',
+      frames: [{ key: 'player_sit_shoot', frame: 2 }],
+      frameRate: 10,
+      repeat: 0 // 🔹 La animación se ejecuta solo una vez
+    });
+
+
     this.anims.create({
       key: 'jump_shoot',
       frames: this.anims.generateFrameNumbers('player_jump_shoot', { start: 0, end: 3 }),
       frameRate: 10
     });
+
 
     // Animación de daño
     this.anims.create({
@@ -258,6 +281,7 @@ export default class Boot extends Phaser.Scene {
       frameRate: 10,
       repeat: -1
     });
+
     this.anims.create({
       key: 'enemy1_attack',
       frames: this.anims.generateFrameNumbers('enemy1_attack', { start: 0, end: 5 }),

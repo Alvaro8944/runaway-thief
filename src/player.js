@@ -114,12 +114,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.isClimbing = true;
         this.body.allowGravity = false;
         this.setVelocityY(0);
-        if (this.currentLadder) {
-          this.x = this.currentLadder.x;
-        }
+        this.setVelocityX(0);
       }
 
       if (this.isClimbing) {
+        // Centrar constantemente al jugador en la escalera
+        const targetX = this.currentLadder.x + 10;
+        const diffX = targetX - this.x;
+        
+        if (Math.abs(diffX) > 1) {
+          // Mover suavemente hacia el centro de la escalera
+          this.x += diffX * 0.2;
+        } else {
+          this.x = targetX;
+        }
+
         // Movimiento vertical en la escalera
         if (isUpPressed) {
           this.setVelocityY(-this.climbSpeed);

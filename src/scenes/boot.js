@@ -16,6 +16,15 @@ import enemy1_idle from '../../assets/Enemies/1/Idle.png';
 //ENEMY 1 WALK
 import enemy1_walk from '../../assets/Enemies/1/Walk.png';
 
+//ENEMY 1 HURT
+import enemy1_hurt from '../../assets/Enemies/1/Hurt.png'
+
+//ENEMY 1 ATTACK
+import enemy1_attack from '../../assets/Enemies/1/Attack.png'
+
+//ENEMY 1 DEATH
+import enemy1_die from '../../assets/Enemies/1/Death.png'
+
 //PLAYER SHOOT HAND
 import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
 
@@ -59,6 +68,19 @@ export default class Boot extends Phaser.Scene {
       frameWidth: 48,
       frameHeight: 48
     });
+    this.load.spritesheet('enemy1_hurt', enemy1_hurt, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('enemy1_attack', enemy1_attack, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('enemy1_die', enemy1_die, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    
 
     // ---- PLAYER ----
     this.load.spritesheet('player_idle', player_idle, {
@@ -179,6 +201,28 @@ export default class Boot extends Phaser.Scene {
       frames: this.anims.generateFrameNumbers('enemy1_walk', { start: 0, end: 5 }),
       frameRate: 10,
       repeat: -1
+    });
+    this.anims.create({
+      key: 'enemy1_attack',
+      frames: this.anims.generateFrameNumbers('enemy1_attack', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
+    });
+    
+    // Animación de recibir daño (hurt)
+    this.anims.create({
+      key: 'enemy1_hurt',
+      frames: this.anims.generateFrameNumbers('enemy1_hurt', { start: 0, end: 1 }),
+      frameRate: 10,
+      repeat: 0
+    });
+    
+    // Animación de muerte
+    this.anims.create({
+      key: 'enemy1_die',
+      frames: this.anims.generateFrameNumbers('enemy1_die', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
     });
   }
 

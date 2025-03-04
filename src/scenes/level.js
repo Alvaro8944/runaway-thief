@@ -8,19 +8,15 @@ export default class Level extends Phaser.Scene {
   }
 
   create() {
-    // Cargar el mapa
+    
     const map = this.make.tilemap({ key: 'map' });
     const tiles1 = map.addTilesetImage('tileset', 'tiles');
     const tiles2 = map.addTilesetImage('tileset2', 'tiles2');
 
-    // Capas
     const layerSuelo = map.createLayer('Suelo', [tiles1, tiles2], 0, 0);
-    const layerVegetacion = map.createLayer('Vegetacion', [tiles1, tiles2], 0, 0);
-
-    // Activar colisiones en el suelo
+    map.createLayer('Vegetacion', [tiles1, tiles2], 0, 0);
     layerSuelo.setCollisionByExclusion([-1], true);
 
-    // Crear capa de escaleras
     const escaleraLayer = map.getObjectLayer('Escalera');
     if (escaleraLayer) {
       this.ladders = this.physics.add.staticGroup();
@@ -31,28 +27,56 @@ export default class Level extends Phaser.Scene {
       });
     }
 
-    // Crear enemigo y jugador
-    this.enemy1 = new Enemy(this, 0, 0);
+    this.bullets = this.physics.add.group({
+        allowGravity: false
+    });
+
+    // Crear jugador y enemigo
     this.player = new Player(this, 0, 0);
+    this.enemy1 = new Enemy(this, 0, 0);
+    // Asignar referencia del jugador al enemigo
+    this.enemy1.player = this.player;
 
     // Configurar colisiones
     this.physics.add.collider(this.player, layerSuelo);
     this.physics.add.collider(this.enemy1, layerSuelo);
 
+    // Colisión para detectar disparos sobre el enemigo
+    // Asumimos que cada bala creada tiene la propiedad bullet.damage
+    this.physics.add.overlap(
+        this.enemy1,
+        this.bullets,
+        (enemy, bullet) => {
+          enemy.takeDamage(bullet.damage);
+          bullet.destroy();
+        }
+      );
+      
+      
+
+    // Colisión para detectar ataque cuerpo a cuerpo del enemigo
+    this.physics.add.overlap(
+        this.player,
+        this.enemy1,
+        () => {
+          // Puedes usar un temporizador para evitar ataques continuos
+          this.enemy1.attack();
+        },
+        null,
+        this
+      );
+      
+
     // Posiciones iniciales
     this.player.setPosition(50, 700);
     this.enemy1.setPosition(650, 790);
 
-    // Límites del mundo
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-
-    // Cámara
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.cameras.main.centerOn(map.widthInPixels / 2, map.heightInPixels / 2);
     this.cameras.main.startFollow(this.player);
     this.cameras.main.setLerp(1, 0);
 
-    // Controles
     this.keys = this.input.keyboard.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
       left: Phaser.Input.Keyboard.KeyCodes.A,

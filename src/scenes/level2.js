@@ -137,7 +137,7 @@ export default class Level2 extends Phaser.Scene {
     );
 
     // Posiciones iniciales
-    this.player.setPosition(100, 200);
+    this.player.setPosition(100, 800);
 
     // Configuración de los límites del mundo y la cámara
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);

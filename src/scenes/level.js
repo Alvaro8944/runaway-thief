@@ -49,11 +49,7 @@ export default class Level extends Phaser.Scene {
       if (escalera === escaleraMasAlta) {
         escaleraSprite.isTransitionPoint = true;
         
-        // Debug visual para la escalera de transición
-        const graphics = this.add.graphics();
-        graphics.lineStyle(2, 0x00ff00);
-        graphics.strokeRect(escalera.x, escalera.y - escalera.height, escalera.width, escalera.height);
-        console.log('Escalera de transición en Y:', escalera.y);
+        
       }
     });
 
@@ -273,7 +269,7 @@ export default class Level extends Phaser.Scene {
     });
 
     // Posiciones iniciales
-    this.player.setPosition(3100, 150);
+    this.player.setPosition(100, 800);
 
     // Configuración de los límites del mundo y la cámara
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);

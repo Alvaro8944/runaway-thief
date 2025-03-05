@@ -135,12 +135,6 @@ export default class Level extends Phaser.Scene {
                 bullet.destroy();
                 return;
             }
-
-            // Comprobar colisiones con tiles
-            const tiles = layerSuelo.getTilesWithinShape(bullet.body);
-            if (tiles.some(tile => tile.index !== -1)) {
-                bullet.destroy();
-            }
         });
     });
 

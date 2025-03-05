@@ -31,9 +31,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.health = 50;      // Salud del jugador
     this.damage = 20;       // Daño de sus disparos
     this.hasWeapon = false;
+    this.resetearAgacharse = false;
     this.crawlTime = 0;
     this.restarcrawl = 0;
-    this.maxCrawlTime = 90;
+    this.maxCrawlTime = 55;
 
     // Atributos para el doble salto
     this.jumpsAvailable = 2;
@@ -222,7 +223,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.setVelocityY(this.jumpSpeed);
       this.currentJumps++;
       
-      if (this.currentJumps === 2) {
+
+      if (this.currentJumps === 2 ) {
         // Solo en el segundo salto cambiamos al sprite de doble salto
         this.play('doublejump', true);
         // Emitir partículas
@@ -233,9 +235,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const anim = this.body.velocity.x !== 0 ? jumpAnim : idleJumpAnim;
         this.play(anim, true);
       }
+
+      if(this.hasWeapon) this.currentJumps = this.jumpsAvailable;
     }
 
-    if (this.scene.keys.down.isDown && this.crawlTime <= this.maxCrawlTime) {
+    if (this.scene.keys.down.isDown && this.crawlTime <= this.maxCrawlTime && this.body.onFloor()) {
+
+      this.resetearAgacharse = true;
 
       if (this.weapon) {
         this.anims.play("sit_shoot", true);
@@ -244,19 +250,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
       } else {
         this.anims.play("crawl", true);
+        this.body.setSize(20, 28); // 🔹 Ajusta la hitbox para que coincida
+        this.body.offset.y = 20;
       }
 
       this.crawlTime++;
     }
     else{
 
+      if(this.resetearAgacharse){
       this.setSize(20, 35);
       this.setOffset(14, 13);
+      this.resetearAgacharse = false;
+      }
 
     }
 
 
-    if (this.crawlTime >= this.maxCrawlTime) {
+    if (this.crawlTime >= this.maxCrawlTime ) {
       this.restarcrawl++;
       if (this.restarcrawl >= this.maxCrawlTime) {
         this.crawlTime = 0;
@@ -312,7 +323,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   shoot() {
 
-    if (this.hasWeapon) {
+    
+  if (this.hasWeapon) {
     const bulletSpeed = 800;
     let angle = this.weapon.rotation;
     if (this.flipX) {
@@ -359,6 +371,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     effect.once('animationcomplete', () => effect.destroy());
 
   }
+    
   }
 
   takeDamage(amount, attacker = null) {

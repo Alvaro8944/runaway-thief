@@ -8,6 +8,8 @@ export const STATE = {
   DEAD: 'DEAD'
 };
 
+const DAMAGE_ENEMY = 20;
+
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, 'enemy1_idle');
@@ -25,7 +27,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     // Atributos de movimiento, salud y daño
     this.speed = 80;
     this.health = 50;
-    this.damage = 10;
+    this.damage = DAMAGE_ENEMY;
     this.state = STATE.PATROLLING; // Inicia patrullando
     this.direction = 1; // 1 = derecha, -1 = izquierda
     this.setVelocityX(this.speed * this.direction);

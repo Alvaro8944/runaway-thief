@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import Player from '../player.js';
 import Enemy, { STATE, PatrollingEnemy } from '../enemy1.js';
 
+const SPIKE_DAMAGE = 20;
+
 export default class Level extends Phaser.Scene {
   constructor() {
     super({ key: 'level' });
@@ -202,7 +204,7 @@ export default class Level extends Phaser.Scene {
         this.spikes,
         (player, spike) => {
             if (!player.isInvulnerable) {
-                player.takeDamage(1, spike);
+                player.takeDamage(SPIKE_DAMAGE, spike);
             }
         },
         null,
@@ -295,7 +297,8 @@ export default class Level extends Phaser.Scene {
       left: Phaser.Input.Keyboard.KeyCodes.A,
       down: Phaser.Input.Keyboard.KeyCodes.S,
       right: Phaser.Input.Keyboard.KeyCodes.D,
-      jump: Phaser.Input.Keyboard.KeyCodes.SPACE
+      jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
+      cambiarWeapon:  Phaser.Input.Keyboard.KeyCodes.X
     });
 
     // Añadir colisión con la última escalera para fin de nivel

@@ -28,9 +28,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.jumpSpeed = -240;
     this.climbSpeed = 100;
     this.score = 0;
-    this.health = 100;      // Salud del jugador
+    this.health = 50;      // Salud del jugador
     this.damage = 20;       // Daño de sus disparos
-    this.hasWeapon = true;
+    this.hasWeapon = false;
     this.crawlTime = 0;
     this.restarcrawl = 0;
     this.maxCrawlTime = 90;
@@ -52,7 +52,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Controles y disparo
     this.cursors = scene.input.keyboard.createCursorKeys();
-    this.scene.input.on('pointerdown', () => this.shoot(), this);
+   this.scene.input.on('pointerdown', () => this.shoot(), this);
 
     // Mano y arma
     this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.5, 0.5);
@@ -85,10 +85,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.doubleJumpEmitter.stop(); // Asegurarse de que está detenido inicialmente
   }
 
+
+
+
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
     if (this.state === PLAYER_STATE.DEAD) return;
+
+
+
+
+  
 
     // Actualizar invulnerabilidad
     if (this.isInvulnerable && time - this.lastHitTime >= this.invulnerableTime) {
@@ -102,15 +110,29 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const runAnim = this.hasWeapon ? 'run_shoot' : 'run';
     const idleAnim = this.hasWeapon ? 'idle_shoot' : 'idle';
     const jumpAnim = this.hasWeapon ? 'jump_shoot' : 'jump';
-    const idleJumpAnim = this.hasWeapon ? 'idle_jump_shoot' : 'idle_jump';
+    const idleJumpAnim = this.hasWeapon ? 'jump_shoot' : 'jump';
+
+
+
+   
+    if (Phaser.Input.Keyboard.JustDown( this.scene.keys.cambiarWeapon)) {
+      this.hasWeapon = !this.hasWeapon;
+      this.weapon.setVisible(this.hasWeapon);   
+      this.hand.setVisible(this.hasWeapon);   
+    }
+  
+
 
     // Lógica de escalada
     if (this.canClimb) {
+
+      
       const isUpPressed = this.scene.keys.up.isDown;
       const isDownPressed = this.scene.keys.down.isDown;
 
       if ((isUpPressed || isDownPressed) && !this.isClimbing) {
-        // Iniciar escalada
+ 
+
         this.isClimbing = true;
         this.body.allowGravity = false;
         this.setVelocityY(0);
@@ -155,7 +177,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         return;
       }
     } else if (this.isClimbing) {
+
       // Dejar de escalar si no está en contacto con una escalera
+
+
       this.isClimbing = false;
       this.body.allowGravity = true;
       this.play(idleAnim);
@@ -172,6 +197,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Lógica de movimiento horizontal
     if (this.scene.keys.left.isDown) {
+
       this.setVelocityX(-this.speed);
       if (this.body.onFloor()) {
         this.anims.play(runAnim, true);
@@ -285,6 +311,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   shoot() {
+
+    if (this.hasWeapon) {
     const bulletSpeed = 800;
     let angle = this.weapon.rotation;
     if (this.flipX) {
@@ -329,6 +357,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       repeat: effect.anims.getTotalFrames()
     });
     effect.once('animationcomplete', () => effect.destroy());
+
+  }
   }
 
   takeDamage(amount, attacker = null) {

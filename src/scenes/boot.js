@@ -181,17 +181,11 @@ export default class Boot extends Phaser.Scene {
       frameRate: 10
     });
 
-    // Jump
-    this.anims.create({
-      key: 'idle_jump',
-      frames: this.anims.generateFrameNumbers('player_jump', { start: 0, end: 3 }),
-      frameRate: 10
-    });
 
     this.anims.create({
       key: 'jump',
       frames: this.anims.generateFrameNumbers('player_jump', { start: 0, end: 3 }),
-      frameRate: 10
+      frameRate: 3
     });
 
     this.anims.create({
@@ -208,6 +202,7 @@ export default class Boot extends Phaser.Scene {
       frameRate: 10,
       repeat: -1
     });
+
 
     this.anims.create({
       key: 'idle_shoot',
@@ -227,7 +222,7 @@ export default class Boot extends Phaser.Scene {
     this.anims.create({
       key: 'jump_shoot',
       frames: this.anims.generateFrameNumbers('player_jump_shoot', { start: 0, end: 3 }),
-      frameRate: 10
+      frameRate: 3
     });
 
 

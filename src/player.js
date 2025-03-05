@@ -219,12 +219,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Lógica de salto mejorada
     const justPressedJump = Phaser.Input.Keyboard.JustDown(this.scene.keys.jump);
-    if (justPressedJump && this.currentJumps < this.jumpsAvailable) {
+    if ((justPressedJump && (!this.hasWeapon && this.currentJumps < this.jumpsAvailable)) || 
+    justPressedJump && (this.hasWeapon && this.currentJumps == 0)) {
+
       this.setVelocityY(this.jumpSpeed);
       this.currentJumps++;
-      
+    
 
-      if (this.currentJumps === 2 ) {
+      if (this.currentJumps === 2 && !this.hasWeapon) {
         // Solo en el segundo salto cambiamos al sprite de doble salto
         this.play('doublejump', true);
         // Emitir partículas
@@ -235,8 +237,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const anim = this.body.velocity.x !== 0 ? jumpAnim : idleJumpAnim;
         this.play(anim, true);
       }
-
-      if(this.hasWeapon) this.currentJumps = this.jumpsAvailable;
+      
     }
 
     if (this.scene.keys.down.isDown && this.crawlTime <= this.maxCrawlTime && this.body.onFloor()) {

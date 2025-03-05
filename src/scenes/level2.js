@@ -156,7 +156,8 @@ export default class Level2 extends Phaser.Scene {
       left: Phaser.Input.Keyboard.KeyCodes.A,
       down: Phaser.Input.Keyboard.KeyCodes.S,
       right: Phaser.Input.Keyboard.KeyCodes.D,
-      jump: Phaser.Input.Keyboard.KeyCodes.SPACE
+      jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
+      cambiarWeapon:  Phaser.Input.Keyboard.KeyCodes.X
     });
 
     // Eventos de muerte

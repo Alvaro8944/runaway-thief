@@ -24,7 +24,7 @@ let config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 420 },
-            debug: false 
+            debug: true 
         }
     }
 };

@@ -72,34 +72,8 @@ export default class Level extends Phaser.Scene {
         this.finNivel.setPosition(finNivelObj.x, finNivelObj.y);
         this.finNivel.body.setAllowGravity(false);
         this.finNivel.body.moves = false;
-
-        // Debug visual para la zona
-        const graphics = this.add.graphics();
-        graphics.lineStyle(2, 0x00ff00);
-        graphics.strokeRect(finNivelObj.x, finNivelObj.y, 32, 64);
     } else {
         console.warn('No se encontró la capa FinNivel en el mapa');
-    }
-
-    // Configurar colisiones para las rampas
-    const propiedadesRampas = {
-      33: { // ID del tile de rampa izquierda
-        slope: 'left'
-      },
-      32: { // ID del tile de rampa derecha
-        slope: 'right'
-      }
-    };
-
-    // Aplicar propiedades de colisión a las rampas
-    for (const [tileId, props] of Object.entries(propiedadesRampas)) {
-      map.setCollision(parseInt(tileId));
-      const tiles = layerSuelo.filterTiles(tile => tile.index === parseInt(tileId));
-      tiles.forEach(tile => {
-        tile.properties = { ...tile.properties, ...props };
-        tile.faceLeft = props.slope === 'left';
-        tile.faceRight = props.slope === 'right';
-      });
     }
 
     layerSuelo.setCollisionByExclusion([-1], true);

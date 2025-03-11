@@ -20,7 +20,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setBounce(0.1);
     this.setSize(20, 35);
-    this.setOffset(14, 13);
+    this.setOffset(13, 13);
     this.setScale(1.25);
 
     // Atributos de movimiento y salud
@@ -189,7 +189,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Resetear saltos disponibles cuando toca el suelo
     if (this.body.onFloor()) {
+
       if (this.currentJumps > 0) {
+
         this.currentJumps = 0;
         // Asegurarse de que el emisor está detenido al tocar el suelo
         this.doubleJumpEmitter.stop();
@@ -219,19 +221,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Lógica de salto mejorada
     const justPressedJump = Phaser.Input.Keyboard.JustDown(this.scene.keys.jump);
-    if ((justPressedJump && (!this.hasWeapon && this.currentJumps < this.jumpsAvailable)) || 
-    justPressedJump && (this.hasWeapon && this.currentJumps == 0)) {
+    if (justPressedJump && (this.currentJumps < this.jumpsAvailable)) {
 
-      this.setVelocityY(this.jumpSpeed);
+
       this.currentJumps++;
-    
-
+      this.setVelocityY(this.jumpSpeed);
+      
+  
       if (this.currentJumps === 2 && !this.hasWeapon) {
         // Solo en el segundo salto cambiamos al sprite de doble salto
         this.play('doublejump', true);
         // Emitir partículas
         this.doubleJumpEmitter.setPosition(this.x, this.y + 20);
         this.doubleJumpEmitter.explode(10);
+        
       } else {
         // Primer salto normal
         const anim = this.body.velocity.x !== 0 ? jumpAnim : idleJumpAnim;

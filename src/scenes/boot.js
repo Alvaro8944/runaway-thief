@@ -31,6 +31,8 @@ import enemy1_attack from '../../assets/Enemies/1/Attack.png'
 //ENEMY 1 DEATH
 import enemy1_die from '../../assets/Enemies/1/Death.png'
 
+
+
 //PLAYER SHOOT HAND
 import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
 
@@ -72,7 +74,7 @@ export default class Boot extends Phaser.Scene {
     this.load.image('pichos_abajo', pichos_abajo);
     this.load.tilemapTiledJSON('map', MainScene);
 
-    // ---- ENEMY ----
+    // ---- ENEMY 1----
     this.load.spritesheet('enemy1_idle', enemy1_idle, {
       frameWidth: 48,
       frameHeight: 48
@@ -93,7 +95,8 @@ export default class Boot extends Phaser.Scene {
       frameWidth: 48,
       frameHeight: 48
     });
-    
+
+
 
     // ---- PLAYER ----
     this.load.spritesheet('player_idle', player_idle, {
@@ -263,6 +266,7 @@ export default class Boot extends Phaser.Scene {
   //         Animaciones de ENEMY
   // ---------------------------------------------
   createEnemyAnimations() {
+
     this.anims.create({
       key: 'enemy1_idle',
       frames: this.anims.generateFrameNumbers('enemy1_idle', { start: 0, end: 3 }),

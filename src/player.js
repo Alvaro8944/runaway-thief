@@ -34,7 +34,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.resetearAgacharse = false;
     this.crawlTime = 0;
     this.restarcrawl = 0;
-    this.maxCrawlTime = 55;
+    this.maxCrawlTime = 90;
 
     // Atributos para el doble salto
     this.jumpsAvailable = 2;

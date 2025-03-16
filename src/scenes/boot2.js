@@ -21,6 +21,17 @@ import enemy1_hurt from '../../assets/Enemies/1/Hurt.png';
 import enemy1_attack from '../../assets/Enemies/1/Attack.png';
 import enemy1_die from '../../assets/Enemies/1/Death.png';
 
+
+
+//ENEMY 2
+import enemy2_idle from '../../assets/Enemies/2/Idle.png';
+import enemy2_walk from '../../assets/Enemies/2/Walk.png';
+import enemy2_hurt from '../../assets/Enemies/2/Hurt.png'
+import enemy2_attack from '../../assets/Enemies/2/Attack.png'
+import enemy2_die from '../../assets/Enemies/2/Death.png'
+
+
+
 //PLAYER SHOOT HAND
 import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
 
@@ -136,6 +147,33 @@ export default class Boot2 extends Phaser.Scene {
       frameHeight: 48
     });
 
+
+     // ---- ENEMY 2----
+     this.load.spritesheet('enemy2_idle', enemy2_idle, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('enemy2_walk', enemy2_walk, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('enemy2_hurt', enemy2_hurt, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('enemy2_attack', enemy2_attack, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    this.load.spritesheet('enemy2_die', enemy2_die, {
+      frameWidth: 48,
+      frameHeight: 48
+    });
+    
+
+
+
+
     // HAND, WEAPON, BULLET, EFFECT
     this.load.spritesheet('hand3', hand3, { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('weapon', weapon, { frameWidth: 29, frameHeight: 11 });
@@ -147,6 +185,7 @@ export default class Boot2 extends Phaser.Scene {
     console.log('Boot2: Assets cargados, creando animaciones');
     this.createPlayerAnimations();
     this.createEnemyAnimations();
+    this.createEnemy2Animations();
     this.createWeaponAnimations();
 
     console.log('Boot2: Iniciando nivel 2 con datos:', this.playerData);
@@ -272,6 +311,56 @@ export default class Boot2 extends Phaser.Scene {
       repeat: 0
     });
   }
+
+
+
+
+
+   // ---------------------------------------------
+  //         Animaciones de ENEMY 2
+  // ---------------------------------------------
+  createEnemy2Animations() {
+
+    this.anims.create({
+      key: 'enemy2_idle',
+      frames: this.anims.generateFrameNumbers('enemy2_idle', { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'enemy2_walk',
+      frames: this.anims.generateFrameNumbers('enemy2_walk', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'enemy2_attack',
+      frames: this.anims.generateFrameNumbers('enemy2_attack', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
+    });
+    
+    // Animación de recibir daño (hurt)
+    this.anims.create({
+      key: 'enemy2_hurt',
+      frames: this.anims.generateFrameNumbers('enemy2_hurt', { start: 0, end: 1 }),
+      frameRate: 10,
+      repeat: 0
+    });
+    
+    // Animación de muerte
+    this.anims.create({
+      key: 'enemy2_die',
+      frames: this.anims.generateFrameNumbers('enemy2_die', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
+    });
+  }
+
+
+
 
   createWeaponAnimations() {
     this.anims.create({

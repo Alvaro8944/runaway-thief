@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import Player from '../player.js';
-import Enemy, { STATE, PatrollingEnemy } from '../enemy1.js';
+import Enemy2, { STATE, PatrollingEnemy2 } from '../enemy2.js';
 
 export default class Level2 extends Phaser.Scene {
   constructor() {
@@ -88,10 +88,7 @@ export default class Level2 extends Phaser.Scene {
           bullet.destroy();
           return;
         }
-        const tiles = layerSuelo.getTilesWithinShape(bullet.body);
-        if (tiles.some(tile => tile.index !== -1)) {
-          bullet.destroy();
-        }
+       
       });
     });
 
@@ -119,6 +116,79 @@ export default class Level2 extends Phaser.Scene {
       null,
       this
     );
+
+
+
+    this.enemies = this.add.group();
+    
+    // Crear enemigos en posiciones específicas
+    const enemyPositions = [
+        { x: 200, y: 800, type: 'normal' },     // Enemigo normal en plataforma baja
+        { x: 1100, y: 500, type: 'patrolling' },
+        { x: 2200, y: 500, type: 'patrolling' },
+        { x: 2800, y: 400, type: 'patrolling' },
+        { x: 2800, y: 0, type: 'normal' }
+    ];
+
+
+        enemyPositions.forEach(pos => {
+            const enemy = pos.type === 'patrolling' 
+                ? new PatrollingEnemy2(this, pos.x, pos.y)
+                : new Enemy2(this, pos.x, pos.y);
+                
+            enemy.player = this.player;
+            enemy.map = map; // Añadir referencia al mapa
+            this.enemies.add(enemy);
+            
+            // Configurar colisiones para cada enemigo
+            this.physics.add.collider(enemy, layerSuelo);
+            
+            // Colisión entre jugador y este enemigo
+            this.physics.add.overlap(
+                this.player,
+                enemy,
+                (player, enemySprite) => {
+                    if (enemySprite.state !== STATE.DEAD && 
+                        enemySprite.state !== STATE.HURT && 
+                        !player.isInvulnerable) {
+                        if (enemySprite.state === STATE.ATTACKING && !enemySprite.attackDamageDealt) {
+                            player.takeDamage(enemySprite.damage, enemySprite);
+                            enemySprite.attackDamageDealt = true;
+                        }
+                    }
+                },
+                null,
+                this
+            );
+    
+            // Colisión para detectar disparos sobre este enemigo
+            this.physics.add.overlap(
+                enemy,
+                this.bullets,
+                (enemySprite, bullet) => {
+                    if (enemySprite.state !== STATE.DEAD) {
+                        enemySprite.takeDamage(bullet.damage);
+                        bullet.destroy();
+                    }
+                },
+                null,
+                this
+            );
+        });
+    
+
+
+
+
+    
+
+
+
+
+
+
+
+
 
     // Configurar colisiones
     this.physics.add.collider(this.player, layerSuelo);

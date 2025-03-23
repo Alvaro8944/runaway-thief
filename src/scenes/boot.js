@@ -33,6 +33,15 @@ import enemy1_die from '../../assets/Enemies/1/Death.png'
 
 
 
+//ENEMY 2
+import enemy2_idle from '../../assets/Enemies/2/Idle.png';
+import enemy2_walk from '../../assets/Enemies/2/Walk.png';
+import enemy2_hurt from '../../assets/Enemies/2/Hurt.png'
+import enemy2_attack from '../../assets/Enemies/2/Attack.png'
+import enemy2_die from '../../assets/Enemies/2/Death.png'
+
+
+
 //PLAYER SHOOT HAND
 import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
 
@@ -97,6 +106,30 @@ export default class Boot extends Phaser.Scene {
     });
 
 
+      // ---- ENEMY 2----
+         this.load.spritesheet('enemy2_idle', enemy2_idle, {
+          frameWidth: 48,
+          frameHeight: 48
+        });
+        this.load.spritesheet('enemy2_walk', enemy2_walk, {
+          frameWidth: 48,
+          frameHeight: 48
+        });
+        this.load.spritesheet('enemy2_hurt', enemy2_hurt, {
+          frameWidth: 48,
+          frameHeight: 48
+        });
+        this.load.spritesheet('enemy2_attack', enemy2_attack, {
+          frameWidth: 48,
+          frameHeight: 48
+        });
+        this.load.spritesheet('enemy2_die', enemy2_die, {
+          frameWidth: 48,
+          frameHeight: 48
+        });
+        
+    
+
 
     // ---- PLAYER ----
     this.load.spritesheet('player_idle', player_idle, {
@@ -159,6 +192,7 @@ export default class Boot extends Phaser.Scene {
   create() {
     this.createPlayerAnimations();
     this.createEnemyAnimations();
+    this.createEnemy2Animations();
     this.createWeaponAnimations();
 
     // Iniciar la escena del juego
@@ -305,6 +339,55 @@ export default class Boot extends Phaser.Scene {
     });
   }
 
+
+
+
+  // ---------------------------------------------
+  //         Animaciones de ENEMY 2
+  // ---------------------------------------------
+  createEnemy2Animations() {
+
+    this.anims.create({
+      key: 'enemy2_idle',
+      frames: this.anims.generateFrameNumbers('enemy2_idle', { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'enemy2_walk',
+      frames: this.anims.generateFrameNumbers('enemy2_walk', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'enemy2_attack',
+      frames: this.anims.generateFrameNumbers('enemy2_attack', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
+    });
+    
+    // Animación de recibir daño (hurt)
+    this.anims.create({
+      key: 'enemy2_hurt',
+      frames: this.anims.generateFrameNumbers('enemy2_hurt', { start: 0, end: 1 }),
+      frameRate: 10,
+      repeat: 0
+    });
+    
+    // Animación de muerte
+    this.anims.create({
+      key: 'enemy2_die',
+      frames: this.anims.generateFrameNumbers('enemy2_die', { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
+    });
+  }
+
+
+
+  
   // ---------------------------------------------
   //         Animaciones de armas / efectos
   // ---------------------------------------------

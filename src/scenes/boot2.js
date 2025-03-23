@@ -219,7 +219,7 @@ export default class Boot2 extends Phaser.Scene {
     this.anims.create({
       key: 'jump',
       frames: this.anims.generateFrameNumbers('player_jump', { start: 0, end: 3 }),
-      frameRate: 10
+      frameRate: 3
     });
 
     // Climb

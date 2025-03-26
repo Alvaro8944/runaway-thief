@@ -80,7 +80,7 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
       if (horizontalDist < this.attackRange && verticalDiff < this.attackRange && this.state !== STATE2.HURT  && !this.hasObstacleBetween()) {
         this.attack();
       } else if (horizontalDist < this.detectionRange && withinVerticalTolerance && 
-                 this.state !== STATE2.HURT) {
+                 this.state !== STATE2.HURT && !this.hasObstacleBetween()) {
         this.chase();
       } else if (this.state !== STATE2.HURT) {
         this.patrol();
@@ -159,18 +159,26 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
 
 
 
-
   hasObstacleBetween() {
-    if (!this.scene.physics || !this.scene.physics.world) return false;
+    if (!this.scene || !this.scene.layerSuelo) return false;
 
     const start = new Phaser.Math.Vector2(this.x, this.y);
     const end = new Phaser.Math.Vector2(this.player.x, this.player.y);
+    const steps = 10; // Cuántos puntos intermedios verificar
 
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const checkX = Phaser.Math.Linear(start.x, end.x, t);
+        const checkY = Phaser.Math.Linear(start.y, end.y, t);
 
+        const tile = this.scene.layerSuelo.getTileAtWorldXY(checkX, checkY);
 
-    //MIRAR COLISION NS COMO HACERLO
-    
-    return false;
+        if (tile && tile.collides) {
+            return true; // Hay un obstáculo en el camino
+        }
+    }
+
+    return false; // No hay obstáculos
 }
 
 

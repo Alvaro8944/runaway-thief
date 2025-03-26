@@ -18,11 +18,11 @@ export default class Level extends Phaser.Scene {
 
     
     // Crear las capas
-    const layerSuelo = map.createLayer('Suelo', tileset);
+    this.layerSuelo = map.createLayer('Suelo', tileset);
     const layerVegetacion = map.createLayer('Vegetacion', tileset);
 
     // Configurar colisiones con el suelo
-    layerSuelo.setCollisionByProperty({ colision: true });
+    this.layerSuelo.setCollisionByProperty({ colision: true });
 
     // Crear grupos para objetos
     this.ladders = this.physics.add.staticGroup();
@@ -78,7 +78,7 @@ export default class Level extends Phaser.Scene {
         console.warn('No se encontró la capa FinNivel en el mapa');
     }
 
-    layerSuelo.setCollisionByExclusion([-1], true);
+    this.layerSuelo.setCollisionByExclusion([-1], true);
 
     this.bullets = this.physics.add.group({
         allowGravity: false,
@@ -111,7 +111,7 @@ export default class Level extends Phaser.Scene {
     });
 
     // Añadir colisión entre balas y suelo
-    this.physics.add.collider(this.bullets, layerSuelo, (bullet) => {
+    this.physics.add.collider(this.bullets, this.layerSuelo, (bullet) => {
         if (bullet.active) {
             bullet.destroy();
         }
@@ -206,7 +206,7 @@ export default class Level extends Phaser.Scene {
         this.enemies.add(enemy);
         
         // Configurar colisiones para cada enemigo
-        this.physics.add.collider(enemy, layerSuelo);
+        this.physics.add.collider(enemy, this.layerSuelo);
         
         // Colisión entre jugador y este enemigo
         this.physics.add.overlap(
@@ -255,7 +255,7 @@ export default class Level extends Phaser.Scene {
         this.enemies.add(enemy);
         
         // Configurar colisiones para cada enemigo
-        this.physics.add.collider(enemy, layerSuelo);
+        this.physics.add.collider(enemy, this.layerSuelo);
         
         // Colisión entre jugador y este enemigo
         this.physics.add.overlap(
@@ -291,7 +291,7 @@ export default class Level extends Phaser.Scene {
     });
 
     // Configurar colisiones
-    this.physics.add.collider(this.player, layerSuelo);
+    this.physics.add.collider(this.player, this.layerSuelo);
 
     // Eventos de muerte
     this.events.on('playerDeath', () => {

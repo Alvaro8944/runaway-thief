@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import Player from '../player.js';
-import Enemy2, { STATE2, PatrollingEnemy2 } from '../enemy2.js';
+import Enemy2, { STATE, PatrollingEnemy2 } from '../enemy2.js';
 
 export default class Level2 extends Phaser.Scene {
   constructor() {
@@ -148,10 +148,10 @@ export default class Level2 extends Phaser.Scene {
                 this.player,
                 enemy,
                 (player, enemySprite) => {
-                    if (enemySprite.state !== STATE2.DEAD && 
-                        enemySprite.state !== STATE2.HURT && 
+                    if (enemySprite.state !== STATE.DEAD && 
+                        enemySprite.state !== STATE.HURT && 
                         !player.isInvulnerable) {
-                        if (enemySprite.state === STATE2.ATTACKING && !enemySprite.attackDamageDealt) {
+                        if (enemySprite.state === STATE.ATTACKING && !enemySprite.attackDamageDealt) {
                             player.takeDamage(enemySprite.damage, enemySprite);
                             enemySprite.attackDamageDealt = true;
                         }
@@ -166,7 +166,7 @@ export default class Level2 extends Phaser.Scene {
                 enemy,
                 this.bullets,
                 (enemySprite, bullet) => {
-                    if (enemySprite.state !== STATE2.DEAD) {
+                    if (enemySprite.state !== STATE.DEAD) {
                         enemySprite.takeDamage(bullet.damage);
                         bullet.destroy();
                     }
@@ -176,6 +176,13 @@ export default class Level2 extends Phaser.Scene {
             );
         });
     
+
+
+
+
+    
+
+
 
 
 
@@ -229,8 +236,9 @@ export default class Level2 extends Phaser.Scene {
       this.scene.restart();
     });
 
-        const audio=this.sound.add('nivel');
-    audio.play();
+    /*
+    const audio=this.sound.add('nivel');
+    audio.play();*/
   }
 
   update() {

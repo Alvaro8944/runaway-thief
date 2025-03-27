@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import Player from '../player.js';
 import Enemy, { STATE, PatrollingEnemy } from '../enemy1.js';
-import Enemy2, { STATE2, PatrollingEnemy2 } from '../enemy2.js';
 
 const SPIKE_DAMAGE = 20;
 
@@ -16,13 +15,12 @@ export default class Level extends Phaser.Scene {
     const tileset = map.addTilesetImage('Tileset', 'tiles');
     const tilesetObjetos = map.addTilesetImage('TilesetObjetos', 'tiles2');
 
-    
     // Crear las capas
-    this.layerSuelo = map.createLayer('Suelo', tileset);
+    const layerSuelo = map.createLayer('Suelo', tileset);
     const layerVegetacion = map.createLayer('Vegetacion', tileset);
 
     // Configurar colisiones con el suelo
-    this.layerSuelo.setCollisionByProperty({ colision: true });
+    layerSuelo.setCollisionByProperty({ colision: true });
 
     // Crear grupos para objetos
     this.ladders = this.physics.add.staticGroup();
@@ -78,7 +76,7 @@ export default class Level extends Phaser.Scene {
         console.warn('No se encontró la capa FinNivel en el mapa');
     }
 
-    this.layerSuelo.setCollisionByExclusion([-1], true);
+    layerSuelo.setCollisionByExclusion([-1], true);
 
     this.bullets = this.physics.add.group({
         allowGravity: false,
@@ -111,14 +109,11 @@ export default class Level extends Phaser.Scene {
     });
 
     // Añadir colisión entre balas y suelo
-    this.physics.add.collider(this.bullets, this.layerSuelo, (bullet) => {
+    this.physics.add.collider(this.bullets, layerSuelo, (bullet) => {
         if (bullet.active) {
             bullet.destroy();
         }
     });
-
-
-
 
     // Crear jugador y enemigos
     this.player = new Player(this, 0, 0);
@@ -185,66 +180,13 @@ export default class Level extends Phaser.Scene {
     
     // Crear enemigos en posiciones específicas
     const enemyPositions = [
+        { x: 650, y: 790, type: 'normal' },     // Enemigo normal en plataforma baja
         { x: 1600, y: 500, type: 'patrolling' },
         { x: 2200, y: 500, type: 'patrolling' },
         { x: 2800, y: 400, type: 'patrolling' },
         { x: 2800, y: 0, type: 'normal' }
     ];
 
-    const enemy2Positions = [
-        { x: 650, y: 790, type: 'normal' },     // Enemigo normal en plataforma baja
-    ];
-
-
-    enemy2Positions.forEach(pos => {
-        const enemy = pos.type === 'patrolling' 
-            ? new PatrollingEnemy2(this, pos.x, pos.y)
-            : new Enemy2(this, pos.x, pos.y);
-            
-        enemy.player = this.player;
-        enemy.map = map; // Añadir referencia al mapa
-        this.enemies.add(enemy);
-        
-        // Configurar colisiones para cada enemigo
-        this.physics.add.collider(enemy, this.layerSuelo);
-        
-        // Colisión entre jugador y este enemigo
-        this.physics.add.overlap(
-            this.player,
-            enemy,
-            (player, enemySprite) => {
-                if (enemySprite.state !== STATE2.DEAD && 
-                    enemySprite.state !== STATE2.HURT && 
-                    !player.isInvulnerable) {
-                    if (enemySprite.state === STATE2.ATTACKING && !enemySprite.attackDamageDealt) {
-                        player.takeDamage(enemySprite.damage, enemySprite);
-                        enemySprite.attackDamageDealt = true;
-                    }
-                }
-            },
-            null,
-            this
-        );
-
-        // Colisión para detectar disparos sobre este enemigo
-        this.physics.add.overlap(
-            enemy,
-            this.bullets,
-            (enemySprite, bullet) => {
-                if (enemySprite.state !== STATE2.DEAD) {
-                    enemySprite.takeDamage(bullet.damage);
-                    bullet.destroy();
-                }
-            },
-            null,
-            this
-        );
-    });
-
-
-
-
-    
     enemyPositions.forEach(pos => {
         const enemy = pos.type === 'patrolling' 
             ? new PatrollingEnemy(this, pos.x, pos.y)
@@ -255,7 +197,7 @@ export default class Level extends Phaser.Scene {
         this.enemies.add(enemy);
         
         // Configurar colisiones para cada enemigo
-        this.physics.add.collider(enemy, this.layerSuelo);
+        this.physics.add.collider(enemy, layerSuelo);
         
         // Colisión entre jugador y este enemigo
         this.physics.add.overlap(
@@ -291,7 +233,7 @@ export default class Level extends Phaser.Scene {
     });
 
     // Configurar colisiones
-    this.physics.add.collider(this.player, this.layerSuelo);
+    this.physics.add.collider(this.player, layerSuelo);
 
     // Eventos de muerte
     this.events.on('playerDeath', () => {
@@ -355,9 +297,6 @@ export default class Level extends Phaser.Scene {
             this
         );
     }
-
-    const audio=this.sound.add('nivel');
-    audio.play();
   }
 
   update() {

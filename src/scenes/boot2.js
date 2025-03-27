@@ -56,6 +56,7 @@ import bush from '../../assets/tiled/Objects/Resized/bush.png';
 import ladder from '../../assets/tiled/Objects/Resized/escalera.png';
 import pichos_arriba from '../../assets/tiled/Objects/Resized/pinchos_grandes_arriba.png';
 import pichos_abajo from '../../assets/tiled/Objects/Resized/pinchos_grandes_abajo.png';
+
 //Sounds
 import Disparo from '../../assets/Sounds/Shoot.mp3';
 import LevelSound from '../../assets/Sounds/nivel.mp3';
@@ -73,12 +74,13 @@ export default class Boot2 extends Phaser.Scene {
 
   preload() {
     console.log('Boot2: Iniciando carga de assets');
-    //Sounds
+        //Sonido
+        this.load.audio('disparo', Disparo);
 
-this.load.audio('disparo', Disparo);
-this.load.audio('nivel', LevelSound);
-this.load.audio('damage',Damage);
+        this.load.audio('nivel', LevelSound);
+        this.load.audio('damage',Damage);
 
+    
     
     // TILEMAPS & TILESETS
     this.load.image('tiles', Tileset);
@@ -189,6 +191,9 @@ this.load.audio('damage',Damage);
     this.load.spritesheet('weapon', weapon, { frameWidth: 29, frameHeight: 11 });
     this.load.spritesheet('bullet', bullet, { frameWidth: 15, frameHeight: 4 });
     this.load.spritesheet('effect', effect, { frameWidth: 288, frameHeight: 48 });
+
+    
+  
   }
 
   create() {
@@ -229,7 +234,7 @@ this.load.audio('damage',Damage);
     this.anims.create({
       key: 'jump',
       frames: this.anims.generateFrameNumbers('player_jump', { start: 0, end: 3 }),
-      frameRate: 3
+      frameRate: 10
     });
 
     // Climb

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-export const STATE = {
+export const STATE2 = {
   PATROLLING: 'PATROLLING',
   CHASING: 'CHASING',
   ATTACKING: 'ATTACKING',
@@ -25,10 +25,10 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
     this.setScale(1.25);
 
     // Atributos de movimiento, salud y daño
-    this.speed = 80;
+    this.speed = 40;
     this.health = 50;
     this.damage = DAMAGE_ENEMY;
-    this.state = STATE.PATROLLING; // Inicia patrullando
+    this.state = STATE2.PATROLLING; // Inicia patrullando
     this.direction = 1; // 1 = derecha, -1 = izquierda
     this.setVelocityX(this.speed * this.direction);
     this.body.setGravityY(500);
@@ -36,7 +36,7 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
     // Rangos de detección y ataque
     this.detectionRange = 300; // Reducido para que sólo se active en distancias cortas
     this.attackRange = 300;
-    this.attackCooldown = 1000; // ms
+    this.attackCooldown = 200; // ms
     this.lastAttackTime = 0;
 
     // Tolerancia vertical (en píxeles) para que el enemigo solo persiga/ataque si están a la misma altura
@@ -55,7 +55,7 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
     this.attackDamageDealt = false;
     
     // Crear hitbox de ataque
-    this.attackHitbox = scene.add.rectangle(300, 300, 300, 300);
+    this.attackHitbox = scene.add.rectangle(0, 0, 300, 300);
     scene.physics.add.existing(this.attackHitbox, true);
     this.attackHitbox.body.enable = false;
   }
@@ -63,7 +63,7 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
-    if (this.state === STATE.DEAD) return;
+    if (this.state === STATE2.DEAD) return;
 
     // Actualizar posición del hitbox de ataque
     if (this.attackHitbox) {
@@ -77,20 +77,18 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
       const verticalDiff = Math.abs(this.y - this.player.y);
       const withinVerticalTolerance = verticalDiff < this.verticalTolerance;
 
-      if (horizontalDist < this.attackRange || verticalDiff < this.attackRange && 
-          time - this.lastAttackTime > this.attackCooldown && 
-          this.state !== STATE.HURT) {
+      if (horizontalDist < this.attackRange && verticalDiff < this.attackRange && this.state !== STATE2.HURT  && !this.hasObstacleBetween()) {
         this.attack();
       } else if (horizontalDist < this.detectionRange && withinVerticalTolerance && 
-                 this.state !== STATE.HURT) {
+                 this.state !== STATE2.HURT && !this.hasObstacleBetween()) {
         this.chase();
-      } else if (this.state !== STATE.HURT) {
+      } else if (this.state !== STATE2.HURT) {
         this.patrol();
       }
     }
 
     // Si el enemigo está en PATROLLING o CHASING y se bloquea contra la pared, invertir la dirección
-    if ((this.state === STATE.PATROLLING || this.state === STATE.CHASING) && (this.body.blocked.left || this.body.blocked.right)) {
+    if ((this.state === STATE2.PATROLLING || this.state === STATE2.CHASING) && (this.body.blocked.left || this.body.blocked.right)) {
       if (this.body.blocked.left) {
         this.direction = 1;
         this.setVelocityX(this.speed);
@@ -107,7 +105,7 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Si no está atacando ni en estado hurt, reproducir la animación de movimiento
-    if (this.state !== STATE.ATTACKING && this.state !== STATE.HURT) {
+    if (this.state !== STATE2.ATTACKING && this.state !== STATE2.HURT) {
       if (this.body.velocity.x !== 0) {
         this.play('enemy2_walk', true);
       } else {
@@ -117,10 +115,14 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
   }
 
   attack() {
-    if (this.state === STATE.DEAD || this.isAttacking) return;
+    if (this.state === STATE2.DEAD || this.isAttacking) return;
+
+
+     // Girar hacia el jugador antes de atacar
+     this.setFlipX(this.player.x < this.x);
 
     this.isAttacking = true;
-    this.state = STATE.ATTACKING;
+    this.state = STATE2.ATTACKING;
     this.attackDamageDealt = false;
     this.setVelocityX(0);
     
@@ -132,7 +134,7 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
     
     // Timer para el daño en medio de la animación
     this.scene.time.delayedCall(this.attackDuration / 2, () => {
-      if (this.state === STATE.ATTACKING && !this.attackDamageDealt) {
+      if (this.state === STATE2.ATTACKING && !this.attackDamageDealt) {
         this.checkAttackHit();
       }
     });
@@ -144,23 +146,50 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
   }
 
   checkAttackHit() {
-    if (!this.player || this.attackDamageDealt) return;
+    if (!this.player || this.attackDamageDealt || this.hasObstacleBetween()) return;
 
     const hitboxBounds = this.attackHitbox.getBounds();
     const playerBounds = this.player.getBounds();
 
-    if (Phaser.Geom.Rectangle.Overlaps(hitboxBounds, playerBounds)) {
+    if (Phaser.Geom.Rectangle.Area(hitboxBounds, playerBounds)) {
       this.player.takeDamage(this.damage, this);
       this.attackDamageDealt = true;
     }
   }
+
+
+
+  hasObstacleBetween() {
+    if (!this.scene || !this.scene.layerSuelo) return false;
+
+    const start = new Phaser.Math.Vector2(this.x, this.y);
+    const end = new Phaser.Math.Vector2(this.player.x, this.player.y);
+    const steps = 10; // Cuántos puntos intermedios verificar
+
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const checkX = Phaser.Math.Linear(start.x, end.x, t);
+        const checkY = Phaser.Math.Linear(start.y, end.y, t);
+
+        const tile = this.scene.layerSuelo.getTileAtWorldXY(checkX, checkY);
+
+        if (tile && tile.collides) {
+            return true; // Hay un obstáculo en el camino
+        }
+    }
+
+    return false; // No hay obstáculos
+}
+
+
+
 
   finishAttack() {
     this.isAttacking = false;
     this.attackHitbox.body.enable = false;
     this.lastAttackTime = this.scene.time.now;
     
-    if (this.state !== STATE.HURT && this.state !== STATE.DEAD) {
+    if (this.state !== STATE2.HURT && this.state !== STATE2.DEAD) {
       const horizontalDist = this.player ? Math.abs(this.x - this.player.x) : Infinity;
       const verticalDiff = this.player ? Math.abs(this.y - this.player.y) : Infinity;
       const withinVertical = verticalDiff < this.verticalTolerance;
@@ -174,7 +203,7 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
   }
 
   chase() {
-    this.state = STATE.CHASING;
+    this.state = STATE2.CHASING;
     const direction = this.player.x < this.x ? -1 : 1;
     this.setVelocityX(this.speed * direction);
     this.setFlipX(direction === -1);
@@ -183,18 +212,18 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
   }
 
   patrol() {
-    this.state = STATE.PATROLLING;
+    this.state = STATE2.PATROLLING;
     this.setVelocityX(this.speed * this.direction);
     this.setFlipX(this.direction === -1);
     this.setOffset(this.direction === -1 ? 23 : 0, 13);
   }
 
   takeDamage(amount) {
-    if (this.state === STATE.DEAD) return;
+    if (this.state === STATE2.DEAD) return;
     this.health -= amount;
     // Si no está ya en estado HURT, entra en ese estado y reproduce la animación correspondiente.
-    if (this.state !== STATE.HURT) {
-      this.state = STATE.HURT;
+    if (this.state !== STATE2.HURT) {
+      this.state = STATE2.HURT;
       this.play('enemy2_hurt');
       this.once('animationcomplete-enemy2_hurt', () => {
         if (this.health <= 0) {
@@ -203,14 +232,14 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
           const horizontalDist = this.player ? Math.abs(this.x - this.player.x) : Infinity;
           const verticalDiff = this.player ? Math.abs(this.y - this.player.y) : Infinity;
           const withinVertical = verticalDiff < this.verticalTolerance;
-          this.state = (horizontalDist < this.detectionRange && withinVertical) ? STATE.CHASING : STATE.PATROLLING;
+          this.state = (horizontalDist < this.detectionRange && withinVertical) ? STATE2.CHASING : STATE2.PATROLLING;
         }
       });
     }
   }
 
   die() {
-    this.state = STATE.DEAD;
+    this.state = STATE2.DEAD;
     this.play('enemy2_die');
     this.once('animationcomplete-enemy2_die', () => {
       this.destroy();
@@ -230,7 +259,7 @@ export class PatrollingEnemy2 extends Enemy2 {
   }
 
   patrol() {
-    this.state = STATE.PATROLLING;
+    this.state = STATE2.PATROLLING;
     
     if (this.edgeDetectionEnabled && this.map) {
       const currentTime = this.scene.time.now;

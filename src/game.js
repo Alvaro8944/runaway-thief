@@ -11,15 +11,15 @@ import Phaser from 'phaser';
  */
 let config = {
     type: Phaser.AUTO,
-    width: 750,
-    height: 530,
+    width: 900,
+    height: 730,
     parent: 'juego',
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
     pixelArt: true,
-    scene: [Boot2,Level2, Boot , Level, , End],
+    scene: [Boot, Boot2 , Level, Level2, End],
     physics: {
         default: 'arcade',
         arcade: {

@@ -1,7 +1,5 @@
 import Phaser from 'phaser';
 
-
-
 export const PLAYER_STATE = {
   IDLE: 'IDLE',
   RUNNING: 'RUNNING',
@@ -15,7 +13,6 @@ export const PLAYER_STATE = {
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, 'player');
-    
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -87,13 +84,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       frequency: -1 // -1 significa que no emite automáticamente
     });
     this.doubleJumpEmitter.stop(); // Asegurarse de que está detenido inicialmente
-    
-
-
-
-
   }
-
 
 
 
@@ -383,13 +374,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     });
     effect.once('animationcomplete', () => effect.destroy());
 
-    const shootsound=this.scene.sound.add("disparo");
-    shootsound.play();
-
   }
-  
-
-
     
   }
 
@@ -431,9 +416,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.state = PLAYER_STATE.IDLE;
       }
     });
-
-    const damagesound=this.scene.sound.add("damage");
-    damagesound.play();
   }
 
   die() {

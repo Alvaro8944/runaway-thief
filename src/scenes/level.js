@@ -355,6 +355,9 @@ export default class Level extends Phaser.Scene {
             this
         );
     }
+
+    const audio=this.sound.add('nivel');
+    audio.play();
   }
 
   update() {

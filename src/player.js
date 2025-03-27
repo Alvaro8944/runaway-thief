@@ -156,9 +156,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (isUpPressed) {
           this.setVelocityY(-this.climbSpeed);
           this.play('climb', true);
+          this.climb_sound();
+
         } else if (isDownPressed) {
           this.setVelocityY(this.climbSpeed);
           this.play('climb', true);
+          this.climb_sound();
         } else {
           this.setVelocityY(0);
           this.anims.pause();
@@ -170,6 +173,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
           this.body.allowGravity = true;
           this.setVelocityY(this.jumpSpeed);
           this.currentJumps = 1;
+          this.jump_sound();
           return;
         }
 
@@ -228,6 +232,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.setVelocityY(this.jumpSpeed);
       
   
+      this.jump_sound();
       if (this.currentJumps === 2 && !this.hasWeapon) {
         // Solo en el segundo salto cambiamos al sprite de doble salto
         this.play('doublejump', true);
@@ -375,6 +380,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     effect.once('animationcomplete', () => effect.destroy());
 
   }
+
+  const shootsound= this.scene.sound.add('disparo');
+  shootsound.play();
     
   }
 
@@ -416,6 +424,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.state = PLAYER_STATE.IDLE;
       }
     });
+
+    const damagesound= this.scene.sound.add('damage');
+  damagesound.play();
   }
 
   die() {
@@ -430,9 +441,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
+
+
   hurt() {
     if (this.isInvulnerable || this.state === PLAYER_STATE.DEAD) return;
     
     this.takeDamage(20); // Los pinchos hacen 20 de daño
   }
+  jump_sound(){
+   const jump=this.scene.sound.add("jump");
+   jump.play();
+
+  }
+  climb_sound(){
+   const climb=this.scene.sound.add("escaleras");
+   climb.play();
+
+  }
+
+
 }

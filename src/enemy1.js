@@ -123,6 +123,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.state = STATE.ATTACKING;
     this.attackDamageDealt = false;
     this.setVelocityX(0);
+
+    const baseball=this.scene.sound.add("baseball");
+    baseball.play();
     
     // Activar hitbox de ataque
     this.attackHitbox.body.enable = true;

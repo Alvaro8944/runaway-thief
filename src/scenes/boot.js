@@ -62,6 +62,13 @@ import ladder from '../../assets/tiled/Objects/Resized/escalera.png';
 import pichos_arriba from '../../assets/tiled/Objects/Resized/pinchos_grandes_arriba.png';
 import pichos_abajo from '../../assets/tiled/Objects/Resized/pinchos_grandes_abajo.png';
 
+import Disparo from '../../assets/Sounds/Shoot.mp3';
+import LevelSound from '../../assets/Sounds/nivel.mp3';
+import Damage from '../../assets/Sounds/Damage.wav';
+import baseball from '../../assets/Sounds/baseball.wav';
+import Jump from '../../assets/Sounds/jump.flac';
+import Escaleras from '../../assets/Sounds/Escaleras.wav';
+import Shootgun from '../../assets/Sounds/Shootgun.wav';
 
 
 
@@ -75,6 +82,16 @@ export default class Boot extends Phaser.Scene {
   }
 
   preload() {
+
+    //Sonido
+            this.load.audio('disparo', Disparo);
+    
+            this.load.audio('level2', LevelSound);
+            this.load.audio('damage',Damage);
+            this.load.audio('baseball',baseball);
+            this.load.audio('jump',Jump);
+            this.load.audio('escaleras',Escaleras);
+            this.load.audio('shootgun',Shootgun);
     // ---- TILEMAPS & TILESETS ----
     this.load.image('tiles', Tileset);
     this.load.image('tiles2', Tileset2);

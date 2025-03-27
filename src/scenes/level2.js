@@ -228,6 +228,9 @@ export default class Level2 extends Phaser.Scene {
       console.log('Game Over - Player died');
       this.scene.restart();
     });
+
+        const audio=this.sound.add('nivel');
+    audio.play();
   }
 
   update() {

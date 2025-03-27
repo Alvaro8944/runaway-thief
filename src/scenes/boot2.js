@@ -56,6 +56,10 @@ import bush from '../../assets/tiled/Objects/Resized/bush.png';
 import ladder from '../../assets/tiled/Objects/Resized/escalera.png';
 import pichos_arriba from '../../assets/tiled/Objects/Resized/pinchos_grandes_arriba.png';
 import pichos_abajo from '../../assets/tiled/Objects/Resized/pinchos_grandes_abajo.png';
+//Sounds
+import Disparo from '../../assets/Sounds/Shoot.mp3';
+import LevelSound from '../../assets/Sounds/nivel.mp3';
+import Damage from '../../assets/Sounds/Damage.wav';
 
 export default class Boot2 extends Phaser.Scene {
   constructor() {
@@ -69,6 +73,12 @@ export default class Boot2 extends Phaser.Scene {
 
   preload() {
     console.log('Boot2: Iniciando carga de assets');
+    //Sounds
+
+this.load.audio('disparo', Disparo);
+this.load.audio('nivel', LevelSound);
+this.load.audio('damage',Damage);
+
     
     // TILEMAPS & TILESETS
     this.load.image('tiles', Tileset);

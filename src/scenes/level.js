@@ -14,7 +14,6 @@ export default class Level extends Phaser.Scene {
     
     const map = this.make.tilemap({ key: 'map' });
     const tileset = map.addTilesetImage('Tileset', 'tiles');
-    const tilesetObjetos = map.addTilesetImage('TilesetObjetos', 'tiles2');
 
     
     // Crear las capas

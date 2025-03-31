@@ -18,6 +18,7 @@ export default class Level extends Phaser.Scene {
     
     // Crear las capas
     this.layerSuelo = map.createLayer('Suelo', tileset);
+    this.layerFondo = map.createLayer('Fondo', tileset);
 
     // Configurar colisiones con el suelo
     this.layerSuelo.setCollisionByProperty({ colision: true });
@@ -53,15 +54,7 @@ export default class Level extends Phaser.Scene {
       }
     });
 
-    // Crear pinchos desde el tilemap
-    const pinchosLayer = map.getObjectLayer('Pinchos');
-    pinchosLayer.objects.forEach(pincho => {
-      let spriteName = pincho.gid === 82 ? 'pichos_abajo' : 'pichos_arriba';
-      const spikeSprite = this.spikes.create(pincho.x + 16, pincho.y - 16, spriteName);
-      spikeSprite.body.setSize(24, 12); // Ajustar el hitbox para que sea más preciso
-      spikeSprite.setDisplaySize(32, 32); // Mantener el tamaño visual original
-      spikeSprite.setOrigin(0.5, 0.5); // Centrar el punto de origen
-    });
+
 
     // Crear zona de final del nivel
     const finNivelLayer = map.getObjectLayer('FinNivel');
@@ -299,7 +292,7 @@ export default class Level extends Phaser.Scene {
     });
 
     // Posiciones iniciales
-    this.player.setPosition(100, 800);
+    this.player.setPosition(700, 200);
 
     // Configuración de los límites del mundo y la cámara
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);

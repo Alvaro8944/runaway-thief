@@ -86,6 +86,13 @@ export default class Level extends Phaser.Scene {
         bounceY: 0
     });
 
+    this.enemyBullets = this.physics.add.group({
+        allowGravity: false,
+        collideWorldBounds: true,
+        bounceX: 0,
+        bounceY: 0
+    });
+
     // Configurar el tamaño del hitbox de las balas cuando se crean
     this.bullets.createCallback = (bullet) => {
         bullet.setSize(4, 4); // Hitbox más pequeño y preciso
@@ -95,6 +102,18 @@ export default class Level extends Phaser.Scene {
         bullet.lifespan = 1000; // 1 segundo
         bullet.createTime = this.time.now;
     };
+
+
+     // Configurar el tamaño del hitbox de las balas cuando se crean
+     this.enemyBullets.createCallback = (enemyBullet) => {
+        enemyBullet.setSize(4, 4); // Hitbox más pequeño y preciso
+        enemyBullet.setOffset(6, 0);
+        
+        // Añadir un tiempo de vida máximo a la bala
+        enemyBullet.lifespan = 1000; // 1 segundo
+        enemyBullet.createTime = this.time.now;
+    };
+
 
     // Actualizar y comprobar las balas cada frame
     this.events.on('update', () => {
@@ -107,6 +126,17 @@ export default class Level extends Phaser.Scene {
                 return;
             }
         });
+
+        this.enemyBullets.children.each(enemyBullet => {
+            if (!enemyBullet || !enemyBullet.active) return;
+
+            // Destruir balas que han superado su tiempo de vida
+            if (this.time.now - enemyBullet.createTime > enemyBullet.lifespan) {
+                enemyBullet.destroy();
+                return;
+            }
+        });
+
     });
 
     // Añadir colisión entre balas y suelo
@@ -116,7 +146,12 @@ export default class Level extends Phaser.Scene {
         }
     });
 
-
+ // Añadir colisión entre balas y suelo
+ this.physics.add.collider(this.enemyBullets, this.layerSuelo, (enemyBullet) => {
+    if (enemyBullet.active) {
+        enemyBullet.destroy();
+    }
+});
 
 
     // Crear jugador y enemigos
@@ -238,6 +273,23 @@ export default class Level extends Phaser.Scene {
             null,
             this
         );
+
+        this.physics.add.overlap(
+            this.player,
+            this.enemyBullets,
+            (player, enemyBullet) => {
+                if (!player.isInvulnerable) {
+                    player.takeDamage(enemyBullet.damage, enemyBullet.owner);
+                    enemyBullet.destroy();
+                }
+            },
+            null,
+            this
+        );
+        
+
+       
+
     });
 
 

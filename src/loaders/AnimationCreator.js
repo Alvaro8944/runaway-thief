@@ -163,12 +163,35 @@ export function createEnemy2Animations(scene) {
     repeat: -1
   });
 
+
+
+
+
   scene.anims.create({
     key: 'enemy2_attack',
-    frames: scene.anims.generateFrameNumbers('enemy2_attack', { start: 0, end: 5 }),
+    frames: scene.anims.generateFrameNumbers('enemy2_attack', { start: 0, end: 2 }),
     frameRate: 10,
     repeat: 0
   });
+  
+  scene.anims.create({
+    key: 'enemy2_attack_down',
+    frames: scene.anims.generateFrameNumbers('enemy2_attack', { start: 3, end: 5 }),
+    frameRate: 10,
+    repeat: 0
+  });
+
+  scene.anims.create({
+    key: 'enemy2_attack_up',
+    frames: scene.anims.generateFrameNumbers('enemy2_attack', { start: 6, end: 8 }),
+    frameRate: 10,
+    repeat: 0
+  });
+
+
+
+
+
   
   // Animación de recibir daño (hurt)
   scene.anims.create({

@@ -118,6 +118,18 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
     if (this.state === STATE2.DEAD || this.isAttacking) return;
 
 
+
+    // Calcular ángulo hacia el jugador
+    const angle = Phaser.Math.Angle.Between(this.x, this.y, this.player.x, this.player.y);
+    
+    // Determinar la animación en función del ángulo
+    let animKey = 'enemy2_attack'; // Por defecto horizontal
+    if (angle < -Math.PI / 4 && angle > -3 * Math.PI / 4) {
+        animKey = 'enemy2_attack_up';
+    } else if (angle > Math.PI / 4 && angle < 3 * Math.PI / 4) {
+        animKey = 'enemy2_attack_down';
+    }
+
      // Girar hacia el jugador antes de atacar
      this.setFlipX(this.player.x < this.x);
 
@@ -133,31 +145,38 @@ export default class Enemy2 extends Phaser.Physics.Arcade.Sprite {
     this.attackHitbox.body.enable = true;
     
     // Reproducir animación de ataque
-    this.play('enemy2_attack', true);
-    
-    // Timer para el daño en medio de la animación
-    this.scene.time.delayedCall(this.attackDuration / 2, () => {
-      if (this.state === STATE2.ATTACKING && !this.attackDamageDealt) {
-        this.checkAttackHit();
-      }
-    });
+    this.play(animKey, true);
 
+
+
+
+
+    // Calcular dirección hacia el jugador
+    const bulletSpeed = 800;
+    const direction = new Phaser.Math.Vector2(this.player.x - this.x, this.player.y - this.y).normalize();
+
+    // Calcular posición inicial de la bala
+    const bulletX = this.x + direction.x * 20;
+    const bulletY = this.y + direction.y * 20;
+
+    // Crear la bala
+    const bullet = this.scene.enemyBullets.create(bulletX, bulletY, 'bullet');
+    bullet.setRotation(Phaser.Math.Angle.Between(this.x, this.y, this.player.x, this.player.y));
+    bullet.damage = this.damage;
+    bullet.owner = this;
+    // Configurar velocidad de la bala hacia el jugador
+    bullet.setVelocity(direction.x * bulletSpeed, direction.y * bulletSpeed);
+
+    // Asegurar que la bala no esté afectada por la gravedad
+    bullet.body.allowGravity = false;
+
+
+
+  
     // Timer para finalizar el ataque
     this.scene.time.delayedCall(this.attackDuration, () => {
       this.finishAttack();
     });
-  }
-
-  checkAttackHit() {
-    if (!this.player || this.attackDamageDealt || this.hasObstacleBetween()) return;
-
-    const hitboxBounds = this.attackHitbox.getBounds();
-    const playerBounds = this.player.getBounds();
-
-    if (Phaser.Geom.Rectangle.Area(hitboxBounds, playerBounds)) {
-      this.player.takeDamage(this.damage, this);
-      this.attackDamageDealt = true;
-    }
   }
 
 

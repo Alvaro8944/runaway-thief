@@ -330,9 +330,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.weapon.setScale(!this.flipX ? -1 : 1, 1);
   }
 
-  shoot() {
 
-    
+
+
+  shoot() {
+   
   if (this.hasWeapon) {
     const bulletSpeed = 800;
     let angle = this.weapon.rotation;

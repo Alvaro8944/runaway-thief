@@ -22,7 +22,7 @@ let config = {
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
     pixelArt: true,
-    scene: [Boot3, Level3],
+    scene: [Boot, Level],
     physics: {
         default: 'arcade',
         arcade: {

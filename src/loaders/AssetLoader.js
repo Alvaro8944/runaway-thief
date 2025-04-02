@@ -59,7 +59,7 @@ import Disparo from '../../assets/Sounds/Shoot.mp3';
 import LevelSound from '../../assets/Sounds/nivel.mp3';
 import Damage from '../../assets/Sounds/Damage.wav';
 import baseball from '../../assets/Sounds/baseball.wav';
-import Jump from '../../assets/Sounds/jump.flac';
+import Jump from '../../assets/Sounds/Jump.flac';
 import Escaleras from '../../assets/Sounds/Escaleras.wav';
 import Shootgun from '../../assets/Sounds/Shootgun.wav';
 

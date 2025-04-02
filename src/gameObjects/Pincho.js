@@ -1,0 +1,131 @@
+import Phaser from 'phaser';
+
+/**
+ * Clase para gestionar los pinchos en el juego
+ * @extends Phaser.Physics.Arcade.Sprite
+ */
+export default class Pincho extends Phaser.Physics.Arcade.Sprite {
+  /**
+   * Constructor del objeto Pincho
+   * @param {Phaser.Scene} scene - La escena a la que pertenece este pincho
+   * @param {number} x - Posición X del pincho
+   * @param {number} y - Posición Y del pincho
+   * @param {string} texture - Textura a utilizar (pichos_arriba, pichos_abajo)
+   * @param {number} scale - Escala del pincho (menor que 1 para pinchos pequeños)
+   */
+  constructor(scene, x, y, texture, scale = 1.0) {
+    super(scene, x, y, texture || 'pichos_arriba');
+    
+    // Añadir el sprite a la escena
+    scene.add.existing(this);
+    
+    // Habilitar físicas para este sprite
+    scene.physics.world.enable(this);
+    
+    // Establecer escala si es diferente del valor por defecto
+    if (scale !== 1.0) {
+      this.setScale(scale);
+    }
+    
+    // Configurar el cuerpo físico
+    this.body.setSize(24, 12); // Ajustar el hitbox para que sea más preciso
+    this.body.setOffset(4, 16); // Ajustar el offset para alinear con el sprite
+    this.body.setImmovable(true);
+    this.body.allowGravity = false;
+    
+    // Establecer el daño que causa este pincho
+    this.damage = 20;
+    
+    // Personalizar según el tipo de pincho
+    if (texture === 'pichos_abajo') {
+      this.body.setOffset(4, 4); // Diferente offset para pinchos hacia abajo
+    }
+    
+    // Si la escala es pequeña (pinchos pequeños), reducir el daño y el hitbox
+    if (scale < 1.0) {
+      this.damage = 10; // Menos daño para pinchos pequeños
+      
+      // Ajustar el hitbox proporcionalmente a la escala
+      const newWidth = Math.floor(24 * scale);
+      const newHeight = Math.floor(12 * scale);
+      this.body.setSize(newWidth, newHeight);
+      
+      if (texture === 'pichos_abajo') {
+        this.body.setOffset(4, 4); 
+      } else {
+        this.body.setOffset(4, 16);
+      }
+    }
+  }
+  
+  /**
+   * Método para causar daño al jugador
+   * @param {Player} player - El jugador que recibe daño
+   */
+  doDamage(player) {
+    if (!player.isInvulnerable) {
+      player.takeDamage(this.damage, this);
+    }
+  }
+  
+  /**
+   * Factory method to create pinchos from map objects
+   * @static
+   * @param {Phaser.Scene} scene - The scene to add the pinchos to
+   * @param {Phaser.Tilemaps.Tilemap} map - The tilemap object
+   * @param {string} layerName - The name of the object layer in the map
+   * @param {string} defaultTexture - The default texture to use for the pinchos
+   * @returns {Phaser.GameObjects.Group} - Group containing all created pinchos
+   */
+  static createFromMap(scene, map, layerName, defaultTexture) {
+    // Crear un grupo para los pinchos
+    const pinchosGroup = scene.physics.add.group({
+      classType: Pincho,
+      immovable: true,
+      allowGravity: false
+    });
+    
+    try {
+      // Obtener la capa de objetos
+      const pinchosLayer = map.getObjectLayer(layerName);
+      
+      if (pinchosLayer && pinchosLayer.objects) {
+        pinchosLayer.objects.forEach(pincho => {
+          // Determinar la textura basada en el gid
+          let textureToUse = defaultTexture;
+          let scale = 1.0;
+          
+          // En MainScene.json:
+          // gid 106 o 82 = pinchos hacia abajo
+          // gid 114 o 83 = pinchos hacia arriba 
+          // gid 113 = pinchos pequeños (usaremos los mismos sprites pero con escala)
+          if (pincho.gid === 106 || pincho.gid === 82) {
+            textureToUse = 'pichos_arriba';
+          } else if (pincho.gid === 114 || pincho.gid === 83) {
+            textureToUse = 'pichos_abajo';
+          }
+          
+          // Crear el sprite del pincho
+          const pinchoSprite = new Pincho(
+            scene, 
+            pincho.x + 16, // Ajustar posición X al centro del objeto
+            pincho.y - 16, // Ajustar posición Y al centro del objeto
+            textureToUse,
+            scale
+          );
+          
+          // Añadir el pincho al grupo
+          pinchosGroup.add(pinchoSprite);
+        });
+        
+        console.log(`Creados ${pinchosLayer.objects.length} pinchos desde la capa ${layerName}`);
+      } else {
+        console.warn(`No se encontró la capa de objetos ${layerName} en el mapa`);
+      }
+    } catch (error) {
+      console.error(`Error al crear pinchos desde la capa ${layerName}:`, error);
+    }
+    
+    return pinchosGroup;
+  }
+} 

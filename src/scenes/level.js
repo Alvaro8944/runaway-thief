@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import Player from '../player.js';
 import { Enemy1, STATE, PatrollingEnemy } from '../enemy1.js';
 import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemy2.js';
+import Pincho from '../gameObjects/Pincho.js';
 
 const SPIKE_DAMAGE = 20;
 
@@ -18,14 +19,16 @@ export default class Level extends Phaser.Scene {
     
     // Crear las capas
     this.layerSuelo = map.createLayer('Suelo', tileset);
-    const layerVegetacion = map.createLayer('Vegetacion', tileset);
+    const layerVegetacion = map.createLayer('Suelo', tileset);
 
     // Configurar colisiones con el suelo
     this.layerSuelo.setCollisionByProperty({ colision: true });
 
     // Crear grupos para objetos
     this.ladders = this.physics.add.staticGroup();
-    this.spikes = this.physics.add.staticGroup();
+    
+    // Crear los pinchos usando la clase Pincho
+    this.spikes = Pincho.createFromMap(this, map, 'Pinchos', 'pichos_arriba');
 
     // Crear escaleras desde el tilemap
     const escalerasLayer = map.getObjectLayer('Escaleras');
@@ -52,16 +55,6 @@ export default class Level extends Phaser.Scene {
         
         
       }
-    });
-
-    // Crear pinchos desde el tilemap
-    const pinchosLayer = map.getObjectLayer('Pinchos');
-    pinchosLayer.objects.forEach(pincho => {
-      let spriteName = pincho.gid === 82 ? 'pichos_abajo' : 'pichos_arriba';
-      const spikeSprite = this.spikes.create(pincho.x + 16, pincho.y - 16, spriteName);
-      spikeSprite.body.setSize(24, 12); // Ajustar el hitbox para que sea más preciso
-      spikeSprite.setDisplaySize(32, 32); // Mantener el tamaño visual original
-      spikeSprite.setOrigin(0.5, 0.5); // Centrar el punto de origen
     });
 
     // Crear zona de final del nivel
@@ -206,9 +199,8 @@ export default class Level extends Phaser.Scene {
         this.player,
         this.spikes,
         (player, spike) => {
-            if (!player.isInvulnerable) {
-                player.takeDamage(SPIKE_DAMAGE, spike);
-            }
+            // Usar el método de la clase Pincho para causar daño
+            spike.doDamage(player);
         },
         null,
         this
@@ -352,7 +344,7 @@ export default class Level extends Phaser.Scene {
     });
 
     // Posiciones iniciales
-    this.player.setPosition(100, 800);
+    this.player.setPosition(2000, 600);
 
     // Configuración de los límites del mundo y la cámara
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);

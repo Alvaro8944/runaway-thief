@@ -27,18 +27,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setScale(1.25);
 
     // Atributos de movimiento y salud
-    this.speed = 180;
+    this.normalSpeed = 180;
+    this.parachuteSpeed = 50;
+    this.speed = this.normalSpeed;
+
     this.jumpSpeed = -240;
     this.climbSpeed = 100;
     this.score = 0;
     this.health = 50;      // Salud del jugador
     this.damage = 20;       // Daño de sus disparos
     this.hasWeapon = false;
+    this.hasParachute = false;
     this.resetearAgacharse = false;
     this.crawlTime = 0;
     this.restarcrawl = 0;
     this.maxCrawlTime = 90;
-
+    this.fatalFallHeight = 10;
+    
     // Atributos para el doble salto
     this.jumpsAvailable = 2;
     this.currentJumps = 0;
@@ -60,10 +65,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.scene.input.on('pointerdown', () => this.shoot(), this);
 
     // Mano y arma
-    this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.5, 0.5);
+    this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.45, 0.5);
     this.hand.setDepth(this.depth - 1);
-    this.weapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.2, 0.5);
+    this.weapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.3, 0.5);
     this.weapon.setDepth(this.hand.depth - 1);
+
+
+    // Objects
+    this.parachute = scene.add.sprite(this.x, this.y, 'parachute').setOrigin(0.57, 1.1);
+    this.parachute.setDepth(this.depth - 3);
 
     // Nuevos atributos
     this.state = PLAYER_STATE.IDLE;
@@ -123,10 +133,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.isKnockedBack) return;
 
     if (!this.scene.keys) return;
-    const runAnim = this.hasWeapon ? 'run_shoot' : 'run';
-    const idleAnim = this.hasWeapon ? 'idle_shoot' : 'idle';
-    const jumpAnim = this.hasWeapon ? 'jump_shoot' : 'jump';
-    const idleJumpAnim = this.hasWeapon ? 'jump_shoot' : 'jump';
+    const runAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'run_shoot' : 'run');
+    const idleAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'idle_shoot' : 'idle');
+    const jumpAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
+    const idleJumpAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
+    
 
 
 
@@ -137,6 +148,31 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.hand.setVisible(this.hasWeapon);   
     }
   
+
+
+
+    //PARACHUTE
+    this.hasParachute = (this.scene.keys.up.isDown ||  (this.scene.keys.down.isDown &&  !this.body.onFloor()));
+    this.parachute.setVisible(this.hasParachute);
+    
+    if (this.hasParachute) {
+
+      this.speed = this.parachuteSpeed;
+      this.parachute.setPosition(this.x, this.y);
+
+      if (this.scene.keys.down.isDown && !this.body.onFloor()) {
+        this.setVelocityY(this.speed); // Baja más lento
+
+      } else if (this.scene.keys.up.isDown) {
+        this.setVelocityY(-this.speed); // Sube lentamente
+
+      } else {
+        this.setVelocityY(0); // Mantiene su posición cuando no se pulsa nada
+      }
+    }
+    else{
+      this.speed = this.normalSpeed;
+    }
 
 
     // Lógica de escalada
@@ -246,7 +282,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       
   
       this.jump_sound();
-      if (this.currentJumps === 2 && !this.hasWeapon) {
+      if (this.currentJumps === 2 && !this.hasWeapon && !this.hasParachute) {
         // Solo en el segundo salto cambiamos al sprite de doble salto
         this.play('doublejump', true);
         // Emitir partículas
@@ -310,7 +346,28 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.hasWeapon) {
       this.updateHand();
     }
-  }
+
+
+
+
+
+
+     // DAÑO DE CAÍDA
+     if (!this.body.onFloor()) {
+      if (this.highestY === null ) {
+        this.highestY = this.y; // Guarda la mayor altura alcanzada
+      }
+    } else {
+      if (this.highestY !== null) {
+        const fallDistance = Math.abs(this.highestY - this.y); // Diferencia real de caída
+        if (this.y > this.highestY && fallDistance >= this.fatalFallHeight &&  Math.abs(this.body.velocity.y) > this.parachuteSpeed) {
+          this.health = 0;
+          this.die();
+        }
+      } 
+      this.highestY = null; // Resetea cuando toca el suelo
+    }
+}
 
   updateHand() {
     const pointer = this.scene.input.activePointer;
@@ -323,8 +380,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const minAngle = -Math.PI / 2;
     const maxAngle = Math.PI / 2;
     angle = Phaser.Math.Clamp(angle, minAngle, maxAngle);
-    const shoulderOffsetX = -5;
-    const shoulderOffsetY = 1.5;
+    const shoulderOffsetX = 0;
+    const shoulderOffsetY = 0;
     const shoulderX = this.x + shoulderOffsetX * (this.flipX ? -1 : 1);
     const shoulderY = this.y + shoulderOffsetY;
     this.hand.setPosition(shoulderX, shoulderY);
@@ -473,16 +530,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
    climb.play();
 
   }
+
+
+
   updateTimer(){
     this.remainingtime-=1000;
     //alert(this.remainingtime);
     if(this.remainingtime<=0){
      this.die();
     }
-
     this.timerText.setText("Tiempo Restante:"+this.remainingtime/1000);
-
-
   }
 
 

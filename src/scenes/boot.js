@@ -18,6 +18,7 @@ export default class Boot extends Phaser.Scene {
     AssetLoader.loadPlayerSprites(this);
     AssetLoader.loadEnemySprites(this);
     AssetLoader.loadWeaponSprites(this);
+    AssetLoader.loadObjectSprites(this);
   }
 
   create() {

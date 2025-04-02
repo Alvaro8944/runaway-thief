@@ -33,6 +33,10 @@ import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
 //WEAPON
 import weapon from '../../assets/Guns/4_1.png';
 
+//PARACHUTE
+import parachute from '../../assets/Objects/parachute.png';
+
+
 //BULLET
 import bullet from '../../assets/Bullets/5.png';
 
@@ -183,7 +187,19 @@ export function loadWeaponSprites(scene) {
     frameWidth: 288, 
     frameHeight: 48 
   });
+
 }
+
+
+
+
+export function loadObjectSprites(scene) {
+  scene.load.spritesheet('parachute', parachute, { 
+    frameWidth: 60, 
+    frameHeight: 38 
+  });
+}
+
 
 /**
  * Carga los assets del tilemap

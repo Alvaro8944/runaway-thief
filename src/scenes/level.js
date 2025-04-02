@@ -3,6 +3,7 @@ import Player from '../player.js';
 import { Enemy1, STATE, PatrollingEnemy } from '../enemy1.js';
 import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemy2.js';
 import Pincho from '../gameObjects/Pincho.js';
+import Escalera from '../gameObjects/Escalera.js';
 
 const SPIKE_DAMAGE = 20;
 
@@ -19,43 +20,26 @@ export default class Level extends Phaser.Scene {
     
     // Crear las capas
     this.layerSuelo = map.createLayer('Suelo', tileset);
-    const layerVegetacion = map.createLayer('Suelo', tileset);
+    const layerFondo = map.createLayer('Fondo', tileset);
 
     // Configurar colisiones con el suelo
     this.layerSuelo.setCollisionByProperty({ colision: true });
 
-    // Crear grupos para objetos
-    this.ladders = this.physics.add.staticGroup();
-    
-    // Crear los pinchos usando la clase Pincho
+    // Crear objetos del juego usando nuestras clases personalizadas
     this.spikes = Pincho.createFromMap(this, map, 'Pinchos', 'pichos_arriba');
+    this.ladders = Escalera.createFromMap(this, map, 'Escaleras');
 
-    // Crear escaleras desde el tilemap
-    const escalerasLayer = map.getObjectLayer('Escaleras');
-    
-    // Encontrar la escalera más alta (Y más pequeña)
-    let escaleraMasAlta = escalerasLayer.objects[0];
-    escalerasLayer.objects.forEach(escalera => {
-      if (escalera.y < escaleraMasAlta.y) {
-        escaleraMasAlta = escalera;
-      }
-    });
-
-    // Crear todas las escaleras
-    escalerasLayer.objects.forEach(escalera => {
-      const escaleraSprite = this.ladders.create(escalera.x + escalera.width/2, escalera.y - escalera.height/2, 'ladder2');
-      escaleraSprite.body.setSize(32, escalera.height);
-      escaleraSprite.setDisplaySize(32, escalera.height);
-      escaleraSprite.setOrigin(0.5, 0.5);
-      escaleraSprite.setImmovable(true);
-      
-      // Si es la escalera más alta, marcarla como punto de transición
-      if (escalera === escaleraMasAlta) {
-        escaleraSprite.isTransitionPoint = true;
-        
-        
-      }
-    });
+    // Si tienes una capa adicional para pinchos más peligrosos
+    try {
+      const pinchosLetal = Pincho.createFromMap(this, map, 'PinchosLetales', 'pichos_arriba');
+      pinchosLetal.getChildren().forEach(pincho => {
+        pincho.damage = 40; // Pinchos letales hacen más daño
+        pincho.setTint(0xff0000); // Los pintamos de rojo para que sean visibles
+      });
+      this.spikes.addMultiple(pinchosLetal.getChildren());
+    } catch (error) {
+      console.log('No se encontró la capa PinchosLetales');
+    }
 
     // Crear zona de final del nivel
     const finNivelLayer = map.getObjectLayer('FinNivel');
@@ -72,6 +56,7 @@ export default class Level extends Phaser.Scene {
 
     this.layerSuelo.setCollisionByExclusion([-1], true);
 
+    // Configurar grupos para bullets
     this.bullets = this.physics.add.group({
         allowGravity: false,
         collideWorldBounds: true,
@@ -139,56 +124,23 @@ export default class Level extends Phaser.Scene {
         }
     });
 
- // Añadir colisión entre balas y suelo
- this.physics.add.collider(this.enemyBullets, this.layerSuelo, (enemyBullet) => {
-    if (enemyBullet.active) {
-        enemyBullet.destroy();
-    }
-});
+    // Añadir colisión entre balas y suelo
+    this.physics.add.collider(this.enemyBullets, this.layerSuelo, (enemyBullet) => {
+        if (enemyBullet.active) {
+            enemyBullet.destroy();
+        }
+    });
 
 
     // Crear jugador y enemigos
     this.player = new Player(this, 0, 0);
     
-    // Añadir colisión con escaleras
+    // Añadir colisión con escaleras usando el método de la clase Escalera
     this.physics.add.overlap(
         this.player,
         this.ladders,
         (player, ladder) => {
-            player.canClimb = true;
-            player.currentLadder = ladder;
-
-            // Si es la escalera de transición y el jugador está cerca de la parte superior
-            if (ladder.isTransitionPoint) {
-                // Calcular la distancia a la parte superior de la escalera
-                const distanciaAlTope = Math.abs(player.y - (ladder.y - ladder.height));
-                console.log('Distancia al tope de la escalera:', distanciaAlTope);
-                
-                // Zona más amplia de detección y más abajo
-                if (distanciaAlTope < 50 && this.keys.up.isDown) {
-                    console.log('Detectada colisión con escalera de transición');
-                    // Evitar múltiples transiciones
-                    if (this.isTransitioning) return;
-                    this.isTransitioning = true;
-                    console.log('Iniciando transición al nivel 2');
-
-                    // Desactivar controles del jugador
-                    this.player.body.setVelocity(0, 0);
-                    this.player.body.allowGravity = false;
-                    
-                    // Efecto de fade out
-                    this.cameras.main.fadeOut(1000, 0, 0, 0);
-                    
-                    // Transición al boot2 (que cargará los assets del nivel 2)
-                    this.time.delayedCall(1000, () => {
-                        console.log('Cambiando a escena boot2');
-                        this.scene.start('boot2', { 
-                            playerHealth: this.player.health,
-                            playerScore: this.player.score 
-                        });
-                    });
-                }
-            }
+            ladder.handlePlayerOverlap(player);
         },
         null,
         this

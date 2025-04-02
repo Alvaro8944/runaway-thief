@@ -548,6 +548,12 @@
                  "gid":106,
                  "height":32,
                  "id":73,
+                 "properties":[
+                  {
+                   "name":"damage",
+                   "value":100
+                  }
+                 ],
                  "name":"",
                  "rotation":0,
                  "type":"Pincho",

@@ -4,6 +4,7 @@ import { Enemy1, STATE, PatrollingEnemy } from '../enemy1.js';
 import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemy2.js';
 import Pincho from '../gameObjects/Pincho.js';
 import Escalera from '../gameObjects/Escalera.js';
+import BolaGrande from '../gameObjects/BolaGrande.js';
 
 const SPIKE_DAMAGE = 20;
 
@@ -31,6 +32,14 @@ export default class Level extends Phaser.Scene {
     
     // Configurar cámara y controles
     this.setupCameraAndControls();
+    
+    // A intervalos aleatorios, crear bolas que caen (lluvia de bolas)
+    this.time.addEvent({
+      delay: 20000, // Cada 20 segundos
+      callback: this.crearLluviaBolas,
+      callbackScope: this,
+      loop: true
+    });
     
     // Configurar sonido
     const audio = this.sound.add('level2');
@@ -61,6 +70,12 @@ export default class Level extends Phaser.Scene {
     
     // Crear escaleras
     this.ladders = Escalera.createFromMap(this, this.map, 'Escaleras');
+    
+    // Crear bolas grandes desde el mapa
+    this.bolas = BolaGrande.createFromMap(this, this.map, 'BolasGrandes', 'bola_grande');
+    
+    // Añadir colisión entre bolas y suelo
+    this.physics.add.collider(this.bolas, this.layerSuelo);
     
     // Crear enemigos
     this.enemies = this.add.group();
@@ -297,6 +312,21 @@ export default class Level extends Phaser.Scene {
       );
     }
     
+    // Colisión jugador-bolas
+    if (this.bolas) {
+      this.physics.add.overlap(
+        this.player,
+        this.bolas,
+        (player, bola) => {
+          if (bola && bola.doDamage) {
+            bola.doDamage(player);
+          }
+        },
+        null,
+        this
+      );
+    }
+    
     // Colisión jugador-balas enemigas
     if (this.enemyBullets) {
       this.physics.add.overlap(
@@ -389,8 +419,62 @@ export default class Level extends Phaser.Scene {
       
       // Actualizar al jugador
       this.player.update();
+      
+      // Actualizar las bolas dinámicas si existen
+      if (this.bolas) {
+        this.bolas.getChildren().forEach(bola => {
+          if (bola.active && bola.update) {
+            bola.update();
+          }
+        });
+      }
     } catch (error) {
       console.error('Error en update:', error);
+    }
+  }
+  
+  /**
+   * Método para crear una lluvia de bolas que caen del cielo
+   */
+  crearLluviaBolas() {
+    // Obtener puntos de aparición específicos del mapa
+    const spawnPoints = [];
+    const spawnLayer = this.map ? this.map.getObjectLayer('SpawnBolas') : null;
+    
+    // Solo crear bolas si hay puntos de spawn definidos en el mapa
+    if (spawnLayer && spawnLayer.objects && spawnLayer.objects.length > 0) {
+      // Usar posiciones definidas en el mapa (coordenadas completas)
+      spawnLayer.objects.forEach(obj => {
+        // Guardar tanto X como Y para cada punto
+        spawnPoints.push({ x: obj.x, y: obj.y });
+      });
+      
+      // Crear las bolas en los puntos de spawn definidos
+      const numBolas = Math.min(spawnPoints.length, Phaser.Math.Between(1, 3)); // No crear más bolas que puntos de spawn
+      const bolasCaidas = BolaGrande.crearBolasCaidas(this, numBolas, 'bola_grande', spawnPoints);
+      
+      // Configurar colisiones
+      this.physics.add.collider(bolasCaidas, this.layerSuelo);
+      this.physics.add.overlap(
+        this.player,
+        bolasCaidas,
+        (player, bola) => {
+          if (bola.doDamage) {
+            bola.doDamage(player);
+          }
+        },
+        null,
+        this
+      );
+      
+      // Auto-destruir las bolas después de cierto tiempo
+      this.time.delayedCall(10000, () => {
+        bolasCaidas.clear(true, true); // Destruir todas las bolas
+      });
+      
+      console.log(`Creadas ${numBolas} bolas en puntos de spawn definidos`);
+    } else {
+      console.log('No se encontraron puntos de spawn para bolas en el mapa');
     }
   }
 }

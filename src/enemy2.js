@@ -15,7 +15,7 @@ export class Enemy2 extends BaseEnemy {
       damage: DAMAGE_ENEMY,
       detectionRange: 300,
       attackRange: 300,
-      attackCooldown: 200, // Cooldown original
+      attackCooldown: 1500, // Cooldown aumentado a 1.5 segundos (era 200ms)
       verticalTolerance: 80,
       attackDuration: 400, // Duración original
       hitboxWidth: 300, // Hitbox original
@@ -31,10 +31,10 @@ export class Enemy2 extends BaseEnemy {
     super(scene, x, y, config);
 
     // Configuración específica de Enemy2
-    this.bulletSpeed = 800; // Velocidad original
+    this.bulletSpeed = 400; // Velocidad original
     this.bulletDamage = DAMAGE_ENEMY;
     this.lastBulletTime = 0;
-    this.bulletCooldown = 200;
+    this.bulletCooldown = 1500; // Cooldown aumentado a 1.5 segundos (era 200ms)
     
     // Guardar referencia al mapa para la detección de bordes
     this.map = null;
@@ -65,6 +65,15 @@ export class Enemy2 extends BaseEnemy {
   }
 
   shootBullet() {
+    // Verificar el cooldown entre disparos
+    const currentTime = this.scene.time.now;
+    if (currentTime - this.lastBulletTime < this.bulletCooldown) {
+      return; // Todavía en cooldown, no disparar
+    }
+    
+    // Actualizar el tiempo del último disparo
+    this.lastBulletTime = currentTime;
+    
     // Calcular dirección hacia el jugador
     const direction = new Phaser.Math.Vector2(this.player.x - this.x, this.player.y - this.y).normalize();
 
@@ -84,6 +93,9 @@ export class Enemy2 extends BaseEnemy {
       
       // Asegurar que la bala no esté afectada por la gravedad
       bullet.body.allowGravity = false;
+      
+      // Efecto visual de disparo (opcional)
+      this.scene.cameras.main.shake(100, 0.005);
     }
   }
 
@@ -109,12 +121,14 @@ export class Enemy2 extends BaseEnemy {
     return false; // No hay obstáculos
   }
   
-  // Sobrescribir canAttack para incluir la verificación de obstáculos
+  // Sobrescribir canAttack para incluir la verificación de obstáculos y cooldown
   canAttack(horizontalDist, verticalDiff) {
+    const currentTime = this.scene.time.now;
     return horizontalDist < this.attackRange && 
            verticalDiff < this.attackRange && 
            this.state !== ENEMY_STATE.HURT && 
-           !this.hasObstacleBetween();
+           !this.hasObstacleBetween() &&
+           currentTime - this.lastAttackTime >= this.attackCooldown;
   }
   
   // Sobrescribir preUpdate para mantener la lógica original
@@ -135,9 +149,8 @@ export class Enemy2 extends BaseEnemy {
       const verticalDiff = Math.abs(this.y - this.player.y);
       const withinVerticalTolerance = verticalDiff < this.verticalTolerance;
 
-      // Para Enemy2, comprobar específicamente si puede atacar (sin cooldown, solo rango y obstáculos)
-      if (horizontalDist < this.attackRange && verticalDiff < this.attackRange && 
-          this.state !== ENEMY_STATE.HURT && !this.hasObstacleBetween()) {
+      // Para Enemy2, comprobar específicamente si puede atacar (con cooldown, rango y obstáculos)
+      if (this.canAttack(horizontalDist, verticalDiff)) {
         this.attack();
       } else if (horizontalDist < this.detectionRange && withinVerticalTolerance && 
                  this.state !== ENEMY_STATE.HURT && !this.hasObstacleBetween()) {

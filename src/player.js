@@ -11,6 +11,9 @@ export const PLAYER_STATE = {
 };
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
+    timer=10000;
+    remainingtime;
+    timerText;
   constructor(scene, x, y) {
     super(scene, x, y, 'player');
 
@@ -85,6 +88,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       frequency: -1 // -1 significa que no emite automáticamente
     });
     this.doubleJumpEmitter.stop(); // Asegurarse de que está detenido inicialmente
+
+    this.remainingtime=this.timer;
+    
+    
+    this.scene.time.addEvent({
+      delay:1000,
+      callback: this.updateTimer,
+      callbackScope:this,
+      loop:true
+    });
+    this.timerText= this.scene.add.text(0,0,"Tiempo Restante:"+this.remainingtime/1000);//,{fontSize:'32px',fill:"ffffff"});// .setDepth(1);
+    this.timerText.setScrollFactor(0);
   }
 
 
@@ -94,7 +109,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     super.preUpdate(time, delta);
 
     if (this.state === PLAYER_STATE.DEAD) return;
-
+    
+   
 
   
 
@@ -417,7 +433,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Reproducir animación de daño
     this.play('player_hurt', true);
     this.once('animationcomplete-player_hurt', () => {
-      if (this.health <= 0) {
+      if (this.health <= 0 ) {
         this.die();
       } else {
         this.state = PLAYER_STATE.IDLE;
@@ -455,6 +471,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   climb_sound(){
    const climb=this.scene.sound.add("escaleras");
    climb.play();
+
+  }
+  updateTimer(){
+    this.remainingtime-=1000;
+    //alert(this.remainingtime);
+    if(this.remainingtime<=0){
+     this.die();
+    }
+
+    this.timerText.setText("Tiempo Restante:"+this.remainingtime/1000);
+
 
   }
 

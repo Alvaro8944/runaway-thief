@@ -84,11 +84,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.knockbackDuration = 200;
     this.isKnockedBack = false;
 
-    // Cargar referencias a los sonidos (no crear nuevas instancias)
-    this.climbSound = this.scene.sound.get('escaleras');
-    this.jumpSound = this.scene.sound.get('jump');
-    this.damageSound = this.scene.sound.get('damage');
-    this.shootSound = this.scene.sound.get('disparo');
+    // Control de tiempo para sonidos de escalera
+    this.lastClimbSoundTime = 0;
+    this.climbSoundDelay = 980; // Tiempo entre sonidos de escalera
 
     // Iniciar con la animación idle
     const initialAnim = this.hasWeapon ? 'idle_shoot' : 'idle';
@@ -456,11 +454,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         repeat: effect.anims.getTotalFrames()
       });
       effect.once('animationcomplete', () => effect.destroy());
+      // Reproducir sonido de disparo
+    this.scene.sound.play('disparo');
+    }
 
-  }
-
-  const shootsound= this.scene.sound.add('disparo');
-  shootsound.play();
     
   }
 
@@ -503,8 +500,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     });
 
-    const damagesound= this.scene.sound.add('damage');
-  damagesound.play();
+    // Reproducir sonido de daño
+    this.scene.sound.play('damage');
   }
 
   die() {
@@ -528,21 +525,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   jump_sound() {
-    // Usar el sonido ya cargado
-    if (this.jumpSound) {
-      this.jumpSound.play();
-    }
+    // Reproducir sonido de salto
+    this.scene.sound.play('jump');
   }
 
   climb_sound() {
     // Verificar si ha pasado suficiente tiempo desde el último sonido
     const currentTime = this.scene.time.now;
     if (currentTime - this.lastClimbSoundTime >= this.climbSoundDelay) {
-      // Usar el sonido ya cargado
-      if (this.climbSound) {
-        this.climbSound.setVolume(0.5); // Reducir el volumen para que no sea tan intenso
-        this.climbSound.play();
-      }
+      // En vez de intentar modificar el volumen del sonido retornado por play()
+      // configuramos el volumen directamente en la llamada a play()
+      this.scene.sound.play('escaleras', {
+        volume: 0.5
+      });
+      
       this.lastClimbSoundTime = currentTime;
     }
   }

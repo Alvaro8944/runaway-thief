@@ -455,7 +455,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       });
       effect.once('animationcomplete', () => effect.destroy());
       // Reproducir sonido de disparo
-    this.scene.sound.play('disparo');
+      this.scene.sound.play('disparo');
     }
 
     

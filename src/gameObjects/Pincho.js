@@ -12,9 +12,10 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
    * @param {number} y - Posición Y del pincho
    * @param {string} texture - Textura a utilizar (pichos_arriba, pichos_abajo)
    * @param {number} scale - Escala del pincho (menor que 1 para pinchos pequeños)
+   * @param {number} damage - Daño que causa este pincho (opcional)
    */
-  constructor(scene, x, y, texture, scale = 1.0) {
-    super(scene, x, y, texture || 'pichos_arriba');
+  constructor(scene, x, y, texture, scale = 1.0, damage = null) {
+    super(scene, x, y, texture);
     
     // Añadir el sprite a la escena
     scene.add.existing(this);
@@ -34,7 +35,7 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
     this.body.allowGravity = false;
     
     // Establecer el daño que causa este pincho
-    this.damage = 20;
+    this.damage = damage !== null ? damage : 20;
     
     // Personalizar según el tipo de pincho
     if (texture === 'pichos_abajo') {
@@ -42,7 +43,7 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
     }
     
     // Si la escala es pequeña (pinchos pequeños), reducir el daño y el hitbox
-    if (scale < 1.0) {
+    if (scale < 1.0 && damage === null) {  // Solo ajustar el daño si no se proporcionó explícitamente
       this.damage = 10; // Menos daño para pinchos pequeños
       
       // Ajustar el hitbox proporcionalmente a la escala
@@ -55,6 +56,13 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
       } else {
         this.body.setOffset(4, 16);
       }
+    }
+    
+    // Aplicar tinte según nivel de daño para dar feedback visual
+    if (this.damage > 30) {
+      this.setTint(0xff0000); // Rojo para los muy peligrosos
+    } else if (this.damage > 20) {
+      this.setTint(0xff6600); // Naranja para peligrosidad media-alta
     }
   }
   
@@ -94,6 +102,7 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
           // Determinar la textura basada en el gid
           let textureToUse = defaultTexture;
           let scale = 1.0;
+          let damageValue = null;
           
           // En MainScene.json:
           // gid 106 o 82 = pinchos hacia abajo
@@ -105,13 +114,26 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
             textureToUse = 'pichos_abajo';
           }
           
-          // Crear el sprite del pincho
+          // Buscar propiedad damage en caso de que exista
+          // En Tiled, las propiedades personalizadas se guardan en un array llamado "properties"
+          if (pincho.properties && Array.isArray(pincho.properties)) {
+            // Buscar la propiedad "damage" dentro del array de propiedades
+            const damageProperty = pincho.properties.find(prop => prop.name === 'damage');
+            if (damageProperty) {
+              damageValue = damageProperty.value;
+              console.log(`Pincho con daño personalizado: ${damageValue}`);
+            }
+          }
+
+          
+          // Crear el sprite del pincho con daño personalizado si existe
           const pinchoSprite = new Pincho(
             scene, 
             pincho.x + 16, // Ajustar posición X al centro del objeto
             pincho.y - 16, // Ajustar posición Y al centro del objeto
             textureToUse,
-            scale
+            scale,
+            damageValue
           );
           
           // Añadir el pincho al grupo

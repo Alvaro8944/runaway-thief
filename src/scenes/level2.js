@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import Player from '../player.js';
-import Enemy2, { STATE2, PatrollingEnemy2 } from '../enemy2.js';
+import { Enemy1, STATE, PatrollingEnemy } from '../enemy1.js';
+import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemy2.js';
 
 export default class Level2 extends Phaser.Scene {
   constructor() {

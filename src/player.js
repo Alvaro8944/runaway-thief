@@ -41,6 +41,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.currentJumps = 0;
     this.isDoubleJumping = false;
     this.doubleJumpParticles = null;
+    this.wasOnFloor = false;
 
     // Atributos para escaleras
     this.canClimb = false;
@@ -53,7 +54,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Controles y disparo
     this.cursors = scene.input.keyboard.createCursorKeys();
-   this.scene.input.on('pointerdown', () => this.shoot(), this);
+    this.scene.input.on('pointerdown', () => this.shoot(), this);
 
     // Mano y arma
     this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.5, 0.5);
@@ -93,8 +94,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     super.preUpdate(time, delta);
 
     if (this.state === PLAYER_STATE.DEAD) return;
-
-
 
 
   
@@ -190,17 +189,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.body.allowGravity = true;
       this.play(idleAnim);
     }
-
+    const onFloorNow = this.body.onFloor();
     // Resetear saltos disponibles cuando toca el suelo
-    if (this.body.onFloor()) {
+    if (onFloorNow && !this.wasOnFloor) {
 
-      if (this.currentJumps > 0) {
-
-        this.currentJumps = 0;
-        // Asegurarse de que el emisor está detenido al tocar el suelo
-        this.doubleJumpEmitter.stop();
-      }
+      this.currentJumps = 0;
+      // Asegurarse de que el emisor está detenido al tocar el suelo
+      this.doubleJumpEmitter.stop();
     }
+    this.wasOnFloor = onFloorNow;
 
     // Lógica de movimiento horizontal
     if (this.scene.keys.left.isDown) {
@@ -335,51 +332,51 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   shoot() {
    
-  if (this.hasWeapon) {
-    const bulletSpeed = 800;
-    let angle = this.weapon.rotation;
-    if (this.flipX) {
-      angle += Math.PI;
-    }
-    // Calcular posición inicial de la bala
-    const bulletX = this.weapon.x + Math.cos(angle) * 20;
-    const bulletY = this.weapon.y + Math.sin(angle) * 20;
-    // Crear la bala directamente a través del grupo para que herede la configuración del grupo (allowGravity: false)
-    const bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
-    bullet.setRotation(this.weapon.rotation);
-    bullet.damage = this.damage; // Asigna el daño del disparo
-  
-    // Configurar velocidad de la bala
-    const velocityX = Math.cos(angle) * bulletSpeed;
-    const velocityY = Math.sin(angle) * bulletSpeed;
-    bullet.setVelocity(velocityX, velocityY);
-  
-    // Asegurarse de que la bala no esté afectada por la gravedad (aunque el grupo ya lo configura)
-    bullet.body.allowGravity = false;
-  
-    // Efecto de disparo (no modificado)
-    const cannonOffset = 125;
-    const effect = this.scene.add.sprite(
-      this.weapon.x + Math.cos(angle) * cannonOffset,
-      this.weapon.y + Math.sin(angle) * cannonOffset,
-      'effect'
-    );
-    effect.setRotation(this.flipX ? this.weapon.rotation + Math.PI : this.weapon.rotation);
-    effect.setDepth(this.weapon.depth + 1);
-    effect.play('effect');
-    this.scene.time.addEvent({
-      delay: 16,
-      callback: () => {
-        if (effect.anims.currentFrame) {
-          effect.setPosition(
-            this.weapon.x + Math.cos(angle) * cannonOffset,
-            this.weapon.y + Math.sin(angle) * cannonOffset
-          );
-        }
-      },
-      repeat: effect.anims.getTotalFrames()
-    });
-    effect.once('animationcomplete', () => effect.destroy());
+    if (this.hasWeapon) {
+      const bulletSpeed = 800;
+      let angle = this.weapon.rotation;
+      if (this.flipX) {
+        angle += Math.PI;
+      }
+      // Calcular posición inicial de la bala
+      const bulletX = this.weapon.x + Math.cos(angle) * 20;
+      const bulletY = this.weapon.y + Math.sin(angle) * 20;
+      // Crear la bala directamente a través del grupo para que herede la configuración del grupo (allowGravity: false)
+      const bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+      bullet.setRotation(this.weapon.rotation);
+      bullet.damage = this.damage; // Asigna el daño del disparo
+    
+      // Configurar velocidad de la bala
+      const velocityX = Math.cos(angle) * bulletSpeed;
+      const velocityY = Math.sin(angle) * bulletSpeed;
+      bullet.setVelocity(velocityX, velocityY);
+    
+      // Asegurarse de que la bala no esté afectada por la gravedad (aunque el grupo ya lo configura)
+      bullet.body.allowGravity = false;
+    
+      // Efecto de disparo (no modificado)
+      const cannonOffset = 125;
+      const effect = this.scene.add.sprite(
+        this.weapon.x + Math.cos(angle) * cannonOffset,
+        this.weapon.y + Math.sin(angle) * cannonOffset,
+        'effect'
+      );
+      effect.setRotation(this.flipX ? this.weapon.rotation + Math.PI : this.weapon.rotation);
+      effect.setDepth(this.weapon.depth + 1);
+      effect.play('effect');
+      this.scene.time.addEvent({
+        delay: 16,
+        callback: () => {
+          if (effect.anims.currentFrame) {
+            effect.setPosition(
+              this.weapon.x + Math.cos(angle) * cannonOffset,
+              this.weapon.y + Math.sin(angle) * cannonOffset
+            );
+          }
+        },
+        repeat: effect.anims.getTotalFrames()
+      });
+      effect.once('animationcomplete', () => effect.destroy());
 
   }
 

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import Player from '../player.js';
-import Enemy, { STATE, PatrollingEnemy } from '../enemy1.js';
-import Enemy2, { STATE2, PatrollingEnemy2 } from '../enemy2.js';
+import { Enemy1, STATE, PatrollingEnemy } from '../enemy1.js';
+import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemy2.js';
 
 const SPIKE_DAMAGE = 20;
 
@@ -299,7 +299,7 @@ export default class Level extends Phaser.Scene {
     enemyPositions.forEach(pos => {
         const enemy = pos.type === 'patrolling' 
             ? new PatrollingEnemy(this, pos.x, pos.y)
-            : new Enemy(this, pos.x, pos.y);
+            : new Enemy1(this, pos.x, pos.y);
             
         enemy.player = this.player;
         enemy.map = map; // Añadir referencia al mapa

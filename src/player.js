@@ -34,7 +34,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.jumpSpeed = -240;
     this.climbSpeed = 100;
     this.score = 0;
-    this.health = 50;      // Salud del jugador
+    this.health = 100;      // Salud del jugador
+    this.maxHealth = 100;   // Salud máxima
     this.damage = 20;       // Daño de sus disparos
     this.hasWeapon = false;
     this.hasParachute = false;
@@ -43,6 +44,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.restarcrawl = 0;
     this.maxCrawlTime = 90;
     this.fatalFallHeight = 10;
+    
+    // Sistema de munición y cooldown
+    this.ammo = 6;                   // Balas en el cargador
+    this.maxAmmo = 6;                // Capacidad del cargador
+    this.lastShotTime = 0;           // Tiempo del último disparo
+    this.shotCooldown = 350;         // Tiempo entre disparos (ms)
+    this.isReloading = false;        // Estado de recarga
+    this.reloadTime = 1500;          // Tiempo de recarga completa (ms)
+    this.reloadStartTime = 0;        // Cuándo comenzó la recarga
     
     // Atributos para el doble salto
     this.jumpsAvailable = 2;
@@ -57,8 +67,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.currentLadder = null;
     this.isClimbingCentered = false;
 
-    // Etiqueta de puntuación y salud (opcional)
-    this.label = scene.add.text(10, 10, 'Score: 0 | Health: 100', { fontSize: '20px', fill: '#fff' });
+    // Interfaz - crear los elementos de UI que necesitamos
+    this.createUI();
 
     // Controles y disparo
     this.cursors = scene.input.keyboard.createCursorKeys();
@@ -116,17 +126,97 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.timerText.setScrollFactor(0);
   }
 
+  // Crear los elementos de la interfaz
+  createUI() {
 
+    // Contenedor principal para todos los elementos de UI
+    this.uiContainer = this.scene.add.container(10, 30); // Movido hacia abajo desde 10,10
+    this.uiContainer.setScrollFactor(0); // Fijar a la cámara
+    
+    // Barra de salud
+    this.healthBar = this.scene.add.graphics();
+    this.uiContainer.add(this.healthBar);
+    
+    // Indicador de munición
+    this.ammoText = this.scene.add.text(0, 30, 'Munición: ' + this.ammo + '/' + this.maxAmmo, { 
+      fontSize: '16px', 
+      fill: '#fff',
+      stroke: '#000',
+      strokeThickness: 2
+    });
+    this.uiContainer.add(this.ammoText);
+    
+    // Indicador de puntuación
+    this.scoreText = this.scene.add.text(0, 55, 'Puntuación: ' + this.score, { 
+      fontSize: '16px', 
+      fill: '#fff',
+      stroke: '#000',
+      strokeThickness: 2
+    });
+    this.uiContainer.add(this.scoreText);
+    
+    // Actualizar la UI inicialmente
+    this.updateUI();
+  }
 
+  // Actualizar todos los elementos de la interfaz
+  updateUI() {
+    // Actualizar barra de salud
+    this.healthBar.clear();
+    
+    // Borde de la barra
+    this.healthBar.lineStyle(2, 0x000000, 1);
+    this.healthBar.strokeRect(0, 0, 150, 20);
+    
+    // Fondo rojo
+    this.healthBar.fillStyle(0xff0000, 1);
+    this.healthBar.fillRect(0, 0, 150, 20);
+    
+    // Parte verde proporcional a la salud actual
+    const healthPercent = this.health / this.maxHealth;
+    this.healthBar.fillStyle(0x00ff00, 1);
+    this.healthBar.fillRect(0, 0, 150 * healthPercent, 20);
+    
+    // Texto de salud
+    if (this.healthText) {
+      this.healthText.destroy();
+    }
+    this.healthText = this.scene.add.text(75, 10, `${this.health}/${this.maxHealth}`, { 
+      fontSize: '14px', 
+      fill: '#fff',
+      stroke: '#000',
+      strokeThickness: 2
+    }).setOrigin(0.5);
+    this.uiContainer.add(this.healthText);
+    
+    // Actualizar texto de munición
+    let ammoText = this.ammo + '/' + this.maxAmmo;
+    if (this.isReloading) {
+      // Mostrar una indicación visual de recarga
+      const progress = Math.min(1, (this.scene.time.now - this.reloadStartTime) / this.reloadTime);
+      const dots = '.'.repeat(Math.floor(progress * 3) + 1);
+      ammoText = "Recargando" + dots;
+    }
+    this.ammoText.setText('Munición: ' + ammoText);
+    
+    // Actualizar texto de puntuación
+    this.scoreText.setText('Puntuación: ' + this.score);
+  }
 
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
     if (this.state === PLAYER_STATE.DEAD) return;
     
-   
+    // Actualizar UI en cada frame
+    this.updateUI();
 
-  
+    // Comprobar si la recarga ha terminado
+    if (this.isReloading && time - this.reloadStartTime >= this.reloadTime) {
+      this.ammo = this.maxAmmo;
+      this.isReloading = false;
+      this.scene.sound.play('disparo', { volume: 0.3 }); // Sonido de recarga completada
+    }
 
     // Actualizar invulnerabilidad
     if (this.isInvulnerable && time - this.lastHitTime >= this.invulnerableTime) {
@@ -142,18 +232,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const jumpAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
     const idleJumpAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
     
+    // Agregar tecla R para recargar manualmente
+    const keyR = this.scene.input.keyboard.addKey('R');
+    if (Phaser.Input.Keyboard.JustDown(keyR) && !this.isReloading && this.ammo < this.maxAmmo && this.hasWeapon) {
+      this.reload();
+    }
 
-
-
-   
     if (Phaser.Input.Keyboard.JustDown( this.scene.keys.cambiarWeapon)) {
       this.hasWeapon = !this.hasWeapon;
       this.weapon.setVisible(this.hasWeapon);   
       this.hand.setVisible(this.hasWeapon);   
     }
   
-
-
 
     //PARACHUTE
     this.hasParachute = (this.scene.keys.up.isDown ||  (this.scene.keys.down.isDown &&  !this.body.onFloor()));
@@ -345,8 +435,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    this.label.setText('Score: ' + this.score + ' | Health: ' + this.health);
-
     if (this.hasWeapon) {
       this.updateHand();
     }
@@ -404,61 +492,82 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.weapon.setScale(!this.flipX ? -1 : 1, 1);
   }
 
-
-
+  reload() {
+    if (this.isReloading || this.ammo === this.maxAmmo) return;
+    
+    this.isReloading = true;
+    this.reloadStartTime = this.scene.time.now;
+    
+    // Reproducir sonido de inicio de recarga
+    this.scene.sound.play('escaleras', { volume: 0.3 });
+  }
 
   shoot() {
-   
-    if (this.hasWeapon) {
-      const bulletSpeed = 800;
-      let angle = this.weapon.rotation;
-      if (this.flipX) {
-        angle += Math.PI;
-      }
-      // Calcular posición inicial de la bala
-      const bulletX = this.weapon.x + Math.cos(angle) * 20;
-      const bulletY = this.weapon.y + Math.sin(angle) * 20;
-      // Crear la bala directamente a través del grupo para que herede la configuración del grupo (allowGravity: false)
-      const bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
-      bullet.setRotation(this.weapon.rotation);
-      bullet.damage = this.damage; // Asigna el daño del disparo
+    // Si estamos recargando o no tenemos munición, no podemos disparar
+    if (this.isReloading || this.ammo <= 0 || !this.hasWeapon) return;
     
-      // Configurar velocidad de la bala
-      const velocityX = Math.cos(angle) * bulletSpeed;
-      const velocityY = Math.sin(angle) * bulletSpeed;
-      bullet.setVelocity(velocityX, velocityY);
+    // Comprobar cooldown entre disparos
+    if (this.scene.time.now - this.lastShotTime < this.shotCooldown) return;
     
-      // Asegurarse de que la bala no esté afectada por la gravedad (aunque el grupo ya lo configura)
-      bullet.body.allowGravity = false;
+    // Registrar tiempo de disparo para cooldown
+    this.lastShotTime = this.scene.time.now;
     
-      // Efecto de disparo (no modificado)
-      const cannonOffset = 125;
-      const effect = this.scene.add.sprite(
-        this.weapon.x + Math.cos(angle) * cannonOffset,
-        this.weapon.y + Math.sin(angle) * cannonOffset,
-        'effect'
-      );
-      effect.setRotation(this.flipX ? this.weapon.rotation + Math.PI : this.weapon.rotation);
-      effect.setDepth(this.weapon.depth + 1);
-      effect.play('effect');
-      this.scene.time.addEvent({
-        delay: 16,
-        callback: () => {
-          if (effect.anims.currentFrame) {
-            effect.setPosition(
-              this.weapon.x + Math.cos(angle) * cannonOffset,
-              this.weapon.y + Math.sin(angle) * cannonOffset
-            );
-          }
-        },
-        repeat: effect.anims.getTotalFrames()
-      });
-      effect.once('animationcomplete', () => effect.destroy());
-      // Reproducir sonido de disparo
-      this.scene.sound.play('disparo');
+    // Reducir munición
+    this.ammo--;
+    
+    // Si nos quedamos sin munición, iniciar recarga automática
+    if (this.ammo <= 0) {
+      this.reload();
     }
-
+   
+    // El resto de la lógica de disparo existente
+    const bulletSpeed = 800;
+    let angle = this.weapon.rotation;
+    if (this.flipX) {
+      angle += Math.PI;
+    }
+    // Calcular posición inicial de la bala
+    const bulletX = this.weapon.x + Math.cos(angle) * 20;
+    const bulletY = this.weapon.y + Math.sin(angle) * 20;
+    // Crear la bala directamente a través del grupo para que herede la configuración del grupo (allowGravity: false)
+    const bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+    bullet.setRotation(this.weapon.rotation);
+    bullet.damage = this.damage; // Asigna el daño del disparo
+  
+    // Configurar velocidad de la bala
+    const velocityX = Math.cos(angle) * bulletSpeed;
+    const velocityY = Math.sin(angle) * bulletSpeed;
+    bullet.setVelocity(velocityX, velocityY);
+  
+    // Asegurarse de que la bala no esté afectada por la gravedad (aunque el grupo ya lo configura)
+    bullet.body.allowGravity = false;
+  
+    // Efecto de disparo (no modificado)
+    const cannonOffset = 125;
+    const effect = this.scene.add.sprite(
+      this.weapon.x + Math.cos(angle) * cannonOffset,
+      this.weapon.y + Math.sin(angle) * cannonOffset,
+      'effect'
+    );
+    effect.setRotation(this.flipX ? this.weapon.rotation + Math.PI : this.weapon.rotation);
+    effect.setDepth(this.weapon.depth + 1);
+    effect.play('effect');
+    this.scene.time.addEvent({
+      delay: 16,
+      callback: () => {
+        if (effect.anims.currentFrame) {
+          effect.setPosition(
+            this.weapon.x + Math.cos(angle) * cannonOffset,
+            this.weapon.y + Math.sin(angle) * cannonOffset
+          );
+        }
+      },
+      repeat: effect.anims.getTotalFrames()
+    });
+    effect.once('animationcomplete', () => effect.destroy());
     
+    // Reproducir sonido de disparo
+    this.scene.sound.play('disparo');
   }
 
   takeDamage(amount, attacker = null) {
@@ -500,6 +609,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     });
 
+    // Actualizar la UI
+    this.updateUI();
+
     // Reproducir sonido de daño
     this.scene.sound.play('damage');
   }
@@ -515,8 +627,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.scene.events.emit('playerDeath');
     });
   }
-
-
 
   hurt() {
     if (this.isInvulnerable || this.state === PLAYER_STATE.DEAD) return;

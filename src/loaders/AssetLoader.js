@@ -53,6 +53,7 @@ import ladder from '../../assets/tiled/Objects/Resized/escalera.png';
 import pichos_arriba from '../../assets/tiled/Objects/Resized/pinchos_grandes_arriba.png';
 import pichos_abajo from '../../assets/tiled/Objects/Resized/pinchos_grandes_abajo.png';
 import bola_grande from '../../assets/tiled/Objects/Resized/bola_grande.png';
+import diamante_azul from '../../assets/tiled/Objects/Resized/diamante_azul.png';
 
 // SOUNDS
 import Disparo from '../../assets/Sounds/Shoot.mp3';
@@ -199,6 +200,11 @@ export function loadObjectSprites(scene) {
     frameWidth: 60, 
     frameHeight: 38 
   });
+  scene.load.image('ladder2', ladder);
+  scene.load.image('pichos_arriba', pichos_arriba);
+  scene.load.image('pichos_abajo', pichos_abajo);
+  scene.load.image('bola_grande', bola_grande);
+  scene.load.image('diamante', diamante_azul);
 }
 
 
@@ -210,10 +216,6 @@ export function loadTilemapAssets(scene) {
   scene.load.image('tiles', Tileset);
   scene.load.image('tiles2', Tileset2);
   scene.load.image('tiles3', Tileset3);
-  scene.load.image('ladder2', ladder);
-  scene.load.image('pichos_arriba', pichos_arriba);
-  scene.load.image('pichos_abajo', pichos_abajo);
-  scene.load.image('bola_grande', bola_grande);
   scene.load.tilemapTiledJSON('map', MainScene);
   scene.load.tilemapTiledJSON('map3', Nivel3);
 }

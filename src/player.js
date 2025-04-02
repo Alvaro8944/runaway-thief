@@ -684,7 +684,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   
   jump_sound() {
     // Reproducir sonido de salto
-    this.scene.sound.play('jump');
+    this.scene.sound.play('jump', { volume: 0.5 });
   }
 
   climb_sound() {
@@ -709,5 +709,28 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.die();
     }
     this.timerText.setText("Tiempo Restante:" + this.remainingtime / 1000);
+  }
+
+  // === MÉTODOS DE UI ===
+  
+  /**
+   * Maneja el evento de un diamante recogido, actualizando el puntaje y la UI
+   * @param {number} value - El valor del diamante recogido
+   */
+  handleDiamondCollected(value) {
+    // Incrementar la puntuación
+    this.score += value;
+    
+    // Actualizar la UI
+    this.updateUI();
+    
+    // Efecto visual opcional (por ejemplo, brillo alrededor del jugador)
+    this.scene.tweens.add({
+      targets: this,
+      alpha: 0.8,
+      duration: 100,
+      yoyo: true,
+      repeat: 2
+    });
   }
 }

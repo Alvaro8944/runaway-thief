@@ -5,6 +5,7 @@ import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemy2.js';
 import Pincho from '../gameObjects/Pincho.js';
 import Escalera from '../gameObjects/Escalera.js';
 import BolaGrande from '../gameObjects/BolaGrande.js';
+import Diamante from '../gameObjects/Diamante.js';
 
 const SPIKE_DAMAGE = 20;
 
@@ -42,8 +43,7 @@ export default class Level extends Phaser.Scene {
     });
     
     // Configurar sonido
-    const audio = this.sound.add('level2');
-    //audio.play();
+    //this.sound.play('level2', { volume: 0.2 });
   }
   
   setupMap() {
@@ -73,6 +73,9 @@ export default class Level extends Phaser.Scene {
     
     // Crear bolas grandes desde el mapa
     this.bolas = BolaGrande.createFromMap(this, this.map, 'BolasGrandes', 'bola_grande');
+    
+    // Crear diamantes desde el mapa
+    this.diamantes = Diamante.createFromMap(this, this.map, 'Diamantes', 'diamante');
     
     // Añadir colisión entre bolas y suelo
     this.physics.add.collider(this.bolas, this.layerSuelo);
@@ -343,6 +346,9 @@ export default class Level extends Phaser.Scene {
         this
       );
     }
+    
+    // Configurar colisión con diamantes
+    Diamante.setupCollision(this, this.diamantes, this.player);
     
     // Colisión con zona de fin de nivel
     if (this.finNivel) {

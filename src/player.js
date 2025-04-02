@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+// Constantes para los estados del jugador
 export const PLAYER_STATE = {
   IDLE: 'IDLE',
   RUNNING: 'RUNNING',
@@ -10,99 +11,144 @@ export const PLAYER_STATE = {
   CLIMBING: 'CLIMBING'
 };
 
+// Constantes para la configuración del jugador
+const PLAYER_CONFIG = {
+  // Movimiento
+  NORMAL_SPEED: 180,
+  PARACHUTE_SPEED: 50,
+  JUMP_SPEED: -240,
+  CLIMB_SPEED: 100,
+  
+  // Salud y daño
+  MAX_HEALTH: 100,
+  DAMAGE: 20,
+  
+  // Arma y munición
+  MAX_AMMO: 6,
+  SHOT_COOLDOWN: 350,   // ms entre disparos
+  RELOAD_TIME: 1500,     // ms para recargar
+  BULLET_SPEED: 800,    // velocidad de las balas
+  
+  // Colisiones y física
+  BOUNCE: 0.1,
+  HITBOX_WIDTH: 20,
+  HITBOX_HEIGHT: 35,
+  HITBOX_OFFSET_X: 13,
+  HITBOX_OFFSET_Y: 13,
+  SCALE: 1.25,
+  
+  // Doble salto
+  MAX_JUMPS: 2,
+  
+  // Agacharse
+  MAX_CRAWL_TIME: 90,
+  CRAWL_HITBOX_HEIGHT: 28,
+  CRAWL_HITBOX_OFFSET_Y: 20,
+  
+  // Invulnerabilidad
+  INVULNERABLE_TIME: 1000,
+  KNOCKBACK_FORCE: 200,
+  KNOCKBACK_DURATION: 200,
+  
+  // Escaleras
+  CLIMB_SOUND_DELAY: 980 // ms entre sonidos de escalera
+};
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-    timer=300000;
+    timer = 300000;
     remainingtime;
     timerText;
+  
   constructor(scene, x, y) {
     super(scene, x, y, 'player');
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
+    // Configuración física básica
     this.setCollideWorldBounds(true);
-    this.setBounce(0.1);
-    this.setSize(20, 35);
-    this.setOffset(13, 13);
-    this.setScale(1.25);
+    this.setBounce(PLAYER_CONFIG.BOUNCE);
+    this.setSize(PLAYER_CONFIG.HITBOX_WIDTH, PLAYER_CONFIG.HITBOX_HEIGHT);
+    this.setOffset(PLAYER_CONFIG.HITBOX_OFFSET_X, PLAYER_CONFIG.HITBOX_OFFSET_Y);
+    this.setScale(PLAYER_CONFIG.SCALE);
 
-    // Atributos de movimiento y salud
-    this.normalSpeed = 180;
-    this.parachuteSpeed = 50;
+    // ===== Atributos de movimiento =====
+    this.normalSpeed = PLAYER_CONFIG.NORMAL_SPEED;
+    this.parachuteSpeed = PLAYER_CONFIG.PARACHUTE_SPEED;
     this.speed = this.normalSpeed;
-
-    this.jumpSpeed = -240;
-    this.climbSpeed = 100;
+    this.jumpSpeed = PLAYER_CONFIG.JUMP_SPEED;
+    this.climbSpeed = PLAYER_CONFIG.CLIMB_SPEED;
+    
+    // ===== Atributos de combate =====
     this.score = 0;
-    this.health = 100;      // Salud del jugador
-    this.maxHealth = 100;   // Salud máxima
-    this.damage = 20;       // Daño de sus disparos
+    this.health = PLAYER_CONFIG.MAX_HEALTH;
+    this.maxHealth = PLAYER_CONFIG.MAX_HEALTH;
+    this.damage = PLAYER_CONFIG.DAMAGE;
+    
+    // ===== Atributos de arma y munición =====
     this.hasWeapon = false;
+    this.ammo = PLAYER_CONFIG.MAX_AMMO;
+    this.maxAmmo = PLAYER_CONFIG.MAX_AMMO;
+    this.lastShotTime = 0;
+    this.shotCooldown = PLAYER_CONFIG.SHOT_COOLDOWN;
+    this.isReloading = false;
+    this.reloadTime = PLAYER_CONFIG.RELOAD_TIME;
+    this.reloadStartTime = 0;
+    this.bulletSpeed = PLAYER_CONFIG.BULLET_SPEED;
+    
+    // ===== Atributos de estado =====
     this.hasParachute = false;
     this.resetearAgacharse = false;
     this.crawlTime = 0;
     this.restarcrawl = 0;
-    this.maxCrawlTime = 90;
+    this.maxCrawlTime = PLAYER_CONFIG.MAX_CRAWL_TIME;
     this.fatalFallHeight = 10;
+    this.state = PLAYER_STATE.IDLE;
+    this.invulnerableTime = PLAYER_CONFIG.INVULNERABLE_TIME;
+    this.lastHitTime = 0;
+    this.isInvulnerable = false;
+    this.knockbackForce = PLAYER_CONFIG.KNOCKBACK_FORCE;
+    this.knockbackDuration = PLAYER_CONFIG.KNOCKBACK_DURATION;
+    this.isKnockedBack = false;
     
-    // Sistema de munición y cooldown
-    this.ammo = 6;                   // Balas en el cargador
-    this.maxAmmo = 6;                // Capacidad del cargador
-    this.lastShotTime = 0;           // Tiempo del último disparo
-    this.shotCooldown = 350;         // Tiempo entre disparos (ms)
-    this.isReloading = false;        // Estado de recarga
-    this.reloadTime = 1500;          // Tiempo de recarga completa (ms)
-    this.reloadStartTime = 0;        // Cuándo comenzó la recarga
-    
-    // Atributos para el doble salto
-    this.jumpsAvailable = 2;
+    // ===== Atributos para el doble salto =====
+    this.jumpsAvailable = PLAYER_CONFIG.MAX_JUMPS;
     this.currentJumps = 0;
     this.isDoubleJumping = false;
-    this.doubleJumpParticles = null;
     this.wasOnFloor = false;
 
-    // Atributos para escaleras
+    // ===== Atributos para escaleras =====
     this.canClimb = false;
     this.isClimbing = false;
     this.currentLadder = null;
     this.isClimbingCentered = false;
+    this.lastClimbSoundTime = 0;
+    this.climbSoundDelay = PLAYER_CONFIG.CLIMB_SOUND_DELAY;
 
-    // Interfaz - crear los elementos de UI que necesitamos
+    // ===== Interfaz =====
     this.createUI();
 
-    // Controles y disparo
+    // ===== Controles =====
     this.cursors = scene.input.keyboard.createCursorKeys();
     this.scene.input.on('pointerdown', () => this.shoot(), this);
 
+    // ===== Objetos visuales =====
     // Mano y arma
     this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.45, 0.5);
     this.hand.setDepth(this.depth - 1);
     this.weapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.3, 0.5);
     this.weapon.setDepth(this.hand.depth - 1);
 
-
-    // Objects
+    // Paracaídas
     this.parachute = scene.add.sprite(this.x, this.y, 'parachute').setOrigin(0.57, 1.1);
     this.parachute.setDepth(this.depth - 3);
 
-    // Nuevos atributos
-    this.state = PLAYER_STATE.IDLE;
-    this.invulnerableTime = 1000;
-    this.lastHitTime = 0;
-    this.isInvulnerable = false;
-    this.knockbackForce = 200;
-    this.knockbackDuration = 200;
-    this.isKnockedBack = false;
-
-    // Control de tiempo para sonidos de escalera
-    this.lastClimbSoundTime = 0;
-    this.climbSoundDelay = 980; // Tiempo entre sonidos de escalera
-
+    // ===== Inicialización =====
     // Iniciar con la animación idle
     const initialAnim = this.hasWeapon ? 'idle_shoot' : 'idle';
     this.play(initialAnim);
 
-    // Crear el emisor de partículas una sola vez
+    // Crear el emisor de partículas para el doble salto
     this.doubleJumpEmitter = this.scene.add.particles(0, 0, 'effect', {
       speed: 100,
       scale: { start: 0.2, end: 0 },
@@ -113,24 +159,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     });
     this.doubleJumpEmitter.stop(); // Asegurarse de que está detenido inicialmente
 
-    this.remainingtime=this.timer;
-    
-    
+    // Temporizador
+    this.remainingtime = this.timer;
     this.scene.time.addEvent({
-      delay:1000,
+      delay: 1000,
       callback: this.updateTimer,
-      callbackScope:this,
-      loop:true
+      callbackScope: this,
+      loop: true
     });
-    this.timerText= this.scene.add.text(0,0,"Tiempo Restante:"+this.remainingtime/1000);//,{fontSize:'32px',fill:"ffffff"});// .setDepth(1);
+    this.timerText = this.scene.add.text(0, 0, "Tiempo Restante:" + this.remainingtime / 1000);
     this.timerText.setScrollFactor(0);
   }
 
+  // === MÉTODOS DE INTERFAZ ===
+  
   // Crear los elementos de la interfaz
   createUI() {
-
     // Contenedor principal para todos los elementos de UI
-    this.uiContainer = this.scene.add.container(10, 30); // Movido hacia abajo desde 10,10
+    this.uiContainer = this.scene.add.container(10, 30);
     this.uiContainer.setScrollFactor(0); // Fijar a la cámara
     
     // Barra de salud
@@ -203,6 +249,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.scoreText.setText('Puntuación: ' + this.score);
   }
 
+  // === MÉTODOS DE ACTUALIZACIÓN ===
+  
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
@@ -227,6 +275,31 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.isKnockedBack) return;
 
     if (!this.scene.keys) return;
+    
+    // ===== LÓGICA DEL PARACAÍDAS =====
+    // Activar/desactivar paracaídas según los controles
+    this.hasParachute = (this.scene.keys.up.isDown || (this.scene.keys.down.isDown && !this.body.onFloor()));
+    this.parachute.setVisible(this.hasParachute);
+     
+    if (this.hasParachute) {
+      // Ajustar velocidad cuando se usa el paracaídas
+      this.speed = this.parachuteSpeed;
+      this.parachute.setPosition(this.x, this.y);
+
+      // Control vertical con paracaídas
+      if (this.scene.keys.down.isDown && !this.body.onFloor()) {
+        this.setVelocityY(this.speed); // Baja más rápido
+      } else if (this.scene.keys.up.isDown) {
+        this.setVelocityY(-this.speed); // Sube lentamente
+      } else {
+        this.setVelocityY(0); // Mantiene posición cuando no se pulsa nada
+      }
+    } else {
+      // Restaurar velocidad normal
+      this.speed = this.normalSpeed;
+    }
+    
+    // Determinar las animaciones según el estado
     const runAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'run_shoot' : 'run');
     const idleAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'idle_shoot' : 'idle');
     const jumpAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
@@ -238,47 +311,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.reload();
     }
 
-    if (Phaser.Input.Keyboard.JustDown( this.scene.keys.cambiarWeapon)) {
+    // Cambiar arma
+    if (Phaser.Input.Keyboard.JustDown(this.scene.keys.cambiarWeapon)) {
       this.hasWeapon = !this.hasWeapon;
       this.weapon.setVisible(this.hasWeapon);   
       this.hand.setVisible(this.hasWeapon);   
     }
-  
-
-    //PARACHUTE
-    this.hasParachute = (this.scene.keys.up.isDown ||  (this.scene.keys.down.isDown &&  !this.body.onFloor()));
-    this.parachute.setVisible(this.hasParachute);
-    
-    if (this.hasParachute) {
-
-      this.speed = this.parachuteSpeed;
-      this.parachute.setPosition(this.x, this.y);
-
-      if (this.scene.keys.down.isDown && !this.body.onFloor()) {
-        this.setVelocityY(this.speed); // Baja más lento
-
-      } else if (this.scene.keys.up.isDown) {
-        this.setVelocityY(-this.speed); // Sube lentamente
-
-      } else {
-        this.setVelocityY(0); // Mantiene su posición cuando no se pulsa nada
-      }
-    }
-    else{
-      this.speed = this.normalSpeed;
-    }
-
 
     // Lógica de escalada
     if (this.canClimb) {
-
-      
       const isUpPressed = this.scene.keys.up.isDown;
       const isDownPressed = this.scene.keys.down.isDown;
 
       if ((isUpPressed || isDownPressed) && !this.isClimbing) {
- 
-
         this.isClimbing = true;
         this.body.allowGravity = false;
         this.setVelocityY(0);
@@ -302,7 +347,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
           this.setVelocityY(-this.climbSpeed);
           this.play('climb', true);
           this.climb_sound();
-
         } else if (isDownPressed) {
           this.setVelocityY(this.climbSpeed);
           this.play('climb', true);
@@ -327,18 +371,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         return;
       }
     } else if (this.isClimbing) {
-
       // Dejar de escalar si no está en contacto con una escalera
-
-
       this.isClimbing = false;
       this.body.allowGravity = true;
       this.play(idleAnim);
     }
+    
     const onFloorNow = this.body.onFloor();
+    
     // Resetear saltos disponibles cuando toca el suelo
     if (onFloorNow && !this.wasOnFloor) {
-
       this.currentJumps = 0;
       // Asegurarse de que el emisor está detenido al tocar el suelo
       this.doubleJumpEmitter.stop();
@@ -347,7 +389,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Lógica de movimiento horizontal
     if (this.scene.keys.left.isDown) {
-
       this.setVelocityX(-this.speed);
       if (this.body.onFloor()) {
         this.anims.play(runAnim, true);
@@ -369,57 +410,48 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Lógica de salto mejorada
     const justPressedJump = Phaser.Input.Keyboard.JustDown(this.scene.keys.jump);
     if (justPressedJump && (this.currentJumps < this.jumpsAvailable)) {
-
-
       this.currentJumps++;
       this.setVelocityY(this.jumpSpeed);
       
-  
       this.jump_sound();
-      if (this.currentJumps === 2 && !this.hasWeapon && !this.hasParachute) {
+      if (this.currentJumps === 2 && !this.hasWeapon) {
         // Solo en el segundo salto cambiamos al sprite de doble salto
         this.play('doublejump', true);
         // Emitir partículas
         this.doubleJumpEmitter.setPosition(this.x, this.y + 20);
         this.doubleJumpEmitter.explode(10);
-        
       } else {
         // Primer salto normal
         const anim = this.body.velocity.x !== 0 ? jumpAnim : idleJumpAnim;
         this.play(anim, true);
       }
-      
     }
 
+    // Lógica para agacharse
     if (this.scene.keys.down.isDown && this.crawlTime <= this.maxCrawlTime && this.body.onFloor()) {
-
       this.resetearAgacharse = true;
 
-      if (this.weapon) {
+      if (this.hasWeapon) {
         this.anims.play("sit_shoot", true);
-        this.body.setSize(20, 28); // 🔹 Ajusta la hitbox para que coincida
-        this.body.offset.y = 20;
-
+        this.body.setSize(PLAYER_CONFIG.HITBOX_WIDTH, PLAYER_CONFIG.CRAWL_HITBOX_HEIGHT);
+        this.body.offset.y = PLAYER_CONFIG.CRAWL_HITBOX_OFFSET_Y;
       } else {
         this.anims.play("crawl", true);
-        this.body.setSize(20, 28); // 🔹 Ajusta la hitbox para que coincida
-        this.body.offset.y = 20;
+        this.body.setSize(PLAYER_CONFIG.HITBOX_WIDTH, PLAYER_CONFIG.CRAWL_HITBOX_HEIGHT);
+        this.body.offset.y = PLAYER_CONFIG.CRAWL_HITBOX_OFFSET_Y;
       }
 
       this.crawlTime++;
-    }
-    else{
-
-      if(this.resetearAgacharse){
-      this.setSize(20, 35);
-      this.setOffset(14, 13);
-      this.resetearAgacharse = false;
+    } else {
+      if (this.resetearAgacharse) {
+        this.setSize(PLAYER_CONFIG.HITBOX_WIDTH, PLAYER_CONFIG.HITBOX_HEIGHT);
+        this.setOffset(PLAYER_CONFIG.HITBOX_OFFSET_X, PLAYER_CONFIG.HITBOX_OFFSET_Y);
+        this.resetearAgacharse = false;
       }
-
     }
 
-
-    if (this.crawlTime >= this.maxCrawlTime ) {
+    // Control de tiempo para el agacharse
+    if (this.crawlTime >= this.maxCrawlTime) {
       this.restarcrawl++;
       if (this.restarcrawl >= this.maxCrawlTime) {
         this.crawlTime = 0;
@@ -438,60 +470,31 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.hasWeapon) {
       this.updateHand();
     }
-
-
-
-
-
-
-     // DAÑO DE CAÍDA
-     if (!this.body.onFloor()) {
-      if (this.highestY === null ) {
+    
+    // ===== DAÑO POR CAÍDA =====
+    // Registrar la posición más alta y calcular daño por caída
+    if (!this.body.onFloor()) {
+      if (this.highestY === undefined || this.highestY === null) {
         this.highestY = this.y; // Guarda la mayor altura alcanzada
+      } else if (this.y < this.highestY) {
+        this.highestY = this.y; // Actualiza si sube más alto
       }
     } else {
-      if (this.highestY !== null) {
+      if (this.highestY !== undefined && this.highestY !== null) {
         const fallDistance = Math.abs(this.highestY - this.y); // Diferencia real de caída
-        if (this.y > this.highestY && fallDistance >= this.fatalFallHeight &&  Math.abs(this.body.velocity.y) > this.parachuteSpeed) {
+        if (this.y > this.highestY && 
+            fallDistance >= this.fatalFallHeight && 
+            Math.abs(this.body.velocity.y) > this.parachuteSpeed) {
           this.health = 0;
           this.die();
         }
       } 
       this.highestY = null; // Resetea cuando toca el suelo
     }
-}
-
-  updateHand() {
-    const pointer = this.scene.input.activePointer;
-    const worldPointer = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    let angle = Phaser.Math.Angle.Between(this.x, this.y, worldPointer.x, worldPointer.y);
-    if (this.flipX) {
-      angle += Math.PI;
-    }
-    angle = Phaser.Math.Angle.Wrap(angle);
-    const minAngle = -Math.PI / 2;
-    const maxAngle = Math.PI / 2;
-    angle = Phaser.Math.Clamp(angle, minAngle, maxAngle);
-    const shoulderOffsetX = 0;
-    const shoulderOffsetY = 0;
-    const shoulderX = this.x + shoulderOffsetX * (this.flipX ? -1 : 1);
-    const shoulderY = this.y + shoulderOffsetY;
-    this.hand.setPosition(shoulderX, shoulderY);
-    this.hand.setRotation(angle);
-    this.updateWeapon();
-    this.ajustarDireccion();
   }
 
-  updateWeapon() {
-    this.weapon.setPosition(this.hand.x, this.hand.y);
-    this.weapon.setRotation(this.hand.rotation);
-  }
-
-  ajustarDireccion() {
-    this.hand.setScale(!this.flipX ? -1 : 1, 1);
-    this.weapon.setScale(!this.flipX ? -1 : 1, 1);
-  }
-
+  // === MÉTODOS DE ARMA Y DISPARO ===
+  
   reload() {
     if (this.isReloading || this.ammo === this.maxAmmo) return;
     
@@ -520,29 +523,37 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.reload();
     }
    
-    // El resto de la lógica de disparo existente
-    const bulletSpeed = 800;
+    // Calcular ángulo de disparo
     let angle = this.weapon.rotation;
     if (this.flipX) {
       angle += Math.PI;
     }
+    
     // Calcular posición inicial de la bala
     const bulletX = this.weapon.x + Math.cos(angle) * 20;
     const bulletY = this.weapon.y + Math.sin(angle) * 20;
-    // Crear la bala directamente a través del grupo para que herede la configuración del grupo (allowGravity: false)
+    
+    // Crear la bala
     const bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
     bullet.setRotation(this.weapon.rotation);
-    bullet.damage = this.damage; // Asigna el daño del disparo
+    bullet.damage = this.damage;
   
     // Configurar velocidad de la bala
-    const velocityX = Math.cos(angle) * bulletSpeed;
-    const velocityY = Math.sin(angle) * bulletSpeed;
+    const velocityX = Math.cos(angle) * this.bulletSpeed;
+    const velocityY = Math.sin(angle) * this.bulletSpeed;
     bullet.setVelocity(velocityX, velocityY);
   
-    // Asegurarse de que la bala no esté afectada por la gravedad (aunque el grupo ya lo configura)
+    // Asegurarse de que la bala no esté afectada por la gravedad
     bullet.body.allowGravity = false;
   
-    // Efecto de disparo (no modificado)
+    // Efecto de disparo
+    this.createShootEffect(angle);
+    
+    // Reproducir sonido de disparo
+    this.scene.sound.play('disparo');
+  }
+  
+  createShootEffect(angle) {
     const cannonOffset = 125;
     const effect = this.scene.add.sprite(
       this.weapon.x + Math.cos(angle) * cannonOffset,
@@ -552,6 +563,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     effect.setRotation(this.flipX ? this.weapon.rotation + Math.PI : this.weapon.rotation);
     effect.setDepth(this.weapon.depth + 1);
     effect.play('effect');
+    
     this.scene.time.addEvent({
       delay: 16,
       callback: () => {
@@ -564,12 +576,47 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       },
       repeat: effect.anims.getTotalFrames()
     });
-    effect.once('animationcomplete', () => effect.destroy());
     
-    // Reproducir sonido de disparo
-    this.scene.sound.play('disparo');
+    effect.once('animationcomplete', () => effect.destroy());
   }
 
+  updateHand() {
+    const pointer = this.scene.input.activePointer;
+    const worldPointer = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    let angle = Phaser.Math.Angle.Between(this.x, this.y, worldPointer.x, worldPointer.y);
+    
+    if (this.flipX) {
+      angle += Math.PI;
+    }
+    
+    angle = Phaser.Math.Angle.Wrap(angle);
+    const minAngle = -Math.PI / 2;
+    const maxAngle = Math.PI / 2;
+    angle = Phaser.Math.Clamp(angle, minAngle, maxAngle);
+    
+    const shoulderOffsetX = -5;
+    const shoulderOffsetY = 1.5;
+    const shoulderX = this.x + shoulderOffsetX * (this.flipX ? -1 : 1);
+    const shoulderY = this.y + shoulderOffsetY;
+    
+    this.hand.setPosition(shoulderX, shoulderY);
+    this.hand.setRotation(angle);
+    this.updateWeapon();
+    this.ajustarDireccion();
+  }
+
+  updateWeapon() {
+    this.weapon.setPosition(this.hand.x, this.hand.y);
+    this.weapon.setRotation(this.hand.rotation);
+  }
+
+  ajustarDireccion() {
+    this.hand.setScale(!this.flipX ? -1 : 1, 1);
+    this.weapon.setScale(!this.flipX ? -1 : 1, 1);
+  }
+
+  // === MÉTODOS DE DAÑO Y SALUD ===
+  
   takeDamage(amount, attacker = null) {
     if (this.isInvulnerable || this.state === PLAYER_STATE.DEAD) return;
 
@@ -602,7 +649,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Reproducir animación de daño
     this.play('player_hurt', true);
     this.once('animationcomplete-player_hurt', () => {
-      if (this.health <= 0 ) {
+      if (this.health <= 0) {
         this.die();
       } else {
         this.state = PLAYER_STATE.IDLE;
@@ -630,10 +677,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   hurt() {
     if (this.isInvulnerable || this.state === PLAYER_STATE.DEAD) return;
-    
     this.takeDamage(20); // Los pinchos hacen 20 de daño
   }
 
+  // === MÉTODOS DE SONIDO ===
+  
   jump_sound() {
     // Reproducir sonido de salto
     this.scene.sound.play('jump');
@@ -653,13 +701,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
   
+  // === MÉTODOS DE TEMPORIZADOR ===
+  
   updateTimer() {
-    this.remainingtime-=1000;
-    //alert(this.remainingtime);
-    if(this.remainingtime<=0){
+    this.remainingtime -= 1000;
+    if (this.remainingtime <= 0) {
       this.die();
     }
-
-    this.timerText.setText("Tiempo Restante:"+this.remainingtime/1000);
+    this.timerText.setText("Tiempo Restante:" + this.remainingtime / 1000);
   }
 }

@@ -11,7 +11,7 @@ export const PLAYER_STATE = {
 };
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-    timer=10000;
+    timer=100000;
     remainingtime;
     timerText;
   constructor(scene, x, y) {

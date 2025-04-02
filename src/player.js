@@ -11,7 +11,7 @@ export const PLAYER_STATE = {
 };
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-    timer=100000;
+    timer=300000;
     remainingtime;
     timerText;
   constructor(scene, x, y) {
@@ -83,6 +83,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.knockbackForce = 200;
     this.knockbackDuration = 200;
     this.isKnockedBack = false;
+
+    // Cargar referencias a los sonidos (no crear nuevas instancias)
+    this.climbSound = this.scene.sound.get('escaleras');
+    this.jumpSound = this.scene.sound.get('jump');
+    this.damageSound = this.scene.sound.get('damage');
+    this.shootSound = this.scene.sound.get('disparo');
 
     // Iniciar con la animación idle
     const initialAnim = this.hasWeapon ? 'idle_shoot' : 'idle';
@@ -520,27 +526,34 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     
     this.takeDamage(20); // Los pinchos hacen 20 de daño
   }
-  jump_sound(){
-   const jump=this.scene.sound.add("jump");
-   jump.play();
 
-  }
-  climb_sound(){
-   const climb=this.scene.sound.add("escaleras");
-   climb.play();
-
+  jump_sound() {
+    // Usar el sonido ya cargado
+    if (this.jumpSound) {
+      this.jumpSound.play();
+    }
   }
 
-
-
-  updateTimer(){
+  climb_sound() {
+    // Verificar si ha pasado suficiente tiempo desde el último sonido
+    const currentTime = this.scene.time.now;
+    if (currentTime - this.lastClimbSoundTime >= this.climbSoundDelay) {
+      // Usar el sonido ya cargado
+      if (this.climbSound) {
+        this.climbSound.setVolume(0.5); // Reducir el volumen para que no sea tan intenso
+        this.climbSound.play();
+      }
+      this.lastClimbSoundTime = currentTime;
+    }
+  }
+  
+  updateTimer() {
     this.remainingtime-=1000;
     //alert(this.remainingtime);
     if(this.remainingtime<=0){
-     this.die();
+      this.die();
     }
+
     this.timerText.setText("Tiempo Restante:"+this.remainingtime/1000);
   }
-
-
 }

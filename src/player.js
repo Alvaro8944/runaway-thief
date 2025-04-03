@@ -150,8 +150,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
 
         // Variables para el tiempo de uso y recarga
-this.floatingEnergy = 400; // Máxima energía
-this.floatingEnergyMax = 400;
+this.floatingEnergy = 200; // Máxima energía
+this.floatingEnergyMax = 200;
 this.floatingEnergyDrainRate = 1; // Cuánto se gasta por frame
 this.floatingEnergyRechargeRate = 1; // Cuánto se recarga por frame
 this.isRecharging = false; // Indica si está recargando
@@ -268,6 +268,8 @@ this.isRecharging = false; // Indica si está recargando
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
+
+    console.log(this.x + " "+  this.y);
     if (this.state === PLAYER_STATE.DEAD) return;
     
     // Actualizar UI en cada frame
@@ -303,7 +305,8 @@ this.isRecharging = false; // Indica si está recargando
 
     if (this.hasFloatingObject) {
       // Ajustar velocidad cuando se usa el paracaídas
-      this.speed = this.floatingSpeed;
+      if(this.parachuteActivated) this.speed = this.floatingSpeed;
+      else if(this.jetpackActivated) this.speed = this.floatingSpeed*3;
 
       this.floatingEnergy -= this.floatingEnergyDrainRate;
         this.floatingEnergy = Math.max(0, this.floatingEnergy);

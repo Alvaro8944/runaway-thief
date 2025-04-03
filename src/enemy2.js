@@ -15,7 +15,7 @@ export class Enemy2 extends BaseEnemy {
       damage: DAMAGE_ENEMY,
       detectionRange: 300,
       attackRange: 300,
-      attackCooldown: 1500, // Cooldown aumentado a 1.5 segundos (era 200ms)
+      attackCooldown: 600, // Cooldown aumentado a 1.5 segundos (era 200ms)
       verticalTolerance: 80,
       attackDuration: 400, // Duración original
       hitboxWidth: 300, // Hitbox original
@@ -31,10 +31,10 @@ export class Enemy2 extends BaseEnemy {
     super(scene, x, y, config);
 
     // Configuración específica de Enemy2
-    this.bulletSpeed = 400; // Velocidad original
+    this.bulletSpeed = 600; // Velocidad original
     this.bulletDamage = DAMAGE_ENEMY;
     this.lastBulletTime = 0;
-    this.bulletCooldown = 1500; // Cooldown aumentado a 1.5 segundos (era 200ms)
+    this.bulletCooldown = 600; // Cooldown aumentado a 1.5 segundos (era 200ms)
     
     // Guardar referencia al mapa para la detección de bordes
     this.map = null;

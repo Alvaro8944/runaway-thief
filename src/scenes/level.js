@@ -23,7 +23,7 @@ export default class Level extends Phaser.Scene {
     
     // Crear jugador
     this.player = new Player(this, 0, 0);
-    this.player.setPosition(100, 1750); // Posición inicial
+    this.player.setPosition(3200, 1400); // Posición inicial
     
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)
     this.createGameObjects();
@@ -153,15 +153,46 @@ export default class Level extends Phaser.Scene {
   createEnemies() {
     // Posiciones de enemigos tipo 1
     const enemyPositions = [
-      { x: 1600, y: 500, type: 'patrolling' },
-      { x: 2200, y: 500, type: 'patrolling' },
-      { x: 2800, y: 400, type: 'patrolling' },
-      { x: 2800, y: 0, type: 'normal' }
+      { x: 1600, y: 1800, type: 'patrolling' },
+      { x: 2200, y: 1500, type: 'patrolling' },
+      { x: 2600, y: 1400, type: 'patrolling' },
+      { x: 2750, y: 1300, type: 'patrolling' },
+      { x: 2850, y: 1100, type: 'patrolling' },
+      { x: 3650, y: 1450, type: 'patrolling' },
+
+      { x: 4403, y: 1570, type: 'patrolling' },
+      { x: 5111, y: 1602, type: 'patrolling' },
+      { x: 6303, y: 1122, type: 'patrolling' },
+      { x: 7134, y: 1058, type: 'patrolling' },
+      { x: 7134, y: 1058, type: 'patrolling' },
+      { x: 8520, y: 706, type: 'patrolling' }
+
+
+
     ];
     
     // Posiciones de enemigos tipo 2
     const enemy2Positions = [
-      { x: 650, y: 790, type: 'normal' }
+      { x: 650, y: 500, type: 'normal' },
+      { x: 3200, y: 1150, type: 'patrolling' },
+      { x: 3650, y: 1250, type: 'patrolling' },
+      { x: 3400, y: 2000, type: 'normal' },
+      { x: 3400, y: 2000, type: 'normal' },
+
+      { x: 4403, y: 1570, type: 'patrolling' },
+      { x: 5111, y: 1602, type: 'patrolling' },
+      { x: 5628, y: 1250, type: 'patrolling' },
+      { x: 6303, y: 1122, type: 'patrolling' },
+
+
+      //{ x: 6461, y: 930, type: 'patrolling' },    //ESTATICO
+      //{ x: 6151, y: 930, type: 'patrolling' }   //ESTATICO
+
+      { x: 7134, y: 1058, type: 'patrolling' },
+      { x: 7134, y: 1058, type: 'patrolling' },
+      { x: 7734, y: 962, type: 'patrolling' }
+
+
     ];
     
     // Crear enemigos tipo 2

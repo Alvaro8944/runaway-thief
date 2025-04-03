@@ -23,7 +23,7 @@ export default class Level extends Phaser.Scene {
     
     // Crear jugador
     this.player = new Player(this, 0, 0);
-    this.player.setPosition(3200, 1400); // Posición inicial
+    this.player.setPosition(100, 1700); // Posición inicial
     
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)
     this.createGameObjects();
@@ -173,7 +173,7 @@ export default class Level extends Phaser.Scene {
     
     // Posiciones de enemigos tipo 2
     const enemy2Positions = [
-      { x: 650, y: 500, type: 'normal' },
+      { x: 700, y: 1750, type: 'normal' },
       { x: 3200, y: 1150, type: 'patrolling' },
       { x: 3650, y: 1250, type: 'patrolling' },
       { x: 3400, y: 2000, type: 'normal' },

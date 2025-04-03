@@ -551,9 +551,8 @@ this.isRecharging = false; // Indica si está recargando
     
     this.isReloading = true;
     this.reloadStartTime = this.scene.time.now;
-    
     // Reproducir sonido de inicio de recarga
-    this.scene.sound.play('escaleras', { volume: 0.3 });
+    //this.scene.sound.play('escaleras', { volume: 0.3 });
   }
 
   shoot() {

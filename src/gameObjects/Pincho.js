@@ -29,7 +29,7 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
     }
     
     // Configurar el cuerpo físico
-    this.body.setSize(24, 12); // Ajustar el hitbox para que sea más preciso
+    this.body.setSize(24, 20); // Ajustar el hitbox para que sea más preciso
     this.body.setOffset(4, 16); // Ajustar el offset para alinear con el sprite
     this.body.setImmovable(true);
     this.body.allowGravity = false;

@@ -74,7 +74,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // ===== Atributos de movimiento =====
     this.normalSpeed = PLAYER_CONFIG.NORMAL_SPEED;
-    this.parachuteSpeed = PLAYER_CONFIG.PARACHUTE_SPEED;
+    this.floatingSpeed = PLAYER_CONFIG.PARACHUTE_SPEED;
     this.speed = this.normalSpeed;
     this.jumpSpeed = PLAYER_CONFIG.JUMP_SPEED;
     this.climbSpeed = PLAYER_CONFIG.CLIMB_SPEED;
@@ -97,7 +97,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.bulletSpeed = PLAYER_CONFIG.BULLET_SPEED;
     
     // ===== Atributos de estado =====
-    this.hasParachute = false;
+    this.hasFloatingObject = false;
     this.resetearAgacharse = false;
     this.crawlTime = 0;
     this.restarcrawl = 0;
@@ -142,6 +142,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Paracaídas
     this.parachute = scene.add.sprite(this.x, this.y, 'parachute').setOrigin(0.57, 1.1);
     this.parachute.setDepth(this.depth - 3);
+
+        // Jetpack
+        this.jetpack = scene.add.sprite(this.x, this.y, 'jetpack').setOrigin(0.55, 0.3);
+        this.jetpack.setDepth(this.depth - 3);
+
+
+
+        // Variables para el tiempo de uso y recarga
+this.floatingEnergy = 400; // Máxima energía
+this.floatingEnergyMax = 400;
+this.floatingEnergyDrainRate = 1; // Cuánto se gasta por frame
+this.floatingEnergyRechargeRate = 1; // Cuánto se recarga por frame
+this.isRecharging = false; // Indica si está recargando
+
 
     // ===== Inicialización =====
     // Iniciar con la animación idle
@@ -278,13 +292,31 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     
     // ===== LÓGICA DEL PARACAÍDAS =====
     // Activar/desactivar paracaídas según los controles
-    this.hasParachute = (this.scene.keys.up.isDown || (this.scene.keys.down.isDown && !this.body.onFloor()));
-    this.parachute.setVisible(this.hasParachute);
-     
-    if (this.hasParachute) {
+
+    this.parachuteActivated = (this.scene.keys.down.isDown && !this.body.onFloor());
+    this.jetpackActivated = this.scene.keys.up.isDown;
+
+    this.hasFloatingObject = ( (this.jetpackActivated || this.parachuteActivated ) && !this.isClimbing && this.floatingEnergy > 0);
+    this.parachute.setVisible(this.hasFloatingObject && this.parachuteActivated);
+    this.jetpack.setVisible(this.hasFloatingObject && this.jetpackActivated);
+    
+
+    if (this.hasFloatingObject) {
       // Ajustar velocidad cuando se usa el paracaídas
-      this.speed = this.parachuteSpeed;
-      this.parachute.setPosition(this.x, this.y);
+      this.speed = this.floatingSpeed;
+
+      this.floatingEnergy -= this.floatingEnergyDrainRate;
+        this.floatingEnergy = Math.max(0, this.floatingEnergy);
+        this.isRecharging = false; // Mientras esté en el aire, no recarga
+
+
+      if (this.parachuteActivated)this.parachute.setPosition(this.x, this.y);
+      if(this.jetpackActivated) {
+        
+        this.jetpack.setPosition(this.x, this.y);
+        this.createJetpackEffect()
+      }
+
 
       // Control vertical con paracaídas
       if (this.scene.keys.down.isDown && !this.body.onFloor()) {
@@ -298,13 +330,28 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       // Restaurar velocidad normal
       this.speed = this.normalSpeed;
     }
+
+
+     // Si toca el suelo, empieza la recarga
+     if (this.body.onFloor()) {
+      this.isRecharging = true;
+     }
+
+     // Si está en el suelo, recargar energía
+    if (this.isRecharging) {
+      this.floatingEnergy += this.floatingEnergyRechargeRate;
+      this.floatingEnergy = Math.min(this.floatingEnergyMax, this.floatingEnergy);
+    }
+
+
     
     // Determinar las animaciones según el estado
-    const runAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'run_shoot' : 'run');
-    const idleAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'idle_shoot' : 'idle');
-    const jumpAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
-    const idleJumpAnim = this.hasParachute ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
+    const runAnim = this.hasFloatingObject ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'run_shoot' : 'run');
+    const idleAnim = this.hasFloatingObject ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'idle_shoot' : 'idle');
+    const jumpAnim = this.hasFloatingObject ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
+    const idleJumpAnim = this.hasFloatingObject ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
     
+
     // Agregar tecla R para recargar manualmente
     const keyR = this.scene.input.keyboard.addKey('R');
     if (Phaser.Input.Keyboard.JustDown(keyR) && !this.isReloading && this.ammo < this.maxAmmo && this.hasWeapon) {
@@ -461,6 +508,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Actualizar animaciones en el aire
     if (!this.body.onFloor() && this.currentJumps !== 2) {
+      
       const anim = this.body.velocity.x !== 0 ? jumpAnim : idleJumpAnim;
       if (!this.anims.isPlaying || this.anims.currentAnim.key !== anim) {
         this.play(anim, true);
@@ -484,7 +532,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const fallDistance = Math.abs(this.highestY - this.y); // Diferencia real de caída
         if (this.y > this.highestY && 
             fallDistance >= this.fatalFallHeight && 
-            Math.abs(this.body.velocity.y) > this.parachuteSpeed) {
+            Math.abs(this.body.velocity.y) > this.floatingSpeed) {
           this.health = 0;
           this.die();
         }
@@ -552,6 +600,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Reproducir sonido de disparo
     this.scene.sound.play('disparo');
   }
+
+
+
+  createJetpackEffect() {
+    this.doubleJumpEmitter.setPosition(this.x, this.y + 50);
+    this.doubleJumpEmitter.setAngle(90); // Apunta hacia abajo
+    this.doubleJumpEmitter.explode(2);
+  }
+  
+  
+  
+
+  
   
   createShootEffect(angle) {
     const cannonOffset = 125;
@@ -594,7 +655,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const maxAngle = Math.PI / 2;
     angle = Phaser.Math.Clamp(angle, minAngle, maxAngle);
     
-    const shoulderOffsetX = -5;
+    const shoulderOffsetX = 0;
     const shoulderOffsetY = 1.5;
     const shoulderX = this.x + shoulderOffsetX * (this.flipX ? -1 : 1);
     const shoulderY = this.y + shoulderOffsetY;

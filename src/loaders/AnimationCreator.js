@@ -242,4 +242,8 @@ export function createWeaponAnimations(scene) {
     frames: scene.anims.generateFrameNumbers('effect', { start: 0, end: 5 }),
     frameRate: 10
   });
+
+
+
+
 }

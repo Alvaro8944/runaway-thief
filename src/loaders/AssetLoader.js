@@ -36,12 +36,16 @@ import weapon from '../../assets/Guns/4_1.png';
 //PARACHUTE
 import parachute from '../../assets/Objects/parachute.png';
 
+//JETPACK
+import jetpack from '../../assets/Objects/jetpack.png';
 
 //BULLET
 import bullet from '../../assets/Bullets/5.png';
 
 //SHOOT EFFECT
 import effect from '../../assets/Shoot_effects/9_1.png';
+
+
 
 // TILEMAP
 import Tileset from '../../assets/tiled/Tileset.png';
@@ -185,6 +189,7 @@ export function loadWeaponSprites(scene) {
     frameWidth: 15, 
     frameHeight: 4 
   });
+  
   scene.load.spritesheet('effect', effect, { 
     frameWidth: 288, 
     frameHeight: 48 
@@ -200,6 +205,13 @@ export function loadObjectSprites(scene) {
     frameWidth: 60, 
     frameHeight: 38 
   });
+
+
+  scene.load.spritesheet('jetpack', jetpack, { 
+    frameWidth: 40, 
+    frameHeight: 40 
+  });
+
   scene.load.image('ladder2', ladder);
   scene.load.image('pichos_arriba', pichos_arriba);
   scene.load.image('pichos_abajo', pichos_abajo);

@@ -20,7 +20,7 @@ const PLAYER_CONFIG = {
   CLIMB_SPEED: 100,
   
   // Salud y daño
-  MAX_HEALTH: 100,
+  MAX_HEALTH: 150,
   DAMAGE: 20,
   
   // Arma y munición

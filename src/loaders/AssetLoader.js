@@ -56,6 +56,8 @@ import Nivel3 from '../../assets/tiled/Nivel3.json';
 import ladder from '../../assets/tiled/Objects/Resized/escalera.png';
 import pichos_arriba from '../../assets/tiled/Objects/Resized/pinchos_grandes_arriba.png';
 import pichos_abajo from '../../assets/tiled/Objects/Resized/pinchos_grandes_abajo.png';
+import pichos_izquierda from '../../assets/tiled/Objects/Resized/pinchos_grandes_izquierda.png';
+import pichos_derecha from '../../assets/tiled/Objects/Resized/pinchos_grandes_derecha.png';
 import bola_grande from '../../assets/tiled/Objects/Resized/bola_grande.png';
 import diamante_azul from '../../assets/tiled/Objects/Resized/diamante_azul.png';
 
@@ -215,6 +217,8 @@ export function loadObjectSprites(scene) {
   scene.load.image('ladder2', ladder);
   scene.load.image('pichos_arriba', pichos_arriba);
   scene.load.image('pichos_abajo', pichos_abajo);
+  scene.load.image('pichos_izquierda', pichos_izquierda);
+  scene.load.image('pichos_derecha', pichos_derecha);
   scene.load.image('bola_grande', bola_grande);
   scene.load.image('diamante', diamante_azul);
 }

@@ -164,7 +164,6 @@ export default class Level extends Phaser.Scene {
       { x: 5111, y: 1602, type: 'patrolling' },
       { x: 6303, y: 1122, type: 'patrolling' },
       { x: 7134, y: 1058, type: 'patrolling' },
-      { x: 7134, y: 1058, type: 'patrolling' },
       { x: 8520, y: 706, type: 'patrolling' }
 
 
@@ -177,7 +176,7 @@ export default class Level extends Phaser.Scene {
       { x: 3200, y: 1150, type: 'patrolling' },
       { x: 3650, y: 1250, type: 'patrolling' },
       { x: 3400, y: 2000, type: 'normal' },
-      { x: 3400, y: 2000, type: 'normal' },
+      { x: 3500, y: 2000, type: 'normal' },
 
       { x: 4403, y: 1570, type: 'patrolling' },
       { x: 5111, y: 1602, type: 'patrolling' },

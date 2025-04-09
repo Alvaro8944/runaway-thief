@@ -112,6 +112,11 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
             textureToUse = 'pichos_arriba';
           } else if (pincho.gid === 114 || pincho.gid === 83) {
             textureToUse = 'pichos_abajo';
+          }else if (pincho.gid === 115){
+            console.log("IZQUIERDA")
+            textureToUse = 'pichos_izquierda';
+          }else if (pincho.gid === 97){
+            textureToUse = 'pichos_derecha';
           }
           
           // Buscar propiedad damage en caso de que exista

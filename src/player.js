@@ -86,7 +86,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.damage = PLAYER_CONFIG.DAMAGE;
     
     // ===== Atributos de arma y munición =====
-    this.hasWeapon = false;
+    this.hasWeapon = true;
     this.ammo = PLAYER_CONFIG.MAX_AMMO;
     this.maxAmmo = PLAYER_CONFIG.MAX_AMMO;
     this.lastShotTime = 0;
@@ -151,8 +151,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
 
         // Variables para el tiempo de uso y recarga
-this.floatingEnergy = 200; // Máxima energía
-this.floatingEnergyMax = 200;
+this.floatingEnergy = 70; // Máxima energía
+this.floatingEnergyMax = 70;
 this.floatingEnergyDrainRate = 1; // Cuánto se gasta por frame
 this.floatingEnergyRechargeRate = 1; // Cuánto se recarga por frame
 this.isRecharging = false; // Indica si está recargando

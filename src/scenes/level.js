@@ -153,7 +153,6 @@ export default class Level extends Phaser.Scene {
   createEnemies() {
     // Posiciones de enemigos tipo 1
     const enemyPositions = [
-      { x: 1600, y: 1800, type: 'patrolling' },
       { x: 2200, y: 1500, type: 'patrolling' },
       { x: 2600, y: 1400, type: 'patrolling' },
       { x: 2750, y: 1300, type: 'patrolling' },

@@ -60,9 +60,9 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
     
     // Aplicar tinte según nivel de daño para dar feedback visual
     if (this.damage > 30) {
-      this.setTint(0xff0000); // Rojo para los muy peligrosos
+      //this.setTint(0xff0000); // Rojo para los muy peligrosos
     } else if (this.damage > 20) {
-      this.setTint(0xff6600); // Naranja para peligrosidad media-alta
+      //this.setTint(0xff6600); // Naranja para peligrosidad media-alta
     }
   }
   

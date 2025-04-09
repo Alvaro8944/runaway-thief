@@ -41,7 +41,7 @@ const PLAYER_CONFIG = {
   MAX_JUMPS: 2,
   
   // Agacharse
-  MAX_CRAWL_TIME: 90,
+  MAX_CRAWL_TIME: 80,
   CRAWL_HITBOX_HEIGHT: 28,
   CRAWL_HITBOX_OFFSET_Y: 20,
   
@@ -122,6 +122,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.isClimbing = false;
     this.currentLadder = null;
     this.isClimbingCentered = false;
+    this.movimiento = false;
     this.lastClimbSoundTime = 0;
     this.climbSoundDelay = PLAYER_CONFIG.CLIMB_SOUND_DELAY;
 
@@ -155,7 +156,7 @@ this.floatingEnergyMax = 200;
 this.floatingEnergyDrainRate = 1; // Cuánto se gasta por frame
 this.floatingEnergyRechargeRate = 1; // Cuánto se recarga por frame
 this.isRecharging = false; // Indica si está recargando
-
+this.bloquearmovimiento = false;
 
     // ===== Inicialización =====
     // Iniciar con la animación idle
@@ -268,6 +269,7 @@ this.isRecharging = false; // Indica si está recargando
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
+    this.movimiento = false;
 
     console.log(this.x + " "+  this.y);
     if (this.state === PLAYER_STATE.DEAD) return;
@@ -295,8 +297,8 @@ this.isRecharging = false; // Indica si está recargando
     // ===== LÓGICA DEL PARACAÍDAS =====
     // Activar/desactivar paracaídas según los controles
 
-    this.parachuteActivated = (this.scene.keys.down.isDown && !this.body.onFloor());
-    this.jetpackActivated = this.scene.keys.up.isDown;
+    this.parachuteActivated = (this.scene.keys.down.isDown && !this.body.onFloor() && !this.jetpackActivated);
+    this.jetpackActivated = this.scene.keys.up.isDown && !this.parachuteActivated;
 
     this.hasFloatingObject = ( (this.jetpackActivated || this.parachuteActivated ) && !this.isClimbing && this.floatingEnergy > 0);
     this.parachute.setVisible(this.hasFloatingObject && this.parachuteActivated);
@@ -304,14 +306,15 @@ this.isRecharging = false; // Indica si está recargando
     
 
     if (this.hasFloatingObject) {
+
       // Ajustar velocidad cuando se usa el paracaídas
       if(this.parachuteActivated) this.speed = this.floatingSpeed;
-      else if(this.jetpackActivated) this.speed = this.floatingSpeed*3;
 
-      this.floatingEnergy -= this.floatingEnergyDrainRate;
-        this.floatingEnergy = Math.max(0, this.floatingEnergy);
+      else if(this.jetpackActivated) {
+        
+        this.speed = this.floatingSpeed*3;
         this.isRecharging = false; // Mientras esté en el aire, no recarga
-
+      }
 
       if (this.parachuteActivated)this.parachute.setPosition(this.x, this.y);
       if(this.jetpackActivated) {
@@ -322,10 +325,10 @@ this.isRecharging = false; // Indica si está recargando
 
 
       // Control vertical con paracaídas
-      if (this.scene.keys.down.isDown && !this.body.onFloor()) {
-        this.setVelocityY(this.speed); // Baja más rápido
-      } else if (this.scene.keys.up.isDown) {
-        this.setVelocityY(-this.speed); // Sube lentamente
+      if (this.parachuteActivated) {
+        this.setVelocityY(this.speed); 
+      } else if (this.jetpackActivated) {
+        this.setVelocityY(-this.speed); 
       } else {
         this.setVelocityY(0); // Mantiene posición cuando no se pulsa nada
       }
@@ -340,12 +343,20 @@ this.isRecharging = false; // Indica si está recargando
       this.isRecharging = true;
      }
 
+
      // Si está en el suelo, recargar energía
     if (this.isRecharging) {
       this.floatingEnergy += this.floatingEnergyRechargeRate;
       this.floatingEnergy = Math.min(this.floatingEnergyMax, this.floatingEnergy);
     }
+    else{
 
+     if(!this.parachuteActivated) {
+      this.floatingEnergy -= this.floatingEnergyDrainRate;
+      this.floatingEnergy = Math.max(0, this.floatingEnergy);
+     }
+
+    }
 
     
     // Determinar las animaciones según el estado
@@ -438,13 +449,18 @@ this.isRecharging = false; // Indica si está recargando
     this.wasOnFloor = onFloorNow;
 
     // Lógica de movimiento horizontal
-    if (this.scene.keys.left.isDown) {
+    if (this.scene.keys.left.isDown && !this.bloquearmovimiento) {
+
+      this.movimiento = true;
       this.setVelocityX(-this.speed);
       if (this.body.onFloor()) {
         this.anims.play(runAnim, true);
       }
       this.setFlipX(true);
-    } else if (this.scene.keys.right.isDown) {
+
+    } else if (this.scene.keys.right.isDown && !this.bloquearmovimiento) {
+
+      this.movimiento = true;
       this.setVelocityX(this.speed);
       if (this.body.onFloor()) {
         this.anims.play(runAnim, true);
@@ -479,6 +495,7 @@ this.isRecharging = false; // Indica si está recargando
 
     // Lógica para agacharse
     if (this.scene.keys.down.isDown && this.crawlTime <= this.maxCrawlTime && this.body.onFloor()) {
+
       this.resetearAgacharse = true;
 
       if (this.hasWeapon) {
@@ -492,16 +509,27 @@ this.isRecharging = false; // Indica si está recargando
       }
 
       this.crawlTime++;
+
     } else {
+
       if (this.resetearAgacharse) {
+
         this.setSize(PLAYER_CONFIG.HITBOX_WIDTH, PLAYER_CONFIG.HITBOX_HEIGHT);
         this.setOffset(PLAYER_CONFIG.HITBOX_OFFSET_X, PLAYER_CONFIG.HITBOX_OFFSET_Y);
         this.resetearAgacharse = false;
+        this.bloquearmovimiento = false;
       }
+
     }
 
+
+    if(this.resetearAgacharse && !this.movimiento){
+      this.bloquearmovimiento = true;
+    }
+
+
     // Control de tiempo para el agacharse
-    if (this.crawlTime >= this.maxCrawlTime) {
+    if (this.crawlTime >= this.maxCrawlTime || !(this.scene.keys.down.isDown  && this.body.onFloor())) {
       this.restarcrawl++;
       if (this.restarcrawl >= this.maxCrawlTime) {
         this.crawlTime = 0;
@@ -535,7 +563,8 @@ this.isRecharging = false; // Indica si está recargando
         const fallDistance = Math.abs(this.highestY - this.y); // Diferencia real de caída
         if (this.y > this.highestY && 
             fallDistance >= this.fatalFallHeight && 
-            Math.abs(this.body.velocity.y) > this.floatingSpeed) {
+            Math.abs(this.body.velocity.y) > this.floatingSpeed
+          && !this.jetpackActivated && !this.parachuteActivated) {
           this.health = 0;
           this.die();
         }

@@ -96,6 +96,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.reloadStartTime = 0;
     this.bulletSpeed = PLAYER_CONFIG.BULLET_SPEED;
     
+
+    // ====COSAS DEL ESCUDO=====
+    this.hasEscudo = false;
+   
+
+    // ====TENER OBJETO EN GENERAL=====
+    this.hasObject = this.hasWeapon || this.hasEscudo;
+
     // ===== Atributos de estado =====
     this.hasFloatingObject = false;
     this.resetearAgacharse = false;
@@ -138,7 +146,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.45, 0.5);
     this.hand.setDepth(this.depth - 1);
     this.weapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.3, 0.5);
+    this.escudo = scene.physics.add.sprite(this.x, this.y, 'escudo').setOrigin(1, 0.5);
+    this.escudo.body.setAllowGravity(false);
+    this.escudo.body.setImmovable(true); 
+    this.escudo.setSize(20, 30); 
+    this.escudo.body.setOffset(25, 0);
+    this.escudo.body.setEnable(this.hasEscudo);
+
     this.weapon.setDepth(this.hand.depth - 1);
+    this.escudo.setDepth(this.hand.depth - 1);
+    this.escudo.setVisible(this.hasEscudo); 
 
     // Paracaídas
     this.parachute = scene.add.sprite(this.x, this.y, 'parachute').setOrigin(0.57, 1.1);
@@ -160,7 +177,7 @@ this.bloquearmovimiento = false;
 
     // ===== Inicialización =====
     // Iniciar con la animación idle
-    const initialAnim = this.hasWeapon ? 'idle_shoot' : 'idle';
+    const initialAnim = this.hasObject ? 'idle_shoot' : 'idle';
     this.play(initialAnim);
 
     // Crear el emisor de partículas para el doble salto
@@ -360,10 +377,10 @@ this.bloquearmovimiento = false;
 
     
     // Determinar las animaciones según el estado
-    const runAnim = this.hasFloatingObject ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'run_shoot' : 'run');
-    const idleAnim = this.hasFloatingObject ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'idle_shoot' : 'idle');
-    const jumpAnim = this.hasFloatingObject ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
-    const idleJumpAnim = this.hasFloatingObject ? (this.hasWeapon ? 'idle_shoot' : 'idle') : (this.hasWeapon ? 'jump_shoot' : 'jump');
+    const runAnim = this.hasFloatingObject ? (this.hasObject ? 'idle_shoot' : 'idle') : (this.hasObject ? 'run_shoot' : 'run');
+    const idleAnim = this.hasFloatingObject ? (this.hasObject ? 'idle_shoot' : 'idle') : (this.hasObject ? 'idle_shoot' : 'idle');
+    const jumpAnim = this.hasFloatingObject ? (this.hasObject ? 'idle_shoot' : 'idle') : (this.hasObject ? 'jump_shoot' : 'jump');
+    const idleJumpAnim = this.hasFloatingObject ? (this.hasObject ? 'idle_shoot' : 'idle') : (this.hasObject ? 'jump_shoot' : 'jump');
     
 
     // Agregar tecla R para recargar manualmente
@@ -372,12 +389,30 @@ this.bloquearmovimiento = false;
       this.reload();
     }
 
-    // Cambiar arma
-    if (Phaser.Input.Keyboard.JustDown(this.scene.keys.cambiarWeapon)) {
-      this.hasWeapon = !this.hasWeapon;
+    // SACAR arma
+    if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArma)) {
+      this.hasWeapon = true;
       this.weapon.setVisible(this.hasWeapon);   
       this.hand.setVisible(this.hasWeapon);   
+
+      this.hasEscudo = false;
+      this.escudo.setVisible(this.hasEscudo); 
+      this.escudo.body.setEnable(this.hasEscudo);
+
     }
+
+    // SACAR escudo
+    if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarEscudo)) {
+      this.hasEscudo = true;
+      this.escudo.setVisible(this.hasEscudo);   
+      this.hand.setVisible(this.hasEscudo); 
+      this.escudo.body.setEnable(this.hasEscudo);
+
+      this.hasWeapon = false;
+      this.weapon.setVisible(this.hasWeapon); 
+
+    }
+
 
     // Lógica de escalada
     if (this.canClimb) {
@@ -480,7 +515,7 @@ this.bloquearmovimiento = false;
       this.setVelocityY(this.jumpSpeed);
       
       this.jump_sound();
-      if (this.currentJumps === 2 && !this.hasWeapon) {
+      if (this.currentJumps === 2 && !this.hasObject) {
         // Solo en el segundo salto cambiamos al sprite de doble salto
         this.play('doublejump', true);
         // Emitir partículas
@@ -498,7 +533,7 @@ this.bloquearmovimiento = false;
 
       this.resetearAgacharse = true;
 
-      if (this.hasWeapon) {
+      if (this.hasObject) {
         this.anims.play("sit_shoot", true);
         this.body.setSize(PLAYER_CONFIG.HITBOX_WIDTH, PLAYER_CONFIG.CRAWL_HITBOX_HEIGHT);
         this.body.offset.y = PLAYER_CONFIG.CRAWL_HITBOX_OFFSET_Y;
@@ -546,7 +581,7 @@ this.bloquearmovimiento = false;
       }
     }
 
-    if (this.hasWeapon) {
+    if (this.hasObject) {
       this.updateHand();
     }
     
@@ -693,18 +728,32 @@ this.bloquearmovimiento = false;
     
     this.hand.setPosition(shoulderX, shoulderY);
     this.hand.setRotation(angle);
-    this.updateWeapon();
+    this.updateObject();
     this.ajustarDireccion();
   }
 
-  updateWeapon() {
+  updateObject() {
+    if(this.hasWeapon){
     this.weapon.setPosition(this.hand.x, this.hand.y);
     this.weapon.setRotation(this.hand.rotation);
+    }
+    if(this.hasEscudo){
+    this.escudo.setPosition(this.hand.x, this.hand.y);
+    this.escudo.setRotation(this.hand.rotation);
+
+    
+
+    this.escudo.body.reset(this.hand.x, this.hand.y);
+    }
   }
 
   ajustarDireccion() {
+
     this.hand.setScale(!this.flipX ? -1 : 1, 1);
-    this.weapon.setScale(!this.flipX ? -1 : 1, 1);
+     if(this.hasWeapon) this.weapon.setScale(!this.flipX ? -1 : 1, 1);
+     if(this.hasEscudo) this.escudo.setScale(!this.flipX ? -1 : 1, 1);
+
+     this.escudo.body.reset(this.hand.x, this.hand.y);
   }
 
   // === MÉTODOS DE DAÑO Y SALUD ===

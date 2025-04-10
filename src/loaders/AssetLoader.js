@@ -45,6 +45,9 @@ import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
 //WEAPON
 import weapon from '../../assets/Guns/4_1.png';
 
+//ESCUDO
+import escudo from '../../assets/Objects/escudo.png';
+
 //PARACHUTE
 import parachute from '../../assets/Objects/parachute.png';
 
@@ -220,14 +223,23 @@ export function loadEnemySprites(scene) {
  * @param {Phaser.Scene} scene - La escena donde se cargarán los assets
  */
 export function loadWeaponSprites(scene) {
+
   scene.load.spritesheet('hand3', hand3, { 
     frameWidth: 32, 
     frameHeight: 32 
   });
+
   scene.load.spritesheet('weapon', weapon, { 
     frameWidth: 29, 
     frameHeight: 11 
   });
+
+
+  scene.load.spritesheet('escudo', escudo, { 
+    frameWidth: 30, 
+    frameHeight: 30 
+  });
+
   scene.load.spritesheet('bullet', bullet, { 
     frameWidth: 15, 
     frameHeight: 4 

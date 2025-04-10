@@ -214,7 +214,7 @@ export class PatrollingEnemy3 extends Enemy3 {
     const currentTime = this.scene.time.now;
   
     // --- GESTIÓN DE SPRINT ---
-    if (!this.isSprinting && currentTime - (this.lastSprintTime || 0) > 3000) {
+    if (!this.isSprinting && currentTime - (this.lastSprintTime || 0) > 6000) {
       this.isSprinting = true;
       this.sprintEndTime = currentTime + 3000; // Sprint dura 1 segundo
       this.speed *= 4; // *4 velocidad

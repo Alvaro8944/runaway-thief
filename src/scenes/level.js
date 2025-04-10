@@ -430,6 +430,20 @@ export default class Level extends Phaser.Scene {
     
     // Colisión jugador-balas enemigas
     if (this.enemyBullets) {
+
+
+      this.physics.add.overlap(
+        this.player.escudo,
+        this.enemyBullets,
+        (escudo, enemyBullet) => {
+          if (!enemyBullet) return;
+          enemyBullet.destroy(); 
+        },
+        null,
+        this
+      );
+
+
       this.physics.add.overlap(
         this.player,
         this.enemyBullets,
@@ -505,7 +519,10 @@ export default class Level extends Phaser.Scene {
       down: Phaser.Input.Keyboard.KeyCodes.S,
       right: Phaser.Input.Keyboard.KeyCodes.D,
       jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
-      cambiarWeapon: Phaser.Input.Keyboard.KeyCodes.X
+      cambiarWeapon: Phaser.Input.Keyboard.KeyCodes.X,
+      sacarArma: Phaser.Input.Keyboard.KeyCodes.ONE,
+      sacarEscudo: Phaser.Input.Keyboard.KeyCodes.TWO
+
     });
   }
 

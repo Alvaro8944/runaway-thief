@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import Player from '../player.js';
-import { Enemy1, STATE, PatrollingEnemy } from '../enemy1.js';
-import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemy2.js';
+import { Enemy1, STATE, PatrollingEnemy } from '../enemys/enemy1.js';
+import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemys/enemy2.js';
+import { Enemy3, STATE3, PatrollingEnemy3 } from '../enemys/enemy3.js';
 import Pincho from '../gameObjects/Pincho.js';
 import Escalera from '../gameObjects/Escalera.js';
 import BolaGrande from '../gameObjects/BolaGrande.js';
@@ -165,8 +166,6 @@ export default class Level extends Phaser.Scene {
       { x: 7134, y: 1058, type: 'patrolling' },
       { x: 8520, y: 706, type: 'patrolling' }
 
-
-
     ];
     
     // Posiciones de enemigos tipo 2
@@ -192,14 +191,30 @@ export default class Level extends Phaser.Scene {
 
 
     ];
+
+
+     // Posiciones de enemigos tipo 3
+     const enemy3Positions = [
+      { x: 500, y: 1550, type: 'patrolling' },
+      { x: 600, y: 1500, type: 'patrolling' },
+      { x: 550, y: 1450, type: 'patrolling' }
+    ];
+
+
     
-    // Crear enemigos tipo 2
-    enemy2Positions.forEach(pos => this.createEnemy2(pos));
     
     // Crear enemigos tipo 1
     enemyPositions.forEach(pos => this.createEnemy1(pos));
+
+    // Crear enemigos tipo 2
+    enemy2Positions.forEach(pos => this.createEnemy2(pos));
+
+    // Crear enemigos tipo 3
+    enemy3Positions.forEach(pos => this.createEnemy3(pos));
+
   }
   
+
   createEnemy1(pos) {
     const enemy = pos.type === 'patrolling' 
       ? new PatrollingEnemy(this, pos.x, pos.y)
@@ -293,6 +308,60 @@ export default class Level extends Phaser.Scene {
       this
     );
   }
+
+
+
+  createEnemy3(pos) {
+    const enemy = pos.type === 'patrolling' 
+      ? new PatrollingEnemy3(this, pos.x, pos.y)
+      : new Enemy3(this, pos.x, pos.y);
+    
+    enemy.player = this.player;
+    enemy.map = this.map;
+    this.enemies.add(enemy);
+    
+    // Configurar colisiones
+    this.physics.add.collider(enemy, this.layerSuelo);
+    
+    // Colisión jugador-enemigo
+    this.physics.add.overlap(
+      this.player,
+      enemy,
+      (player, enemySprite) => {
+        if (!enemySprite || !player) return;
+        if (enemySprite.state !== STATE3.DEAD && 
+            enemySprite.state !== STATE3.HURT && 
+            !player.isInvulnerable) {
+          if (enemySprite.state === STATE3.ATTACKING && !enemySprite.attackDamageDealt) {
+            player.takeDamage(enemySprite.damage, enemySprite);
+            enemySprite.attackDamageDealt = true;
+          }
+        }
+      },
+      null,
+      this
+    );
+    
+    // Colisión bala-enemigo
+    this.physics.add.overlap(
+      enemy,
+      this.bullets,
+      (enemySprite, bullet) => {
+        if (!enemySprite || !bullet) return;
+        if (enemySprite.state !== STATE3.DEAD) {
+          enemySprite.takeDamage(bullet.damage);
+          bullet.destroy();
+        }
+      },
+      null,
+      this
+    );
+  }
+
+
+
+
+
   
   setupCollisions() {
     // Verificar que los objetos necesarios existan

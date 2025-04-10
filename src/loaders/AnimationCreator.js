@@ -6,6 +6,7 @@ export function createAllAnimations(scene) {
   createPlayerAnimations(scene);
   createEnemyAnimations(scene);
   createEnemy2Animations(scene);
+  createEnemy3Animations(scene);
   createWeaponAnimations(scene);
 }
 
@@ -164,9 +165,6 @@ export function createEnemy2Animations(scene) {
   });
 
 
-
-
-
   scene.anims.create({
     key: 'enemy2_attack',
     frames: scene.anims.generateFrameNumbers('enemy2_attack', { start: 0, end: 2 }),
@@ -190,9 +188,6 @@ export function createEnemy2Animations(scene) {
 
 
 
-
-
-  
   // Animación de recibir daño (hurt)
   scene.anims.create({
     key: 'enemy2_hurt',
@@ -209,6 +204,49 @@ export function createEnemy2Animations(scene) {
     repeat: 0
   });
 }
+
+
+export function createEnemy3Animations(scene) {
+  scene.anims.create({
+    key: 'enemy3_idle',
+    frames: scene.anims.generateFrameNumbers('enemy3_idle', { start: 0, end: 3 }),
+    frameRate: 10,
+    repeat: -1
+  });
+
+  scene.anims.create({
+    key: 'enemy3_walk',
+    frames: scene.anims.generateFrameNumbers('enemy3_walk', { start: 0, end: 3 }),
+    frameRate: 10,
+    repeat: -1
+  });
+
+
+  scene.anims.create({
+    key: 'enemy3_attack',
+    frames: scene.anims.generateFrameNumbers('enemy3_attack', { start: 0, end: 3 }),
+    frameRate: 10,
+    repeat: 0
+  });
+
+  // Animación de recibir daño (hurt)
+  scene.anims.create({
+    key: 'enemy3_hurt',
+    frames: scene.anims.generateFrameNumbers('enemy3_hurt', { start: 0, end: 1 }),
+    frameRate: 10,
+    repeat: 0
+  });
+  
+  // Animación de muerte
+  scene.anims.create({
+    key: 'enemy3_die',
+    frames: scene.anims.generateFrameNumbers('enemy3_die', { start: 0, end: 3 }),
+    frameRate: 10,
+    repeat: 0
+  });
+}
+
+
 
 /**
  * Crea las animaciones de armas y efectos

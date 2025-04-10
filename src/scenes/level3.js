@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import Player from '../player.js';
-import { Enemy1, STATE, PatrollingEnemy } from '../enemy1.js';
-import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemy2.js';
+import { Enemy1, STATE, PatrollingEnemy } from '../enemys/enemy1.js';
+import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemys/enemy2.js';
 
 const SPIKE_DAMAGE = 20;
 

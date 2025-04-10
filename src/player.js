@@ -151,8 +151,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
 
         // Variables para el tiempo de uso y recarga
-this.floatingEnergy = 70; // Máxima energía
-this.floatingEnergyMax = 70;
+this.floatingEnergy = 400; // Máxima energía
+this.floatingEnergyMax = 400;
 this.floatingEnergyDrainRate = 1; // Cuánto se gasta por frame
 this.floatingEnergyRechargeRate = 1; // Cuánto se recarga por frame
 this.isRecharging = false; // Indica si está recargando

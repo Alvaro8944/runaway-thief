@@ -27,6 +27,18 @@ import enemy2_hurt from '../../assets/Enemies/2/Hurt.png';
 import enemy2_attack from '../../assets/Enemies/2/Attack.png';
 import enemy2_die from '../../assets/Enemies/2/Death.png';
 
+
+
+//ENEMY 3
+import enemy3_idle from '../../assets/Enemies/5/Idle.png';
+import enemy3_walk from '../../assets/Enemies/5/Walk.png';
+import enemy3_hurt from '../../assets/Enemies/5/Hurt.png';
+import enemy3_attack from '../../assets/Enemies/5/Attack.png';
+import enemy3_die from '../../assets/Enemies/5/Death.png';
+
+
+
+
 //PLAYER SHOOT HAND
 import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
 
@@ -172,6 +184,35 @@ export function loadEnemySprites(scene) {
     frameWidth: 48,
     frameHeight: 48
   });
+
+
+
+
+  // ENEMY 3
+  scene.load.spritesheet('enemy3_idle', enemy3_idle, {
+    frameWidth: 48,
+    frameHeight: 48
+  });
+  scene.load.spritesheet('enemy3_walk', enemy3_walk, {
+    frameWidth: 48,
+    frameHeight: 48
+  });
+  scene.load.spritesheet('enemy3_hurt', enemy3_hurt, {
+    frameWidth: 48,
+    frameHeight: 48
+  });
+  scene.load.spritesheet('enemy3_attack', enemy3_attack, {
+    frameWidth: 48,
+    frameHeight: 48
+  });
+  scene.load.spritesheet('enemy3_die', enemy3_die, {
+    frameWidth: 48,
+    frameHeight: 48
+  });
+
+
+
+
 }
 
 /**

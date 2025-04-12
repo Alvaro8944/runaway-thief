@@ -146,11 +146,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.45, 0.5);
     this.hand.setDepth(this.depth - 1);
     this.weapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.3, 0.5);
-    this.escudo = scene.physics.add.sprite(this.x, this.y, 'escudo').setOrigin(1, 0.5);
-    this.escudo.body.setAllowGravity(false);
-    this.escudo.body.setImmovable(true); 
-    this.escudo.setSize(20, 30); 
-    this.escudo.body.setOffset(25, 0);
+    this.escudo = scene.physics.add.sprite(this.x, this.y, 'escudo').setOrigin(1, 0.5); 
+    this.escudo.setSize(20, 25); 
     this.escudo.body.setEnable(this.hasEscudo);
 
     this.weapon.setDepth(this.hand.depth - 1);
@@ -398,15 +395,19 @@ this.bloquearmovimiento = false;
       this.hasEscudo = false;
       this.escudo.setVisible(this.hasEscudo); 
       this.escudo.body.setEnable(this.hasEscudo);
+      this.escudo.body.reset();
+
 
     }
 
     // SACAR escudo
     if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarEscudo)) {
+      
       this.hasEscudo = true;
       this.escudo.setVisible(this.hasEscudo);   
       this.hand.setVisible(this.hasEscudo); 
       this.escudo.body.setEnable(this.hasEscudo);
+      this.escudo.body.reset();
 
       this.hasWeapon = false;
       this.weapon.setVisible(this.hasWeapon); 
@@ -491,7 +492,7 @@ this.bloquearmovimiento = false;
       if (this.body.onFloor()) {
         this.anims.play(runAnim, true);
       }
-      this.setFlipX(true);
+      //this.setFlipX(true);
 
     } else if (this.scene.keys.right.isDown && !this.bloquearmovimiento) {
 
@@ -500,7 +501,7 @@ this.bloquearmovimiento = false;
       if (this.body.onFloor()) {
         this.anims.play(runAnim, true);
       }
-      this.setFlipX(false);
+      //this.setFlipX(false);
     } else {
       this.setVelocityX(0);
       if (this.body.onFloor()) {
@@ -707,6 +708,9 @@ this.bloquearmovimiento = false;
     effect.once('animationcomplete', () => effect.destroy());
   }
 
+
+
+
   updateHand() {
     const pointer = this.scene.input.activePointer;
     const worldPointer = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
@@ -719,7 +723,19 @@ this.bloquearmovimiento = false;
     angle = Phaser.Math.Angle.Wrap(angle);
     const minAngle = -Math.PI / 2;
     const maxAngle = Math.PI / 2;
-    angle = Phaser.Math.Clamp(angle, minAngle, maxAngle);
+
+    if(!this.flipX){
+      if(angle > maxAngle || angle < minAngle ){
+        this.setFlipX(true);
+      }   
+      }
+      else{
+        if(angle > maxAngle || angle < minAngle ){
+          this.setFlipX(false);
+        }
+      }
+  
+
     
     const shoulderOffsetX = 0;
     const shoulderOffsetY = 1.5;
@@ -728,32 +744,73 @@ this.bloquearmovimiento = false;
     
     this.hand.setPosition(shoulderX, shoulderY);
     this.hand.setRotation(angle);
+
+
     this.updateObject();
     this.ajustarDireccion();
+
+
   }
+
+
+
+
+
+
+
 
   updateObject() {
     if(this.hasWeapon){
+
     this.weapon.setPosition(this.hand.x, this.hand.y);
     this.weapon.setRotation(this.hand.rotation);
+
     }
     if(this.hasEscudo){
-    this.escudo.setPosition(this.hand.x, this.hand.y);
-    this.escudo.setRotation(this.hand.rotation);
 
-    
+      this.escudo.setRotation(this.hand.rotation);
+ 
+ 
+        // Simulamos la "rotación" del hitbox calculando el offset inverso
+        let angle = this.hand.rotation;
+        let distancia; // La distancia desde el centro que quieras
+        let offsetX, offsetY;
+ 
+        if (!this.flipX) {
 
-    this.escudo.body.reset(this.hand.x, this.hand.y);
-    }
+          distancia = 10;
+
+          offsetX = Math.cos(angle + Math.PI ) * distancia + 33;
+          offsetY = -Math.sin(angle + Math.PI ) * distancia ;
+
+
+         } else {
+        
+          distancia = 10;
+
+         offsetX = Math.cos(angle + Math.PI ) * distancia + 15;
+         offsetY = Math.sin(angle + Math.PI ) * distancia ;
+
+        }
+
+
+ 
+        this.escudo.body.setOffset(offsetX, offsetY);
+ 
+ 
+     }
   }
 
   ajustarDireccion() {
 
     this.hand.setScale(!this.flipX ? -1 : 1, 1);
      if(this.hasWeapon) this.weapon.setScale(!this.flipX ? -1 : 1, 1);
-     if(this.hasEscudo) this.escudo.setScale(!this.flipX ? -1 : 1, 1);
+     if(this.hasEscudo) {
 
-     this.escudo.body.reset(this.hand.x, this.hand.y);
+      this.escudo.setScale(!this.flipX ? -1 : 1, 1);
+      this.escudo.body.reset(this.hand.x, this.hand.y);
+
+      }
   }
 
   // === MÉTODOS DE DAÑO Y SALUD ===

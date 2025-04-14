@@ -87,6 +87,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     
     // ===== Atributos de arma y munición =====
     this.hasWeapon = true;
+    this.hasWeapon1 = true;
+    this.hasWeapon2 = false;
     this.ammo = PLAYER_CONFIG.MAX_AMMO;
     this.maxAmmo = PLAYER_CONFIG.MAX_AMMO;
     this.lastShotTime = 0;
@@ -146,11 +148,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.45, 0.5);
     this.hand.setDepth(this.depth - 1);
     this.weapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.3, 0.5);
+    this.explosiveWeapon = scene.add.sprite(this.x, this.y, 'explosiveWeapon').setOrigin(1.3, 0.5);
     this.escudo = scene.physics.add.sprite(this.x, this.y, 'escudo').setOrigin(1, 0.5); 
     this.escudo.setSize(20, 25); 
     this.escudo.body.setEnable(this.hasEscudo);
 
     this.weapon.setDepth(this.hand.depth - 1);
+    this.explosiveWeapon.setDepth(this.hand.depth - 1);
     this.escudo.setDepth(this.hand.depth - 1);
     this.escudo.setVisible(this.hasEscudo); 
 
@@ -386,19 +390,40 @@ this.bloquearmovimiento = false;
       this.reload();
     }
 
-    // SACAR arma
-    if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArma)) {
+    // SACAR arma1
+    if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArmaOne)) {
       this.hasWeapon = true;
-      this.weapon.setVisible(this.hasWeapon);   
-      this.hand.setVisible(this.hasWeapon);   
+      this.hasWeapon1 = true;
+      this.weapon.setVisible(true);   
+      this.hand.setVisible(true);   
 
       this.hasEscudo = false;
       this.escudo.setVisible(this.hasEscudo); 
       this.escudo.body.setEnable(this.hasEscudo);
       this.escudo.body.reset();
 
+      this.hasWeapon2 = false;
+      this.explosiveWeapon.setVisible(false);
 
     }
+
+    // SACAR arma2
+    if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArmaTwo)) {
+      this.hasWeapon = true;
+      this.hasWeapon2 = true;
+      this.explosiveWeapon.setVisible(true);   
+      this.hand.setVisible(true);   
+
+      this.hasEscudo = false;
+      this.escudo.setVisible(this.hasEscudo); 
+      this.escudo.body.setEnable(this.hasEscudo);
+      this.escudo.body.reset();
+
+      this.hasWeapon1 = false;
+      this.weapon.setVisible(false);
+    }
+
+
 
     // SACAR escudo
     if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarEscudo)) {
@@ -410,7 +435,10 @@ this.bloquearmovimiento = false;
       this.escudo.body.reset();
 
       this.hasWeapon = false;
+      this.hasWeapon1 = false;
+      this.hasWeapon2 = false;
       this.weapon.setVisible(this.hasWeapon); 
+      this.explosiveWeapon.setVisible(this.hasWeapon); 
 
     }
 
@@ -621,6 +649,8 @@ this.bloquearmovimiento = false;
   }
 
   shoot() {
+
+
     // Si estamos recargando o no tenemos munición, no podemos disparar
     if (this.isReloading || this.ammo <= 0 || !this.hasWeapon) return;
     
@@ -639,18 +669,44 @@ this.bloquearmovimiento = false;
     }
    
     // Calcular ángulo de disparo
-    let angle = this.weapon.rotation;
+
+    let angle;
+
+    if(this.hasWeapon1) { angle = this.weapon.rotation;}
+    else if (this.hasWeapon2){ angle = this.explosiveWeapon.rotation;}
+
     if (this.flipX) {
       angle += Math.PI;
     }
     
-    // Calcular posición inicial de la bala
-    const bulletX = this.weapon.x + Math.cos(angle) * 20;
-    const bulletY = this.weapon.y + Math.sin(angle) * 20;
+
+
+
+    let bulletX = 0;
+    let bulletY = 0;
     
+    if(this.hasWeapon1){
+    // Calcular posición inicial de la bala
+      bulletX = this.weapon.x + Math.cos(angle) * 20;
+      bulletY = this.weapon.y + Math.sin(angle) * 20;
+    }
+    else if(this.hasWeapon2){
+        bulletX = this.explosiveWeapon.x + Math.cos(angle) * 20;
+        bulletY = this.explosiveWeapon.y + Math.sin(angle) * 20;
+    }
+
     // Crear la bala
-    const bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+    let bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+
+
+
+    if(this.hasWeapon1){
     bullet.setRotation(this.weapon.rotation);
+    }
+    else if(this.hasWeapon2){
+      bullet.setRotation(this.explosiveWeapon.rotation);
+    }
+    
     bullet.damage = this.damage;
   
     // Configurar velocidad de la bala
@@ -662,8 +718,9 @@ this.bloquearmovimiento = false;
     bullet.body.allowGravity = false;
   
     // Efecto de disparo
-    this.createShootEffect(angle);
-    
+    if(this.hasWeapon1) this.createShootEffect1(angle);
+    else if(this.hasWeapon2) this.createShootEffect2(angle);
+
     // Reproducir sonido de disparo
     this.scene.sound.play('disparo');
   }
@@ -681,13 +738,16 @@ this.bloquearmovimiento = false;
 
   
   
-  createShootEffect(angle) {
+  createShootEffect1(angle) {
+
     const cannonOffset = 125;
+
     const effect = this.scene.add.sprite(
       this.weapon.x + Math.cos(angle) * cannonOffset,
       this.weapon.y + Math.sin(angle) * cannonOffset,
       'effect'
     );
+
     effect.setRotation(this.flipX ? this.weapon.rotation + Math.PI : this.weapon.rotation);
     effect.setDepth(this.weapon.depth + 1);
     effect.play('effect');
@@ -709,6 +769,36 @@ this.bloquearmovimiento = false;
   }
 
 
+
+  createShootEffect2(angle) {
+
+    const cannonOffset = 125;
+
+    const effect = this.scene.add.sprite(
+      this.explosiveWeapon.x + Math.cos(angle) * cannonOffset,
+      this.explosiveWeapon.y + Math.sin(angle) * cannonOffset,
+      'effect'
+    );
+
+    effect.setRotation(this.flipX ? this.explosiveWeapon.rotation + Math.PI : this.explosiveWeapon.rotation);
+    effect.setDepth(this.explosiveWeapon.depth + 1);
+    effect.play('effect');
+    
+    this.scene.time.addEvent({
+      delay: 16,
+      callback: () => {
+        if (effect.anims.currentFrame) {
+          effect.setPosition(
+            this.explosiveWeapon.x + Math.cos(angle) * cannonOffset,
+            this.explosiveWeapon.y + Math.sin(angle) * cannonOffset
+          );
+        }
+      },
+      repeat: effect.anims.getTotalFrames()
+    });
+    
+    effect.once('animationcomplete', () => effect.destroy());
+  }
 
 
   updateHand() {
@@ -762,11 +852,18 @@ this.bloquearmovimiento = false;
   updateObject() {
     if(this.hasWeapon){
 
+      if(this.hasWeapon1){
     this.weapon.setPosition(this.hand.x, this.hand.y);
     this.weapon.setRotation(this.hand.rotation);
+      }
+      else if(this.hasWeapon2){
+        this.explosiveWeapon.setPosition(this.hand.x, this.hand.y);
+        this.explosiveWeapon.setRotation(this.hand.rotation);
+
+      }
 
     }
-    if(this.hasEscudo){
+    else if(this.hasEscudo){
 
       this.escudo.setRotation(this.hand.rotation);
  
@@ -804,8 +901,13 @@ this.bloquearmovimiento = false;
   ajustarDireccion() {
 
     this.hand.setScale(!this.flipX ? -1 : 1, 1);
-     if(this.hasWeapon) this.weapon.setScale(!this.flipX ? -1 : 1, 1);
-     if(this.hasEscudo) {
+     if(this.hasWeapon) {
+      
+      
+       if(this.hasWeapon1)this.weapon.setScale(!this.flipX ? -1 : 1, 1);
+       else if(this.hasWeapon2) this.explosiveWeapon.setScale(!this.flipX ? -1 : 1, 1);
+     }
+     else if(this.hasEscudo) {
 
       this.escudo.setScale(!this.flipX ? -1 : 1, 1);
       this.escudo.body.reset(this.hand.x, this.hand.y);

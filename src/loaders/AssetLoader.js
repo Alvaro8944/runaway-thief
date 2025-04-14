@@ -45,6 +45,9 @@ import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
 //WEAPON
 import weapon from '../../assets/Guns/4_1.png';
 
+//WEAPON
+import explosiveWeapon from '../../assets/Guns/3_1.png';
+
 //ESCUDO
 import escudo from '../../assets/Objects/escudo.png';
 
@@ -230,6 +233,11 @@ export function loadWeaponSprites(scene) {
   });
 
   scene.load.spritesheet('weapon', weapon, { 
+    frameWidth: 29, 
+    frameHeight: 11 
+  });
+
+  scene.load.spritesheet('explosiveWeapon', explosiveWeapon, { 
     frameWidth: 29, 
     frameHeight: 11 
   });

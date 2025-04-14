@@ -105,6 +105,13 @@ export default class Level extends Phaser.Scene {
       bounceX: 0,
       bounceY: 0
     });
+
+
+    this.areaBullets = this.physics.add.group({
+      allowGravity: false,
+      collideWorldBounds: false
+    });
+    
     
     // Grupo para balas enemigas
     this.enemyBullets = this.physics.add.group({
@@ -120,6 +127,15 @@ export default class Level extends Phaser.Scene {
         bullet.setSize(4, 4);
         bullet.setOffset(6, 0);
         bullet.lifespan = 1000; // 1 segundo
+        bullet.createTime = this.time.now;
+      }
+    };
+
+    this.areaBullets.createCallback = (bullet) => {
+      if (bullet) {
+        bullet.setSize(4, 4);
+        bullet.setOffset(6, 0);
+        bullet.lifespan = 5000; // vida máxima antes de autodestruirse si no llega
         bullet.createTime = this.time.now;
       }
     };
@@ -520,8 +536,10 @@ export default class Level extends Phaser.Scene {
       right: Phaser.Input.Keyboard.KeyCodes.D,
       jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
       cambiarWeapon: Phaser.Input.Keyboard.KeyCodes.X,
-      sacarArma: Phaser.Input.Keyboard.KeyCodes.ONE,
-      sacarEscudo: Phaser.Input.Keyboard.KeyCodes.TWO
+      sacarEscudo: Phaser.Input.Keyboard.KeyCodes.ONE,
+      sacarArmaOne: Phaser.Input.Keyboard.KeyCodes.TWO,
+      sacarArmaTwo: Phaser.Input.Keyboard.KeyCodes.THREE
+      
 
     });
   }

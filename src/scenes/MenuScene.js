@@ -40,7 +40,7 @@ export default class MenuScene extends Phaser.Scene {
 
     
 
-    Start.on('pointerdown',()=>this.scene.start('boot'));
+    Start.on('pointerdown',()=>this.scene.start('LevelSelector'));
     Jugar.on('pointerdown',()=>this.scene.start('HowToPlay'));
 
     }

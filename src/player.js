@@ -28,7 +28,8 @@ const PLAYER_CONFIG = {
   SHOT_COOLDOWN: 350,   // ms entre disparos
   RELOAD_TIME: 1500,     // ms para recargar
   BULLET_SPEED: 800,    // velocidad de las balas
-  
+ 
+
   // Colisiones y física
   BOUNCE: 0.1,
   HITBOX_WIDTH: 20,
@@ -97,7 +98,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.reloadTime = PLAYER_CONFIG.RELOAD_TIME;
     this.reloadStartTime = 0;
     this.bulletSpeed = PLAYER_CONFIG.BULLET_SPEED;
-    
+    this.explosiveBullets = [];
+
+
 
     // ====COSAS DEL ESCUDO=====
     this.hasEscudo = false;
@@ -238,11 +241,49 @@ this.bloquearmovimiento = false;
     this.updateUI();
   }
 
+
+
+  
+// Dentro de tu clase Player
+updateBullets() {
+  const speed = this.bulletSpeed; // velocidad que ya le diste con setVelocity
+
+  // Recorremos el array hacia atrás para poder hacer splice sin liarla
+  for (let i = this.explosiveBullets.length - 1; i >= 0; i--) {
+    const bullet = this.explosiveBullets[i];
+
+    // 1) Si ya no está activa, la quitamos
+    if (!bullet.active) {
+      this.scene.events.emit('bulletReachedTarget', bullet.x, bullet.y, bullet);
+      this.explosiveBullets.splice(i, 1);
+      continue;
+    }
+
+    // 2) Distancia al objetivo
+    const dx = bullet.targetX - bullet.x;
+    const dy = bullet.targetY - bullet.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist < 25) {
+      // llegó: emitimos y destruimos
+      this.scene.events.emit('bulletReachedTarget', bullet.x, bullet.y, bullet);
+      bullet.destroy();
+      this.explosiveBullets.splice(i, 1);
+    }
+    // sino → la dejamos en el array para la siguiente pasada
+  }
+}
+
+
+
+
+
+  
   // Actualizar todos los elementos de la interfaz
   updateUI() {
+
     // Actualizar barra de salud
-    this.healthBar.clear();
-    
+    this.healthBar.clear();   
     // Borde de la barra
     this.healthBar.lineStyle(2, 0x000000, 1);
     this.healthBar.strokeRect(0, 0, 150, 20);
@@ -282,18 +323,23 @@ this.bloquearmovimiento = false;
     this.scoreText.setText('Puntuación: ' + this.score);
   }
 
+
+
+
+
   // === MÉTODOS DE ACTUALIZACIÓN ===
-  
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
     this.movimiento = false;
-
     console.log(this.x + " "+  this.y);
     if (this.state === PLAYER_STATE.DEAD) return;
     
     // Actualizar UI en cada frame
     this.updateUI();
+
+    //Actualizar balas explosivas
+    this.updateBullets();
 
     // Comprobar si la recarga ha terminado
     if (this.isReloading && time - this.reloadStartTime >= this.reloadTime) {
@@ -684,21 +730,32 @@ this.bloquearmovimiento = false;
 
     let bulletX = 0;
     let bulletY = 0;
-    
+    let bullet;
+
     if(this.hasWeapon1){
     // Calcular posición inicial de la bala
       bulletX = this.weapon.x + Math.cos(angle) * 20;
       bulletY = this.weapon.y + Math.sin(angle) * 20;
+      bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+
     }
     else if(this.hasWeapon2){
         bulletX = this.explosiveWeapon.x + Math.cos(angle) * 20;
         bulletY = this.explosiveWeapon.y + Math.sin(angle) * 20;
+
+        const pointer = this.scene.input.activePointer;
+        const worldPointer = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+        bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+        if (bullet) {
+        bullet.targetX = worldPointer.x;
+        bullet.targetY = worldPointer.y;
+        }
+
+        // Meterla en la lista
+        this.explosiveBullets.push(bullet);
     }
 
-    // Crear la bala
-    let bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
-
-
+   
 
     if(this.hasWeapon1){
     bullet.setRotation(this.weapon.rotation);
@@ -707,6 +764,7 @@ this.bloquearmovimiento = false;
       bullet.setRotation(this.explosiveWeapon.rotation);
     }
     
+
     bullet.damage = this.damage;
   
     // Configurar velocidad de la bala

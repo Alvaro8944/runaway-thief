@@ -51,7 +51,7 @@ export default class Level extends Phaser.Scene {
         bullet.destroy();
   
         // 3) Aplica daño en área (sin animación)
-        this.damageArea(x, y, 50, 50);  // p.ej. radio=100, daño=50
+        this.damageArea(x, y, 50, 25);  // p.ej. radio=100, daño=50
       }
     );
 
@@ -71,7 +71,7 @@ export default class Level extends Phaser.Scene {
 damageArea(x, y, radius, damage) {
   // dibujar un círculo de debug
   const g = this.add.graphics({ x, y });
-  g.fillStyle(0xff6600, 0.5);
+  g.fillStyle(0xff3000, 0.5);
   g.fillCircle(0, 0, radius);
   this.time.delayedCall(200, () => g.destroy());
 

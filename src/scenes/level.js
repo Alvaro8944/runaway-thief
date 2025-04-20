@@ -42,51 +42,15 @@ export default class Level extends Phaser.Scene {
       callbackScope: this,
       loop: true
     });
-    
 
-
-    this.events.on('bulletReachedTarget',
-      (x, y, bullet) => {
-        // 2) Destruye la propia bala
-        bullet.destroy();
-  
-        // 3) Aplica daño en área (sin animación)
-        this.damageArea(x, y, 50, 25);  // p.ej. radio=100, daño=50
-      }
-    );
-
+    var bg=this.add.tileSprite(400, 300, 800, 600, 'CaveBackground');
+    bg.setDepth(-20);
+    bg.setScale(1.7);
+    bg.setScrollFactor(0); 
     // Configurar sonido
     //this.sound.play('level2', { volume: 0.2 });
   }
   
-
-
-  /**
- * Hace daño a todos los enemigos que caigan dentro de un radio
- * @param {number} x 
- * @param {number} y 
- * @param {number} radius 
- * @param {number} damage 
- */
-damageArea(x, y, radius, damage) {
-  // dibujar un círculo de debug
-  const g = this.add.graphics({ x, y });
-  g.fillStyle(0xff3000, 0.5);
-  g.fillCircle(0, 0, radius);
-  this.time.delayedCall(200, () => g.destroy());
-
-  // Itera sobre tu grupo de enemigos
-  this.enemies.children.iterate(enemy => {
-    if (!enemy || enemy.state === 'DEAD') return;
-    const d = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
-    if (d <= radius*2) {
-      enemy.takeDamage(damage, /*opcional: fuente=*/null);
-    }
-  });
-}
-
-
-
   setupMap() {
     const map = this.make.tilemap({ key: 'map' });
     this.map = map; // Guardar referencia para uso en otros métodos
@@ -147,8 +111,12 @@ damageArea(x, y, radius, damage) {
     });
 
 
-
-
+    this.areaBullets = this.physics.add.group({
+      allowGravity: false,
+      collideWorldBounds: false
+    });
+    
+    
     // Grupo para balas enemigas
     this.enemyBullets = this.physics.add.group({
       allowGravity: false,
@@ -167,7 +135,14 @@ damageArea(x, y, radius, damage) {
       }
     };
 
-
+    this.areaBullets.createCallback = (bullet) => {
+      if (bullet) {
+        bullet.setSize(4, 4);
+        bullet.setOffset(6, 0);
+        bullet.lifespan = 5000; // vida máxima antes de autodestruirse si no llega
+        bullet.createTime = this.time.now;
+      }
+    };
     
     this.enemyBullets.createCallback = (enemyBullet) => {
       if (enemyBullet) {
@@ -600,24 +575,6 @@ damageArea(x, y, radius, damage) {
       console.error('Error en update:', error);
     }
   }
-
-
-  spawnExplosion(x, y) {
-    // Crear la animación
-    const explosion = this.add.sprite(x, y, 'explosion');
-    explosion.play('explosion_anim');
-
-    // Hacer daño en área
-    this.physics.overlap(this.enemies, explosion, (enemy) => {
-        enemy.takeDamage(50);  // o la lógica que uses
-    });
-
-    explosion.on('animationcomplete', () => {
-        explosion.destroy();
-    });
-}
-
-
   
   /**
    * Método para crear una lluvia de bolas que caen del cielo

@@ -87,6 +87,8 @@ import baseball from '../../assets/Sounds/baseball.wav';
 import Jump from '../../assets/Sounds/Jump.flac';
 import Escaleras from '../../assets/Sounds/Escaleras.wav';
 import Shootgun from '../../assets/Sounds/Shootgun.wav';
+//BackGround
+import CaveBackground from '../../assets/Background/Cave.png';
 
 /**
  * Carga los sprites del jugador
@@ -310,3 +312,8 @@ export function loadSoundAssets(scene) {
   scene.load.audio('escaleras', Escaleras);
   scene.load.audio('shootgun', Shootgun);
 } 
+
+export function loadBackgroundSprites(scene){
+scene.load.image('CaveBackground',CaveBackground);
+
+}

@@ -26,7 +26,7 @@ export default class Level extends Phaser.Scene {
     
     // Crear jugador
     this.player = new Player(this, 0, 0);
-    this.player.setPosition(7000, 1050); // Posición inicial
+    this.player.setPosition(100, 1700); // Posición inicial
     
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)
     this.createGameObjects();

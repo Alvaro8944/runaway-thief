@@ -7,6 +7,8 @@ import Pincho from '../gameObjects/Pincho.js';
 import Escalera from '../gameObjects/Escalera.js';
 import BolaGrande from '../gameObjects/BolaGrande.js';
 import Diamante from '../gameObjects/Diamante.js';
+import Barril from '../gameObjects/Barril.js';
+import RocaDestructible from '../gameObjects/RocaDestructible.js';
 
 const SPIKE_DAMAGE = 20;
 
@@ -24,7 +26,7 @@ export default class Level extends Phaser.Scene {
     
     // Crear jugador
     this.player = new Player(this, 0, 0);
-    this.player.setPosition(100, 1700); // Posición inicial
+    this.player.setPosition(7000, 1050); // Posición inicial
     
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)
     this.createGameObjects();
@@ -81,6 +83,12 @@ export default class Level extends Phaser.Scene {
     
     // Crear diamantes desde el mapa
     this.diamantes = Diamante.createFromMap(this, this.map, 'Diamantes', 'diamante');
+
+    // Crear barriles desde el mapa
+    this.barriles = Barril.createFromMap(this, this.map, 'Barriles');
+
+    // Crear rocas destructibles desde el mapa
+    this.rocas = RocaDestructible.createFromMap(this, this.map, 'RocasDestructibles');
     
     // Añadir colisión entre bolas y suelo
     this.physics.add.collider(this.bolas, this.layerSuelo);
@@ -383,12 +391,20 @@ export default class Level extends Phaser.Scene {
 
 
   
+  /**
+   * Configura todas las colisiones del nivel
+   */
   setupCollisions() {
     // Verificar que los objetos necesarios existan
     if (!this.player || !this.layerSuelo) return;
     
     // Colisión jugador-suelo
     this.physics.add.collider(this.player, this.layerSuelo);
+    
+    // Colisión jugador-rocas destructibles
+    if (this.rocas) {
+      this.physics.add.collider(this.player, this.rocas);
+    }
     
     // Colisión balas-suelo
     if (this.bullets) {
@@ -401,6 +417,44 @@ export default class Level extends Phaser.Scene {
       this.physics.add.collider(this.enemyBullets, this.layerSuelo, bullet => {
         if (bullet && bullet.active) bullet.destroy();
       });
+    }
+    
+    // Colisión balas-rocas destructibles
+    if (this.bullets && this.rocas) {
+      this.physics.add.overlap(
+        this.bullets,
+        this.rocas,
+        (bullet, roca) => {
+          if (!bullet || !roca || !bullet.active || !roca.active) return;
+          
+          // Llamar al método recibirDanio de la roca
+          roca.recibirDanio(1, bullet);
+          
+          // Destruir la bala
+          bullet.destroy();
+        },
+        null,
+        this
+      );
+    }
+    
+    // Colisión balas enemigas-rocas destructibles
+    if (this.enemyBullets && this.rocas) {
+      this.physics.add.overlap(
+        this.enemyBullets,
+        this.rocas,
+        (bullet, roca) => {
+          if (!bullet || !roca || !bullet.active || !roca.active) return;
+          
+          // Llamar al método recibirDanio de la roca
+          roca.recibirDanio(1, bullet);
+          
+          // Destruir la bala
+          bullet.destroy();
+        },
+        null,
+        this
+      );
     }
     
     // Colisión jugador-escaleras
@@ -450,8 +504,6 @@ export default class Level extends Phaser.Scene {
     
     // Colisión jugador-balas enemigas
     if (this.enemyBullets) {
-
-
       this.physics.add.overlap(
         this.player.escudo,
         this.enemyBullets,
@@ -462,7 +514,6 @@ export default class Level extends Phaser.Scene {
         null,
         this
       );
-
 
       this.physics.add.overlap(
         this.player,

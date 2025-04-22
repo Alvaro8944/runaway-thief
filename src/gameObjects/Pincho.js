@@ -108,14 +108,14 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
           // gid 106 o 82 = pinchos hacia abajo
           // gid 114 o 83 = pinchos hacia arriba 
           // gid 113 = pinchos pequeños (usaremos los mismos sprites pero con escala)
-          if (pincho.gid === 106 || pincho.gid === 82) {
+          if (pincho.gid === 116) {
             textureToUse = 'pichos_arriba';
-          } else if (pincho.gid === 114 || pincho.gid === 83) {
+          } else if (pincho.gid === 129) {
             textureToUse = 'pichos_abajo';
-          }else if (pincho.gid === 115){
+          }else if (pincho.gid === 130){
             console.log("IZQUIERDA")
             textureToUse = 'pichos_izquierda';
-          }else if (pincho.gid === 97){
+          }else if (pincho.gid === 102){
             textureToUse = 'pichos_derecha';
           }
           

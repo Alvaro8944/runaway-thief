@@ -1021,6 +1021,92 @@ updateBullets() {
     this.scene.sound.play('damage');
   }
 
+  /**
+   * Recupera salud del jugador
+   * @param {number} amount - Cantidad de salud a recuperar
+   */
+  recoverHealth(amount) {
+    // No recuperar salud si el jugador está muerto
+    if (this.state === PLAYER_STATE.DEAD) return;
+    
+    // Asegurarse de que la cantidad es positiva
+    amount = Math.abs(amount);
+    
+    // Actualizar la salud, sin exceder el máximo
+    this.health = Math.min(this.health + amount, this.maxHealth);
+    
+    // Efecto visual de curación (sin tinte permanente)
+    this.scene.tweens.add({
+      targets: this,
+      alpha: 0.8,
+      duration: 100,
+      yoyo: true,
+      repeat: 2
+    });
+    
+    // Aplica el tinte verde temporalmente y luego lo quita
+    this.setTint(0x00ff00);
+    this.scene.time.delayedCall(300, () => {
+      this.clearTint();
+    });
+    
+    // Crear partículas de curación alrededor del jugador (si existe el sistema de partículas)
+    if (this.scene.particles) {
+      const emitter = this.scene.particles.createEmitter({
+        x: this.x,
+        y: this.y,
+        speed: { min: 20, max: 50 },
+        scale: { start: 0.5, end: 0 },
+        quantity: 10,
+        lifespan: 800,
+        blendMode: 'ADD',
+        tint: 0x00ff00
+      });
+      
+      // Emitir algunas partículas y luego detener
+      emitter.explode(10);
+      this.scene.time.delayedCall(100, () => {
+        emitter.stop();
+      });
+    }
+    
+    // Reproducir sonido de curación (si existe)
+    if (this.scene.sound.get('heal')) {
+      this.scene.sound.play('heal', { volume: 0.5 });
+    }
+    
+    // Mostrar texto flotante con la cantidad curada
+    this.showHealingText(amount);
+    
+    // Actualizar la UI
+    this.updateUI();
+  }
+  
+  /**
+   * Muestra un texto flotante con la cantidad curada
+   * @param {number} amount - Cantidad curada
+   */
+  showHealingText(amount) {
+    const text = this.scene.add.text(this.x, this.y - 50, `+${amount}`, {
+      fontSize: '20px',
+      fontStyle: 'bold',
+      fill: '#00ff00',
+      stroke: '#000',
+      strokeThickness: 4
+    }).setOrigin(0.5);
+    
+    // Animación para que el texto suba y desaparezca
+    this.scene.tweens.add({
+      targets: text,
+      y: this.y - 80,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+  }
+
   die() {
     this.state = PLAYER_STATE.DEAD;
     this.play('player_death', true);

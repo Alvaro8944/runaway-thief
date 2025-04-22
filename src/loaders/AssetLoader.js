@@ -63,7 +63,15 @@ import bullet from '../../assets/Bullets/5.png';
 //SHOOT EFFECT
 import effect from '../../assets/Shoot_effects/9_1.png';
 
+// BARRILES
+import barrilNormal from '../../assets/tiled/Objects/Resized/Barril.png';
+import barrilCura from '../../assets/tiled/Objects/Resized/BarrilCura.png';
+import barrilTNT from '../../assets/tiled/Objects/Resized/BarrilTNT.png';
+//import barrilVeneno from '../../assets/tiled/Objects/Resized/BarrilVeneno.png';
+//import barrilImpulso from '../../assets/tiled/Objects/Resized/BarrilImpulso.png';
 
+//Bloque destructible
+import BlqDestructible from '../../assets/tiled/Objects/Resized/BlqDestructible.png';
 
 // TILEMAP
 import Tileset from '../../assets/tiled/Tileset.png';
@@ -284,6 +292,14 @@ export function loadObjectSprites(scene) {
   scene.load.image('pichos_derecha', pichos_derecha);
   scene.load.image('bola_grande', bola_grande);
   scene.load.image('diamante', diamante_azul);
+  
+  scene.load.image('BarrilNormal', barrilNormal);
+  scene.load.image('BarrilCura', barrilCura);
+  scene.load.image('BarrilTNT', barrilTNT);
+  //scene.load.image('BarrilVeneno', barrilVeneno);
+  //scene.load.image('BarrilImpulso', barrilImpulso);
+
+  scene.load.image('BlqDestructible', BlqDestructible);
 }
 
 

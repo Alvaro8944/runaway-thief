@@ -26,6 +26,7 @@ export default class BolaGrande extends Phaser.Physics.Arcade.Sprite {
     // Configurar el cuerpo físico
     this.body.setCircle(32); // Asumimos que la bola tiene un radio de 16 pixels
     this.body.setOffset(0, 0); // Ajustar según el sprite
+    this.setScale(0.5)
     
     // Guardar propiedades
     this.damage = damage;

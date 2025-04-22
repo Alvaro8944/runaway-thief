@@ -46,7 +46,7 @@ import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
 import weapon from '../../assets/Guns/4_1.png';
 
 //WEAPON
-import explosiveWeapon from '../../assets/Guns/3_1.png';
+import explosiveWeapon from '../../assets/Guns/6_1.png';
 
 //ESCUDO
 import escudo from '../../assets/Objects/escudo.png';
@@ -55,7 +55,7 @@ import escudo from '../../assets/Objects/escudo.png';
 import parachute from '../../assets/Objects/parachute.png';
 
 //JETPACK
-import jetpack from '../../assets/Objects/jetpack.png';
+import jetpack from '../../assets/Objects/jetpackPequeño.png';
 
 //BULLET
 import bullet from '../../assets/Bullets/5.png';

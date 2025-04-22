@@ -151,7 +151,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.45, 0.5);
     this.hand.setDepth(this.depth - 1);
     this.weapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.3, 0.5);
-    this.explosiveWeapon = scene.add.sprite(this.x, this.y, 'explosiveWeapon').setOrigin(1.3, 0.5);
+    this.explosiveWeapon = scene.add.sprite(this.x, this.y, 'explosiveWeapon').setOrigin(1.3, 0.7);
     this.escudo = scene.physics.add.sprite(this.x, this.y, 'escudo').setOrigin(1, 0.5); 
     this.escudo.setSize(20, 25); 
     this.escudo.body.setEnable(this.hasEscudo);
@@ -429,6 +429,7 @@ updateBullets() {
     const jumpAnim = this.hasFloatingObject ? (this.hasObject ? 'idle_shoot' : 'idle') : (this.hasObject ? 'jump_shoot' : 'jump');
     const idleJumpAnim = this.hasFloatingObject ? (this.hasObject ? 'idle_shoot' : 'idle') : (this.hasObject ? 'jump_shoot' : 'jump');
     
+   
 
     // Agregar tecla R para recargar manualmente
     const keyR = this.scene.input.keyboard.addKey('R');
@@ -581,7 +582,13 @@ updateBullets() {
       if (this.body.onFloor()) {
         this.anims.play(idleAnim, true);
       }
+      
     }
+
+    if (!this.body.onFloor() && this.hasFloatingObject) {
+        this.anims.play(idleAnim, true);
+    }
+
 
     // Lógica de salto mejorada
     const justPressedJump = Phaser.Input.Keyboard.JustDown(this.scene.keys.jump);
@@ -599,7 +606,7 @@ updateBullets() {
       } else {
         // Primer salto normal
         const anim = this.body.velocity.x !== 0 ? jumpAnim : idleJumpAnim;
-        this.play(anim, true);
+         this.play(anim, true);
       }
     }
 
@@ -651,10 +658,11 @@ updateBullets() {
     if (!this.body.onFloor() && this.currentJumps !== 2) {
       
       const anim = this.body.velocity.x !== 0 ? jumpAnim : idleJumpAnim;
-      if (!this.anims.isPlaying || this.anims.currentAnim.key !== anim) {
+      if ( (!this.anims.isPlaying || this.anims.currentAnim.key !== anim )) {
         this.play(anim, true);
       }
     }
+
 
     if (this.hasObject) {
       this.updateHand();
@@ -681,6 +689,9 @@ updateBullets() {
       } 
       this.highestY = null; // Resetea cuando toca el suelo
     }
+
+
+    
   }
 
   // === MÉTODOS DE ARMA Y DISPARO ===

@@ -26,7 +26,7 @@ export default class Level extends Phaser.Scene {
     
     // Crear jugador
     this.player = new Player(this, 0, 0);
-    this.player.setPosition(100, 1700); // Posición inicial
+    this.player.setPosition(100, 750); // Posición inicial
     
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)
     this.createGameObjects();
@@ -63,7 +63,7 @@ export default class Level extends Phaser.Scene {
     var bg=this.add.tileSprite(400, 300, 800, 600, 'CaveBackground');
     bg.setDepth(-20);
     bg.setScale(1.7);
-    bg.setScrollFactor(0); 
+    bg.setScrollFactor(0);
     // Configurar sonido
     //this.sound.play('level2', { volume: 0.2 });
   }
@@ -213,7 +213,7 @@ damageArea(x, y, radius, damage) {
   createEnemies() {
     // Posiciones de enemigos tipo 1
     const enemyPositions = [
-      { x: 2200, y: 1500, type: 'patrolling' },
+      { x: 300, y: 750, type: 'patrolling' },
       { x: 2600, y: 1400, type: 'patrolling' },
       { x: 2750, y: 1300, type: 'patrolling' },
       { x: 2850, y: 1100, type: 'patrolling' },

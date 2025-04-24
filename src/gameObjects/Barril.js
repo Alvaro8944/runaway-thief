@@ -109,7 +109,7 @@ export default class Barril extends Phaser.Physics.Arcade.Sprite {
           // Buscar propiedades personalizadas como el tipo
           if (barril.properties && Array.isArray(barril.properties)) {
             // Buscar la propiedad "Tipo" dentro del array de propiedades
-            const tipoProperty = barril.properties.find(prop => prop.name === 'Tipo');
+            const tipoProperty = barril.properties.find(prop => prop.name === 'tipo');
             if (tipoProperty) {
               tipo = tipoProperty.value;
               console.log(`Barril de tipo: ${tipo}`);
@@ -120,7 +120,7 @@ export default class Barril extends Phaser.Physics.Arcade.Sprite {
           let barrilSprite;
           
           switch (tipo) {
-            case 'Cura':
+            case 'cura':
               barrilSprite = new BarrilCura(
                 scene,
                 barril.x + 16, // Ajustar posición X al centro del objeto

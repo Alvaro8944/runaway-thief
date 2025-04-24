@@ -213,40 +213,45 @@ damageArea(x, y, radius, damage) {
   createEnemies() {
     // Posiciones de enemigos tipo 1
     const enemyPositions = [
-      { x: 300, y: 750, type: 'patrolling' },
-      { x: 2600, y: 1400, type: 'patrolling' },
-      { x: 2750, y: 1300, type: 'patrolling' },
-      { x: 2850, y: 1100, type: 'patrolling' },
-      { x: 3650, y: 1450, type: 'patrolling' },
-
-      { x: 4403, y: 1570, type: 'patrolling' },
-      { x: 5111, y: 1602, type: 'patrolling' },
-      { x: 6303, y: 1122, type: 'patrolling' },
-      { x: 7134, y: 1058, type: 'patrolling' },
-      { x: 8520, y: 706, type: 'patrolling' }
+      { x: 2000, y: 350, type: 'patrolling' },
+      { x: 3850, y: 400, type: 'patrolling' },
+      { x: 3712, y: 150, type: 'patrolling' },
+      { x: 4640, y: 600, type: 'patrolling' },
+      { x: 5120, y: 750, type: 'patrolling' },
+      { x: 5440, y: 750, type: 'patrolling' },
+      { x: 6800, y: 650, type: 'patrolling' },
+      { x: 6720, y: 450, type: 'patrolling' },
+      { x: 6880, y: 250, type: 'patrolling' },
+      { x: 7520, y: 425, type: 'patrolling' },
+      { x: 7840, y: 425, type: 'patrolling' },
+      { x: 7840, y: 800, type: 'patrolling' },
+      { x: 8480, y: 425, type: 'patrolling' },
+      { x: 8700, y: 650, type: 'patrolling' },
+      { x: 8800, y: 650, type: 'patrolling' },
+      { x: 8900, y: 650, type: 'patrolling' }
 
     ];
     
     // Posiciones de enemigos tipo 2
     const enemy2Positions = [
-      { x: 700, y: 1750, type: 'normal' },
-      { x: 3200, y: 1150, type: 'patrolling' },
-      { x: 3650, y: 1250, type: 'patrolling' },
-      { x: 3400, y: 2000, type: 'normal' },
-      { x: 3500, y: 2000, type: 'normal' },
+      //{ x: 700, y: 1750, type: 'normal' },
+      //{ x: 3200, y: 1150, type: 'patrolling' },
+      //{ x: 3650, y: 1250, type: 'patrolling' },
+      //{ x: 3400, y: 2000, type: 'normal' },
+      //{ x: 3500, y: 2000, type: 'normal' },
 
-      { x: 4403, y: 1570, type: 'patrolling' },
-      { x: 5111, y: 1602, type: 'patrolling' },
-      { x: 5628, y: 1250, type: 'patrolling' },
-      { x: 6303, y: 1122, type: 'patrolling' },
+      //{ x: 4403, y: 1570, type: 'patrolling' },
+      //{ x: 5111, y: 1602, type: 'patrolling' },
+      //{ x: 5628, y: 1250, type: 'patrolling' },
+      //{ x: 6303, y: 1122, type: 'patrolling' },
 
 
       //{ x: 6461, y: 930, type: 'patrolling' },    //ESTATICO
       //{ x: 6151, y: 930, type: 'patrolling' }   //ESTATICO
 
-      { x: 7134, y: 1058, type: 'patrolling' },
-      { x: 7134, y: 1058, type: 'patrolling' },
-      { x: 7734, y: 962, type: 'patrolling' }
+      //{ x: 7134, y: 1058, type: 'patrolling' },
+      //{ x: 7134, y: 1058, type: 'patrolling' },
+      //{ x: 7734, y: 962, type: 'patrolling' }
 
 
     ];
@@ -254,9 +259,9 @@ damageArea(x, y, radius, damage) {
 
      // Posiciones de enemigos tipo 3
      const enemy3Positions = [
-      { x: 500, y: 1550, type: 'patrolling' },
-      { x: 600, y: 1500, type: 'patrolling' },
-      { x: 550, y: 1450, type: 'patrolling' }
+      //{ x: 500, y: 1550, type: 'patrolling' },
+      //{ x: 600, y: 1500, type: 'patrolling' },
+      //{ x: 550, y: 1450, type: 'patrolling' }
     ];
 
 

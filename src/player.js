@@ -90,6 +90,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.hasWeapon = true;
     this.hasWeapon1 = true;
     this.hasWeapon2 = false;
+    this.hasWeapon3 = false;
     this.ammo = PLAYER_CONFIG.MAX_AMMO;
     this.maxAmmo = PLAYER_CONFIG.MAX_AMMO;
     this.lastShotTime = 0;
@@ -150,14 +151,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Mano y arma
     this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.45, 0.5);
     this.hand.setDepth(this.depth - 1);
-    this.weapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.3, 0.5);
+    this.mainWeapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.3, 0.5);
     this.explosiveWeapon = scene.add.sprite(this.x, this.y, 'explosiveWeapon').setOrigin(1.3, 0.7);
+    this.shotgunWeapon = scene.add.sprite(this.x, this.y, 'shotgunWeapon').setOrigin(1.3, 0.5);
+
+    //EL ARMA VISIBLE SERÁ "WEAPON" Y LA IREMOS REASIGNANDO
+    this.weapon = this.mainWeapon;
+
     this.escudo = scene.physics.add.sprite(this.x, this.y, 'escudo').setOrigin(1, 0.5); 
     this.escudo.setSize(20, 25); 
     this.escudo.body.setEnable(this.hasEscudo);
 
     this.weapon.setDepth(this.hand.depth - 1);
+    /*
+    this.mainWeapon.setDepth(this.hand.depth - 1);
     this.explosiveWeapon.setDepth(this.hand.depth - 1);
+    this.shotgunWeapon.setDepth(this.hand.depth - 1);
+    */
     this.escudo.setDepth(this.hand.depth - 1);
     this.escudo.setVisible(this.hasEscudo); 
 
@@ -345,7 +355,7 @@ updateBullets() {
     if (this.isReloading && time - this.reloadStartTime >= this.reloadTime) {
       this.ammo = this.maxAmmo;
       this.isReloading = false;
-      this.scene.sound.play('disparo', { volume: 0.3 }); // Sonido de recarga completada
+      this.scene.sound.play('disparo', { volume: 0.1 }); // Sonido de recarga completada
     }
 
     // Actualizar invulnerabilidad
@@ -441,6 +451,7 @@ updateBullets() {
     if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArmaOne)) {
       this.hasWeapon = true;
       this.hasWeapon1 = true;
+      this.weapon = this.mainWeapon;
       this.weapon.setVisible(true);   
       this.hand.setVisible(true);   
 
@@ -450,15 +461,17 @@ updateBullets() {
       this.escudo.body.reset();
 
       this.hasWeapon2 = false;
-      this.explosiveWeapon.setVisible(false);
-
+      this.hasWeapon3 = false;
+      this.explosiveWeapon.setVisible(this.hasWeapon2);
+      this.shotgunWeapon.setVisible(this.hasWeapon3);
     }
 
     // SACAR arma2
     if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArmaTwo)) {
       this.hasWeapon = true;
       this.hasWeapon2 = true;
-      this.explosiveWeapon.setVisible(true);   
+      this.weapon = this.explosiveWeapon;
+      this.weapon.setVisible(true);   
       this.hand.setVisible(true);   
 
       this.hasEscudo = false;
@@ -467,8 +480,34 @@ updateBullets() {
       this.escudo.body.reset();
 
       this.hasWeapon1 = false;
-      this.weapon.setVisible(false);
+      this.hasWeapon3 = false;
+      this.mainWeapon.setVisible(this.hasWeapon1);
+      this.shotgunWeapon.setVisible(this.hasWeapon3);
     }
+
+
+     // SACAR arma3
+     if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArmaThree)) {
+      this.hasWeapon = true;
+      this.hasWeapon3 = true;
+      this.weapon = this.shotgunWeapon;
+      this.weapon.setVisible(true);   
+      this.hand.setVisible(true);   
+
+      this.hasEscudo = false;
+      this.escudo.setVisible(this.hasEscudo); 
+      this.escudo.body.setEnable(this.hasEscudo);
+      this.escudo.body.reset();
+
+      this.hasWeapon1 = false;
+      this.hasWeapon2 = false;
+      this.mainWeapon.setVisible(this.hasWeapon1);
+      this.explosiveWeapon.setVisible(this.hasWeapon2);
+    }
+
+
+
+
 
 
 
@@ -484,9 +523,11 @@ updateBullets() {
       this.hasWeapon = false;
       this.hasWeapon1 = false;
       this.hasWeapon2 = false;
-      this.weapon.setVisible(this.hasWeapon); 
-      this.explosiveWeapon.setVisible(this.hasWeapon); 
-
+      this.hasWeapon3 = false;
+      this.weapon.setVisible(this.hasWeapon);  
+      this.mainWeapon.setVisible(this.hasWeapon1);
+      this.explosiveWeapon.setVisible(this.hasWeapon2);
+      this.shotgunWeapon.setVisible(this.hasWeapon3);
     }
 
 
@@ -706,8 +747,12 @@ updateBullets() {
   }
 
   shoot() {
+  
 
-
+     // Si nos quedamos sin munición, iniciar recarga automática
+     if (this.ammo <= 0) {
+      this.reload();
+    }
     // Si estamos recargando o no tenemos munición, no podemos disparar
     if (this.isReloading || this.ammo <= 0 || !this.hasWeapon) return;
     
@@ -716,81 +761,95 @@ updateBullets() {
     
     // Registrar tiempo de disparo para cooldown
     this.lastShotTime = this.scene.time.now;
-    
-    // Reducir munición
-    this.ammo--;
-    
-    // Si nos quedamos sin munición, iniciar recarga automática
-    if (this.ammo <= 0) {
-      this.reload();
-    }
-   
+
+
     // Calcular ángulo de disparo
+    let angle = this.weapon.rotation;
 
-    let angle;
-
-    if(this.hasWeapon1) { angle = this.weapon.rotation;}
-    else if (this.hasWeapon2){ angle = this.explosiveWeapon.rotation;}
 
     if (this.flipX) {
       angle += Math.PI;
     }
     
 
-
-
-    let bulletX = 0;
-    let bulletY = 0;
+    let bulletX = this.weapon.x + Math.cos(angle) * 20;
+    let bulletY = this.weapon.y + Math.sin(angle) * 20;
     let bullet;
 
-    if(this.hasWeapon1){
-    // Calcular posición inicial de la bala
-      bulletX = this.weapon.x + Math.cos(angle) * 20;
-      bulletY = this.weapon.y + Math.sin(angle) * 20;
-      bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
 
+
+    if(this.hasWeapon1){
+
+      bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+      bullet.setRotation(this.weapon.rotation);
+      bullet.damage = this.damage;
+      bullet.setVelocity(Math.cos(angle) * this.bulletSpeed, Math.sin(angle) * this.bulletSpeed); 
+      bullet.body.allowGravity = false;
+
+    // Gasta (-1) de monición
+    this.ammo--;
     }
     else if(this.hasWeapon2){
-        bulletX = this.explosiveWeapon.x + Math.cos(angle) * 20;
-        bulletY = this.explosiveWeapon.y + Math.sin(angle) * 20;
+
+      if (this.ammo < 3) {
+        this.reload();
+        return;
+       }
 
         const pointer = this.scene.input.activePointer;
         const worldPointer = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
         bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+        bullet.setRotation(this.weapon.rotation);
+        bullet.damage = this.damage;
+        bullet.setVelocity(Math.cos(angle) * this.bulletSpeed, Math.sin(angle) * this.bulletSpeed);
+        bullet.body.allowGravity = false;
+
         if (bullet) {
         bullet.targetX = worldPointer.x;
         bullet.targetY = worldPointer.y;
         }
-
-        // Meterla en la lista
+        //En este caso, meterla en la lista de balas explosivas
         this.explosiveBullets.push(bullet);
+        // Gasta (-3) de monición
+        this.ammo -= 3;
+        if(this.ammo < 0) this.ammo = 0;
     }
+    else if (this.hasWeapon3) {
 
-   
+      if (this.ammo < 6) {
+       this.reload();
+       return;
+      }
 
-    if(this.hasWeapon1){
-    bullet.setRotation(this.weapon.rotation);
-    }
-    else if(this.hasWeapon2){
-      bullet.setRotation(this.explosiveWeapon.rotation);
-    }
-    
-
-    bullet.damage = this.damage;
+      // Posición base del disparo
+      let baseX = this.shotgunWeapon.x;
+      let baseY = this.shotgunWeapon.y;
+      let spread = Phaser.Math.DegToRad(15); // Dispersión de 15 grados en total
   
-    // Configurar velocidad de la bala
-    const velocityX = Math.cos(angle) * this.bulletSpeed;
-    const velocityY = Math.sin(angle) * this.bulletSpeed;
-    bullet.setVelocity(velocityX, velocityY);
+      for (let i = 0; i < 5; i++) {
+          // Calcula un ángulo con cierta dispersión (centrado en el "angle" original)
+          let offset = spread * ((i - 2) / 2); // -1.5, -0.75, 0, 0.75, 1.5
+          let angleWithSpread = angle + offset;
   
-    // Asegurarse de que la bala no esté afectada por la gravedad
-    bullet.body.allowGravity = false;
+          let bulletX = baseX + Math.cos(angleWithSpread) * 20;
+          let bulletY = baseY + Math.sin(angleWithSpread) * 20;
   
-    // Efecto de disparo
-    if(this.hasWeapon1) this.createShootEffect1(angle);
-    else if(this.hasWeapon2) this.createShootEffect2(angle);
+          bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+          bullet.setRotation(angleWithSpread);
+          bullet.lifespan = 300;
+          bullet.damage = this.damage;
+          bullet.dispersion = true;
+          bullet.setVelocity(Math.cos(angleWithSpread) * this.bulletSpeed, Math.sin(angleWithSpread) * this.bulletSpeed); 
+          bullet.body.allowGravity = false;
 
-    // Reproducir sonido de disparo
+      }
+
+      //EN EL CASO DE LA ESCOPETA, GASTA TODA LA MONICIÓN 
+      this.ammo = 0;
+  }
+
+     //EFECTO Y SONIDO
+    this.createShootEffect(angle, this.weapon);
     this.scene.sound.play('disparo');
   }
 
@@ -807,18 +866,18 @@ updateBullets() {
 
   
   
-  createShootEffect1(angle) {
+  createShootEffect(angle, weapon) {
 
     const cannonOffset = 125;
 
     const effect = this.scene.add.sprite(
-      this.weapon.x + Math.cos(angle) * cannonOffset,
-      this.weapon.y + Math.sin(angle) * cannonOffset,
+      weapon.x + Math.cos(angle) * cannonOffset,
+      weapon.y + Math.sin(angle) * cannonOffset,
       'effect'
     );
 
-    effect.setRotation(this.flipX ? this.weapon.rotation + Math.PI : this.weapon.rotation);
-    effect.setDepth(this.weapon.depth + 1);
+    effect.setRotation(this.flipX ? weapon.rotation + Math.PI : weapon.rotation);
+    effect.setDepth(weapon.depth + 1);
     effect.play('effect');
     
     this.scene.time.addEvent({
@@ -826,8 +885,8 @@ updateBullets() {
       callback: () => {
         if (effect.anims.currentFrame) {
           effect.setPosition(
-            this.weapon.x + Math.cos(angle) * cannonOffset,
-            this.weapon.y + Math.sin(angle) * cannonOffset
+            weapon.x + Math.cos(angle) * cannonOffset,
+            weapon.y + Math.sin(angle) * cannonOffset
           );
         }
       },
@@ -839,36 +898,7 @@ updateBullets() {
 
 
 
-  createShootEffect2(angle) {
-
-    const cannonOffset = 125;
-
-    const effect = this.scene.add.sprite(
-      this.explosiveWeapon.x + Math.cos(angle) * cannonOffset,
-      this.explosiveWeapon.y + Math.sin(angle) * cannonOffset,
-      'effect'
-    );
-
-    effect.setRotation(this.flipX ? this.explosiveWeapon.rotation + Math.PI : this.explosiveWeapon.rotation);
-    effect.setDepth(this.explosiveWeapon.depth + 1);
-    effect.play('effect');
-    
-    this.scene.time.addEvent({
-      delay: 16,
-      callback: () => {
-        if (effect.anims.currentFrame) {
-          effect.setPosition(
-            this.explosiveWeapon.x + Math.cos(angle) * cannonOffset,
-            this.explosiveWeapon.y + Math.sin(angle) * cannonOffset
-          );
-        }
-      },
-      repeat: effect.anims.getTotalFrames()
-    });
-    
-    effect.once('animationcomplete', () => effect.destroy());
-  }
-
+  
 
   updateHand() {
     const pointer = this.scene.input.activePointer;
@@ -921,15 +951,9 @@ updateBullets() {
   updateObject() {
     if(this.hasWeapon){
 
-      if(this.hasWeapon1){
-    this.weapon.setPosition(this.hand.x, this.hand.y);
-    this.weapon.setRotation(this.hand.rotation);
-      }
-      else if(this.hasWeapon2){
-        this.explosiveWeapon.setPosition(this.hand.x, this.hand.y);
-        this.explosiveWeapon.setRotation(this.hand.rotation);
 
-      }
+      this.weapon.setPosition(this.hand.x, this.hand.y);
+      this.weapon.setRotation(this.hand.rotation);
 
     }
     else if(this.hasEscudo){
@@ -970,11 +994,9 @@ updateBullets() {
   ajustarDireccion() {
 
     this.hand.setScale(!this.flipX ? -1 : 1, 1);
-     if(this.hasWeapon) {
-      
-      
-       if(this.hasWeapon1)this.weapon.setScale(!this.flipX ? -1 : 1, 1);
-       else if(this.hasWeapon2) this.explosiveWeapon.setScale(!this.flipX ? -1 : 1, 1);
+
+     if(this.hasWeapon) {      
+      this.weapon.setScale(!this.flipX ? -1 : 1, 1);
      }
      else if(this.hasEscudo) {
 

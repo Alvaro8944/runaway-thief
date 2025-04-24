@@ -51,10 +51,9 @@ export default class Level extends Phaser.Scene {
     this.events.on('bulletReachedTarget',
       (x, y, bullet) => {
         // 2) Destruye la propia bala
-        bullet.destroy();
-  
+        bullet.destroy(); 
         // 3) Aplica daño en área (sin animación)
-        this.damageArea(x, y, 50, 25);  // p.ej. radio=100, daño=50
+        this.damageArea(x, y, 50, 15);  // p.ej. radio=100, daño=50
       }
     );
 
@@ -178,6 +177,7 @@ damageArea(x, y, radius, damage) {
         bullet.setSize(4, 4);
         bullet.setOffset(6, 0);
         bullet.lifespan = 1000; // 1 segundo
+        bullet.dispersion = false;
         bullet.createTime = this.time.now;
       }
     };
@@ -312,7 +312,17 @@ damageArea(x, y, radius, damage) {
       (enemySprite, bullet) => {
         if (!enemySprite || !bullet) return;
         if (enemySprite.state !== STATE.DEAD) {
-          enemySprite.takeDamage(bullet.damage);
+
+          let finalDamage;
+
+          if(bullet.dispersion){
+           finalDamage = this.calcularDamage(bullet.damage, (this.time.now - bullet.createTime), bullet.lifespan );
+          }
+          else{
+            finalDamage = bullet.damage;          
+          }
+          
+          enemySprite.takeDamage(finalDamage);
           bullet.destroy();
         }
       },
@@ -321,6 +331,38 @@ damageArea(x, y, radius, damage) {
     );
   }
   
+
+
+//Método que calcula daño en función del tiempo transcurrido desde el disparo de la bala
+  calcularDamage(bulletDamage, tiempoTranscurrido, tiempoLifeSpan){
+
+    let finalDamage = bulletDamage;
+
+    //PRIMER RANGO DE TIEMPO (/1.25) SE CONSIDERA QUE LA BALA YA CASI HABRÍA CUIMPLIDO SU TIEMPO MAXIMO, Y SE REDUCIRÍA MUCHO EL DAÑO ASÍ SEGUIMOS COIN TODOS
+    if(tiempoTranscurrido >= tiempoLifeSpan / 1.25){
+      finalDamage = bulletDamage / 13;
+    }
+    else if(tiempoTranscurrido >= tiempoLifeSpan / 2){
+      finalDamage = bulletDamage / 11;
+    }
+    else if(tiempoTranscurrido >= tiempoLifeSpan / 3){
+      finalDamage = bulletDamage / 9;
+    }
+    else if(tiempoTranscurrido >= tiempoLifeSpan / 4){
+      finalDamage = bulletDamage / 7;
+    }
+    else if(tiempoTranscurrido >= tiempoLifeSpan / 5){
+      finalDamage = bulletDamage / 5;
+    }
+    else if(tiempoTranscurrido >= tiempoLifeSpan / 6){
+      finalDamage = bulletDamage / 3;
+    }
+
+   
+
+      return finalDamage;
+  }
+
   createEnemy2(pos) {
     const enemy = pos.type === 'patrolling' 
       ? new PatrollingEnemy2(this, pos.x, pos.y)
@@ -626,7 +668,8 @@ damageArea(x, y, radius, damage) {
       cambiarWeapon: Phaser.Input.Keyboard.KeyCodes.X,
       sacarEscudo: Phaser.Input.Keyboard.KeyCodes.ONE,
       sacarArmaOne: Phaser.Input.Keyboard.KeyCodes.TWO,
-      sacarArmaTwo: Phaser.Input.Keyboard.KeyCodes.THREE
+      sacarArmaTwo: Phaser.Input.Keyboard.KeyCodes.THREE,
+      sacarArmaThree: Phaser.Input.Keyboard.KeyCodes.FOUR
       
 
     });

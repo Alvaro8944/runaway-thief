@@ -5,12 +5,14 @@ import { BaseEnemy, ENEMY_STATE } from './enemy';
 export const STATE3 = ENEMY_STATE;
 
 const DAMAGE_ENEMY = 10;
+const NORMAL_SPEED = 40;
+const ATTACK_SPEED = NORMAL_SPEED *4;
 
 export class Enemy3 extends BaseEnemy {
   constructor(scene, x, y) {
     const config = {
       spriteKey: 'enemy3',
-      speed: 40, // Velocidad original
+      speed: NORMAL_SPEED, // Velocidad original
       health: 50, // Salud original
       damage: DAMAGE_ENEMY,
       detectionRange: 300,
@@ -198,6 +200,8 @@ export class Enemy3 extends BaseEnemy {
   }
 }
 
+
+
 // Clase especializada para enemigos que detectan bordes
 export class PatrollingEnemy3 extends Enemy3 {
   constructor(scene, x, y) {
@@ -217,7 +221,7 @@ export class PatrollingEnemy3 extends Enemy3 {
     if (!this.isSprinting && currentTime - (this.lastSprintTime || 0) > 6000) {
       this.isSprinting = true;
       this.sprintEndTime = currentTime + 3000; // Sprint dura 1 segundo
-      this.speed *= 4; // *4 velocidad
+      this.speed = ATTACK_SPEED; // *4 velocidad
       this.lastSprintTime = currentTime;
     }
   
@@ -248,4 +252,131 @@ export class PatrollingEnemy3 extends Enemy3 {
     this.setOffset(vx < 0 ? 23 : 0, 0);
   }
   
+}
+
+
+
+
+export class AttackingEnemy3 extends Enemy3 {
+  constructor(scene, x, y) {
+    super(scene, x, y);
+    this.edgeDetectionEnabled = true;
+    this.edgeDetectionDistance = 50;
+    this.groundCheckDistance = 60;
+    this.lastDirectionChange = 0;
+    this.directionChangeDelay = 500;
+    this.damage = DAMAGE_ENEMY * 5;
+  }
+
+  patrol() {
+    this.state = STATE3.PATROLLING;
+    const currentTime = this.scene.time.now;
+  
+    // --- GESTIÓN DE SPRINT ---
+    if (!this.isSprinting && currentTime - (this.lastSprintTime || 0) > 6000) {
+      this.isSprinting = true;
+      this.sprintEndTime = currentTime + 3000; // Sprint dura 1 segundo
+      this.speed = ATTACK_SPEED; // *4 velocidad
+      this.lastSprintTime = currentTime;
+    }
+  
+    if (this.isSprinting && currentTime > this.sprintEndTime) {
+      this.isSprinting = false;
+      this.speed = this.originalSpeed; // Vuelve a velocidad normal
+    }
+  
+    // --- PATROLLING ---
+    if (!this.patrolTarget || Phaser.Math.Distance.Between(this.x, this.y, this.patrolTarget.x, this.patrolTarget.y) < 10) {
+      const offsetX = Phaser.Math.Between(-this.patrolOffset * 3, this.patrolOffset * 3);
+      const offsetY = Phaser.Math.Between(-this.patrolOffset, this.patrolOffset);
+  
+      this.patrolTarget = {
+        x: this.originPosition.x + offsetX,
+        y: this.originPosition.y + offsetY
+      };
+    }
+  
+    const dx = this.patrolTarget.x - this.x;
+    const dy = this.patrolTarget.y - this.y;
+    const angle = Math.atan2(dy, dx);
+    const vx = Math.cos(angle) * this.speed;
+    const vy = Math.sin(angle) * this.speed;
+  
+    this.setVelocity(vx, vy);
+    this.setFlipX(vx < 0);
+    this.setOffset(vx < 0 ? 23 : 0, 0);
+  }
+
+
+
+  attack() {
+    if (this.state === ENEMY_STATE.DEAD || this.isAttacking) return;
+
+    // Si hay obstáculo entre enemigo y jugador, dejar de atacar
+    if (this.hasObstacleBetween()) {
+      this.state = ENEMY_STATE.PATROLLING;
+      this.isAttacking = false;
+      return;
+    }
+
+    this.isAttacking = true;
+    this.state = ENEMY_STATE.ATTACKING;
+    this.attackDamageDealt = false;
+
+    // Activar hitbox de ataque si tienes una
+    this.attackHitbox?.body?.enable && (this.attackHitbox.body.enable = true);
+
+  }
+
+
+
+
+  executeAttack() {
+    if (!this.player || this.state === ENEMY_STATE.DEAD) return;
+
+    this.play('enemy3_attack', true);
+    this.setTint(0xff0000);   // rojo al atacar
+
+    // Movimiento hacia el jugador en X e Y
+    const dx = this.player.x - this.x;
+    const dy = this.player.y - this.y;
+    const angle = Math.atan2(dy, dx);
+    const vx = Math.cos(angle) * ATTACK_SPEED;
+    const vy = Math.sin(angle) * ATTACK_SPEED;
+
+    this.setVelocity(vx, vy);
+
+  }
+
+  // Detectar colisión con el jugador
+  preUpdate(time, delta) {
+    super.preUpdate(time, delta);
+    
+    if (this.state === ENEMY_STATE.ATTACKING && this.player && !this.attackDamageDealt) {
+
+      if (this.hasObstacleBetween()) {
+        this.state = ENEMY_STATE.PATROLLING;
+        this.isAttacking = false;
+        this.clearTint();
+        return;
+      }
+
+      this.executeAttack(); //PARA QUE PERSIGA AL JUAGDOR
+        
+    } 
+
+
+    const overlap = Phaser.Geom.Intersects.RectangleToRectangle(this.getBounds(), this.player.getBounds());
+    if (overlap) {          
+      this.attackDamageDealt = true;
+      this.player.takeDamage(this.damage, this); 
+      this.die(); // El alien muere al golpear 
+      return   
+    }
+
+
+  }
+
+
+
 }

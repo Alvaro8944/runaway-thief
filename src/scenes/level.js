@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import Player from '../player.js';
 import { Enemy1, STATE, PatrollingEnemy } from '../enemys/enemy1.js';
 import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemys/enemy2.js';
-import { Enemy3, STATE3, PatrollingEnemy3 } from '../enemys/enemy3.js';
+import { Enemy3, STATE3, PatrollingEnemy3, AttackingEnemy3  } from '../enemys/enemy3.js';
 import Pincho from '../gameObjects/Pincho.js';
 import Escalera from '../gameObjects/Escalera.js';
 import BolaGrande from '../gameObjects/BolaGrande.js';
@@ -213,6 +213,8 @@ damageArea(x, y, radius, damage) {
   createEnemies() {
     // Posiciones de enemigos tipo 1
     const enemyPositions = [
+
+
       { x: 2000, y: 350, type: 'patrolling' },
       { x: 3850, y: 400, type: 'patrolling' },
       { x: 3712, y: 150, type: 'patrolling' },
@@ -259,9 +261,8 @@ damageArea(x, y, radius, damage) {
 
      // Posiciones de enemigos tipo 3
      const enemy3Positions = [
-      //{ x: 500, y: 1550, type: 'patrolling' },
-      //{ x: 600, y: 1500, type: 'patrolling' },
-      //{ x: 550, y: 1450, type: 'patrolling' }
+      { x: 500, y: 700, type: 'attacking' }
+
     ];
 
 
@@ -418,10 +419,17 @@ damageArea(x, y, radius, damage) {
 
 
   createEnemy3(pos) {
-    const enemy = pos.type === 'patrolling' 
-      ? new PatrollingEnemy3(this, pos.x, pos.y)
-      : new Enemy3(this, pos.x, pos.y);
+    let enemy; 
+    if (pos.type === 'patrolling') {
+      enemy = new PatrollingEnemy3(this, pos.x, pos.y);
+    } else if (pos.type === 'attacking') {
+      enemy = new AttackingEnemy3(this, pos.x, pos.y);
+    } else {
+      enemy = new Enemy3(this, pos.x, pos.y);
+    }
     
+
+
     enemy.player = this.player;
     enemy.map = this.map;
     this.enemies.add(enemy);

@@ -7,6 +7,7 @@ export const STATE3 = ENEMY_STATE;
 const DAMAGE_ENEMY = 10;
 const NORMAL_SPEED = 40;
 const ATTACK_SPEED = NORMAL_SPEED *4;
+const AVOID_SPEED = NORMAL_SPEED *10;
 
 export class Enemy3 extends BaseEnemy {
   constructor(scene, x, y) {
@@ -266,6 +267,7 @@ export class AttackingEnemy3 extends Enemy3 {
     this.lastDirectionChange = 0;
     this.directionChangeDelay = 500;
     this.damage = DAMAGE_ENEMY * 5;
+    this.setTint(0xFF4500);
   }
 
   patrol() {
@@ -357,7 +359,7 @@ export class AttackingEnemy3 extends Enemy3 {
       if (this.hasObstacleBetween()) {
         this.state = ENEMY_STATE.PATROLLING;
         this.isAttacking = false;
-        this.clearTint();
+        this.setTint(0xFF4500);
         return;
       }
 
@@ -377,6 +379,94 @@ export class AttackingEnemy3 extends Enemy3 {
 
   }
 
+}
 
+
+
+  export class SmartEnemy3 extends Enemy3 {
+    constructor(scene, x, y) {
+      super(scene, x, y);
+      this.edgeDetectionEnabled = true;
+      this.edgeDetectionDistance = 50;
+      this.groundCheckDistance = 60;
+      this.lastDirectionChange = 0;
+      this.directionChangeDelay = 500;
+
+      // Umbral de detección de balas (en píxeles)
+      this.bulletDodgeRange        = 200;
+      this.setTint(0x556FFF);
+   
+    }
+  
+    patrol() {
+
+      if (!this.checkBullets()){
+      this.state = STATE3.PATROLLING;
+      const currentTime = this.scene.time.now;
+      // --- GESTIÓN DE SPRINT ---
+      if (!this.isSprinting && currentTime - (this.lastSprintTime || 0) > 6000) {
+        this.isSprinting = true;
+        this.sprintEndTime = currentTime + 3000; // Sprint dura 1 segundo
+        this.speed = ATTACK_SPEED; // *4 velocidad
+        this.lastSprintTime = currentTime;
+      }
+    
+      if (this.isSprinting && currentTime > this.sprintEndTime) {
+        this.isSprinting = false;
+        this.speed = this.originalSpeed; // Vuelve a velocidad normal
+      }
+    
+      // --- PATROLLING ---
+      if (!this.patrolTarget || Phaser.Math.Distance.Between(this.x, this.y, this.patrolTarget.x, this.patrolTarget.y) < 10) {
+        const offsetX = Phaser.Math.Between(-this.patrolOffset * 3, this.patrolOffset * 3);
+        const offsetY = Phaser.Math.Between(-this.patrolOffset, this.patrolOffset);
+    
+        this.patrolTarget = {
+          x: this.originPosition.x + offsetX,
+          y: this.originPosition.y + offsetY
+        };
+      }
+    
+      const dx = this.patrolTarget.x - this.x;
+      const dy = this.patrolTarget.y - this.y;
+      const angle = Math.atan2(dy, dx);
+      const vx = Math.cos(angle) * this.speed;
+      const vy = Math.sin(angle) * this.speed;
+    
+      this.setVelocity(vx, vy);
+      this.setFlipX(vx < 0);
+      this.setOffset(vx < 0 ? 23 : 0, 0);
+
+      }
+    }
+
+
+   checkBullets(){
+      // 1) Primero comprueba si hay una bala cercana que esquivar
+    const bullets = this.scene.bullets.getChildren();
+    for (let b of bullets) {
+      if (!b.active) continue;
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, b.x, b.y);
+      if (dist < this.bulletDodgeRange) {
+        // Vector desde la bala hacia el enemigo
+        const dx = this.x - b.x;
+        const dy = this.y - b.y;
+        const angleAway = Math.atan2(dy, dx);
+
+        // Fija una velocidad mayor para esquivar
+        const dodgeVx = Math.cos(angleAway) * (AVOID_SPEED);  
+        const dodgeVy = Math.sin(angleAway) * (AVOID_SPEED);
+
+        this.setVelocity(dodgeVx, dodgeVy);
+        this.setFlipX(dodgeVx < 0);
+        this.setOffset(dodgeVx < 0 ? 23 : 0, 0);
+
+        // Etiqueta el estado para no mezclar con patrulla
+        this.state = STATE3.PATROLLING;
+        return true;
+      }
+    }
+  }
+    
 
 }

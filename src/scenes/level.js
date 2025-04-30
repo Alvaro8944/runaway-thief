@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import Player from '../player.js';
 import { Enemy1, STATE, PatrollingEnemy } from '../enemys/enemy1.js';
 import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemys/enemy2.js';
-import { Enemy3, STATE3, PatrollingEnemy3, AttackingEnemy3  } from '../enemys/enemy3.js';
+import { Enemy3, STATE3, PatrollingEnemy3, AttackingEnemy3, SmartEnemy3  } from '../enemys/enemy3.js';
 import Pincho from '../gameObjects/Pincho.js';
 import Escalera from '../gameObjects/Escalera.js';
 import BolaGrande from '../gameObjects/BolaGrande.js';
@@ -261,7 +261,9 @@ damageArea(x, y, radius, damage) {
 
      // Posiciones de enemigos tipo 3
      const enemy3Positions = [
-      { x: 500, y: 700, type: 'attacking' }
+      { x: 500, y: 700, type: 'smart' },
+      { x: 500, y: 700, type: 'attacking' },
+      { x: 500, y: 700, type: 'patrolling' }
 
     ];
 
@@ -424,6 +426,9 @@ damageArea(x, y, radius, damage) {
       enemy = new PatrollingEnemy3(this, pos.x, pos.y);
     } else if (pos.type === 'attacking') {
       enemy = new AttackingEnemy3(this, pos.x, pos.y);
+    }
+    else if (pos.type === 'smart') {
+        enemy = new SmartEnemy3(this, pos.x, pos.y);
     } else {
       enemy = new Enemy3(this, pos.x, pos.y);
     }

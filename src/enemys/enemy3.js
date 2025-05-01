@@ -379,6 +379,42 @@ export class AttackingEnemy3 extends Enemy3 {
 
   }
 
+
+
+  takeDamage(amount) {
+    if (this.state === ENEMY_STATE.DEAD) return;
+    this.health -= amount;
+    
+    if (this.state !== ENEMY_STATE.HURT && this.state !== ENEMY_STATE.ATTACKING) {
+      this.state = ENEMY_STATE.HURT;
+      this.play(this.config.hurtAnim);
+      this.once(`animationcomplete-${this.config.hurtAnim}`, () => {
+        if (this.health <= 0) {
+          this.die();
+        } else {
+          const horizontalDist = this.player ? Math.abs(this.x - this.player.x) : Infinity;
+          const verticalDiff = this.player ? Math.abs(this.y - this.player.y) : Infinity;
+          const withinVertical = verticalDiff < this.verticalTolerance;
+          this.state = (horizontalDist < this.detectionRange && withinVertical) ? 
+                      ENEMY_STATE.CHASING : ENEMY_STATE.PATROLLING;
+        }
+      });
+    }
+    else if(this.state === ENEMY_STATE.ATTACKING){
+ 
+      this.state = ENEMY_STATE.HURT;
+      this.play(this.config.hurtAnim);
+      this.once(`animationcomplete-${this.config.hurtAnim}`, () => {
+        if (this.health <= 0) {
+          this.die();
+        } else {
+          this.state = ENEMY_STATE.ATTACKING;
+        }
+      });
+    }
+  }
+
+
 }
 
 

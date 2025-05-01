@@ -216,21 +216,14 @@ damageArea(x, y, radius, damage) {
 
 
       { x: 2000, y: 350, type: 'patrolling' },
-      { x: 3850, y: 400, type: 'patrolling' },
-      { x: 3712, y: 150, type: 'patrolling' },
-      { x: 4640, y: 600, type: 'patrolling' },
-      { x: 5120, y: 750, type: 'patrolling' },
-      { x: 5440, y: 750, type: 'patrolling' },
-      { x: 6800, y: 650, type: 'patrolling' },
-      { x: 6720, y: 450, type: 'patrolling' },
-      { x: 6880, y: 250, type: 'patrolling' },
-      { x: 7520, y: 425, type: 'patrolling' },
-      { x: 7840, y: 425, type: 'patrolling' },
-      { x: 7840, y: 800, type: 'patrolling' },
-      { x: 8480, y: 425, type: 'patrolling' },
-      { x: 8700, y: 650, type: 'patrolling' },
-      { x: 8800, y: 650, type: 'patrolling' },
-      { x: 8900, y: 650, type: 'patrolling' }
+      { x: 2300, y: 350, type: 'patrolling' },
+      { x: 3200, y: 300, type: 'patrolling' },
+      { x: 3940, y: 800, type: 'patrolling' },
+      { x: 4040, y: 800, type: 'patrolling' },
+      { x: 4600, y: 700, type: 'patrolling' },
+      { x: 4040, y: 400, type: 'patrolling' },
+      { x: 3900, y: 350, type: 'patrolling' },
+      { x: 4200, y: 100, type: 'patrolling' }
 
     ];
     
@@ -262,7 +255,7 @@ damageArea(x, y, radius, damage) {
      // Posiciones de enemigos tipo 3
      const enemy3Positions = [
       //{ x: 500, y: 700, type: 'smart' },
-      { x: 500, y: 700, type: 'attacking' }
+      //{ x: 500, y: 700, type: 'attacking' }
       //{ x: 500, y: 700, type: 'patrolling' }
 
     ];

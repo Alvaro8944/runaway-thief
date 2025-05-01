@@ -67,6 +67,9 @@ import bullet from '../../assets/Bullets/5.png';
 //SHOOT EFFECT
 import effect from '../../assets/Shoot_effects/9_1.png';
 
+
+
+
 // BARRILES
 import barrilNormal from '../../assets/tiled/Objects/Resized/Barril.png';
 import barrilCura from '../../assets/tiled/Objects/Resized/BarrilCura.png';
@@ -276,6 +279,7 @@ export function loadWeaponSprites(scene) {
     frameWidth: 288, 
     frameHeight: 48 
   });
+
 
 }
 

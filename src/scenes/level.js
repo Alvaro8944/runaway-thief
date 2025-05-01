@@ -255,7 +255,7 @@ damageArea(x, y, radius, damage) {
      // Posiciones de enemigos tipo 3
      const enemy3Positions = [
       //{ x: 500, y: 700, type: 'smart' },
-      //{ x: 500, y: 700, type: 'attacking' }
+      { x: 500, y: 700, type: 'attacking' }
       //{ x: 500, y: 700, type: 'patrolling' }
 
     ];

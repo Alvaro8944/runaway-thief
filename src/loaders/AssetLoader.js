@@ -104,6 +104,7 @@ import Escaleras from '../../assets/Sounds/Escaleras.wav';
 import Shootgun from '../../assets/Sounds/Shootgun.wav';
 //BackGround
 import CaveBackground from '../../assets/Background/Cave.png';
+import CaveBackgroundFirst from '../../assets/Background/caveFirst.png';
 
 /**
  * Carga los sprites del jugador
@@ -344,5 +345,6 @@ export function loadSoundAssets(scene) {
 
 export function loadBackgroundSprites(scene){
 scene.load.image('CaveBackground',CaveBackground);
+scene.load.image('CaveBackgroundFirst',CaveBackgroundFirst);
 
 }

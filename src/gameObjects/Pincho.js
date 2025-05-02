@@ -103,21 +103,9 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
           let textureToUse = defaultTexture;
           let scale = 1.0;
           let damageValue = null;
-          
-          // En MainScene.json:
-          // gid 106 o 82 = pinchos hacia abajo
-          // gid 114 o 83 = pinchos hacia arriba 
-          // gid 113 = pinchos pequeños (usaremos los mismos sprites pero con escala)
-          if (pincho.gid === 43) {
-            textureToUse = 'pichos_arriba';
-          } else if (pincho.gid === 60) {
-            textureToUse = 'pichos_abajo';
-          }else if (pincho.gid === 61){
-            console.log("IZQUIERDA")
-            textureToUse = 'pichos_izquierda';
-          }else if (pincho.gid === 25){
-            textureToUse = 'pichos_derecha';
-          }
+          let direccion = null;
+
+  
           
           // Buscar propiedad damage en caso de que exista
           // En Tiled, las propiedades personalizadas se guardan en un array llamado "properties"
@@ -128,6 +116,20 @@ export default class Pincho extends Phaser.Physics.Arcade.Sprite {
               damageValue = damageProperty.value;
               console.log(`Pincho con daño personalizado: ${damageValue}`);
             }
+            const direccionProperty = pincho.properties.find(prop => prop.name === 'direccion');
+            if (direccionProperty) {
+              direccion = direccionProperty.value;
+            }
+          }
+
+          if(direccion === 'arriba'){
+            textureToUse = 'pichos_arriba';
+          }else if(direccion === 'abajo'){
+            textureToUse = 'pichos_abajo';
+          }else if(direccion === 'izquierda'){
+            textureToUse = 'pichos_izquierda';
+          }else if(direccion === 'derecha'){
+            textureToUse = 'pichos_derecha';
           }
 
           

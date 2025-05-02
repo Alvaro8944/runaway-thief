@@ -6,7 +6,7 @@ export const STATE3 = ENEMY_STATE;
 
 const DAMAGE_ENEMY = 10;
 const NORMAL_SPEED = 40;
-const ATTACK_SPEED = NORMAL_SPEED *4;
+const ATTACK_SPEED = NORMAL_SPEED *3;
 const AVOID_SPEED = NORMAL_SPEED *10;
 
 export class Enemy3 extends BaseEnemy {

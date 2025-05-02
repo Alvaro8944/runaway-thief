@@ -77,6 +77,9 @@ import barrilTNT from '../../assets/tiled/Objects/Resized/BarrilTNT.png';
 //import barrilVeneno from '../../assets/tiled/Objects/Resized/BarrilVeneno.png';
 //import barrilImpulso from '../../assets/tiled/Objects/Resized/BarrilImpulso.png';
 
+// CARTEL
+import cartelMadera from '../../assets/tiled/Objects/Resized/CartelMadera.png';
+
 //Bloque destructible
 import BlqDestructible from '../../assets/tiled/Objects/Resized/BlqDestructible.png';
 
@@ -313,6 +316,9 @@ export function loadObjectSprites(scene) {
   scene.load.image('BarrilTNT', barrilTNT);
   //scene.load.image('BarrilVeneno', barrilVeneno);
   //scene.load.image('BarrilImpulso', barrilImpulso);
+  
+  // Cargar la imagen del cartel
+  scene.load.image('Cartel', cartelMadera);
 
   scene.load.image('BlqDestructible', BlqDestructible);
 }

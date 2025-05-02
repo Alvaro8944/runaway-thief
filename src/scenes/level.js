@@ -9,6 +9,7 @@ import BolaGrande from '../gameObjects/BolaGrande.js';
 import Diamante from '../gameObjects/Diamante.js';
 import Barril from '../gameObjects/Barril.js';
 import RocaDestructible from '../gameObjects/RocaDestructible.js';
+import Cartel from '../gameObjects/cartel.js';
 
 const SPIKE_DAMAGE = 20;
 
@@ -142,6 +143,9 @@ damageArea(x, y, radius, damage) {
 
     // Crear rocas destructibles desde el mapa
     this.rocas = RocaDestructible.createFromMap(this, this.map, 'RocasDestructibles');
+    
+    // Crear carteles desde el mapa
+    this.carteles = Cartel.createFromMap(this, this.map, 'Carteles');
     
     // Añadir colisión entre bolas y suelo
     this.physics.add.collider(this.bolas, this.layerSuelo);

@@ -60,12 +60,22 @@ export default class Level extends Phaser.Scene {
 
 
 
-    var bg=this.add.tileSprite(400, 300, 800, 600, 'CaveBackground');
-    bg.setDepth(-20);
-    bg.setScale(1.7);
-    bg.setScrollFactor(0);
-    // Configurar sonido
-    //this.sound.play('level2', { volume: 0.2 });
+// En create()
+const bgFar = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'CaveBackground')
+.setOrigin(0)
+.setDepth(-20)
+.setScale(1.2)
+.setScrollFactor(0);  // fijado a cámara
+const bgNear = this.add.tileSprite(0, 30, this.scale.width, this.scale.height, 'CaveBackgroundFirst')
+.setOrigin(0)
+.setDepth(-10)
+.setScale(1)
+.setScrollFactor(0);
+
+// guardamos referencias:
+this.bgFar = bgFar;
+this.bgNear = bgNear;
+
   }
   
 
@@ -688,6 +698,16 @@ damageArea(x, y, radius, damage) {
 
   update() {
     if (!this.player) return;
+
+        // En update()
+ const cam = this.cameras.main;
+ // la capa de fondo lejano se mueve despacio:
+ this.bgFar.tilePositionX = cam.scrollX * 0.2;
+ // la capa más cercana, más rápido:
+ this.bgNear.tilePositionX = cam.scrollX * 0.8;
+
+
+ 
     
     try {
       // Verificar la superposición con las escaleras antes de resetear

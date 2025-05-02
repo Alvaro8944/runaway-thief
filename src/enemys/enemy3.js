@@ -42,7 +42,7 @@ export class Enemy3 extends BaseEnemy {
     //ATRIBUTOS ÚNICOS DE LA MAQUINA VOLADORA
     this.body.allowGravity = false;
     this.originPosition = new Phaser.Math.Vector2(x, y); // Guardamos posición de origen
-    this.patrolOffset = 60; // Máximo que puede alejarse de origen
+    this.patrolOffset = 30; // Máximo que puede alejarse de origen
     this.randomMoveTimer = 0;
     this.originalSpeed = this.speed;
     this.isSprinting = false;

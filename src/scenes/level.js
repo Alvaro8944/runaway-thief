@@ -504,6 +504,30 @@ damageArea(x, y, radius, damage) {
       this.physics.add.collider(this.player, this.rocas);
     }
     
+    // Colisión jugador-barriles
+    if (this.barriles) {
+      // Colisión física normal con los barriles (el jugador no los atraviesa)
+      this.physics.add.collider(this.player, this.barriles);
+      
+      // Detección de interacción con los barriles (para activar sus efectos)
+      this.physics.add.overlap(
+        this.player,
+        this.barriles,
+        (player, barril) => {
+          // Los barriles de respawn ahora se activan por proximidad, no por colisión
+          if (barril.tipo !== 'respawn') {
+            if (barril.handleCollision) {
+              barril.handleCollision(player);
+            } else if (barril.activarEfecto) {
+              barril.activarEfecto(player);
+            }
+          }
+        },
+        null,
+        this
+      );
+    }
+    
     // Colisión balas-suelo
     if (this.bullets) {
       this.physics.add.collider(this.bullets, this.layerSuelo, bullet => {
@@ -666,7 +690,17 @@ damageArea(x, y, radius, damage) {
     
     // Eventos de muerte
     this.events.on('playerDeath', () => {
-      console.log('Game Over - Player died');
+      console.log('[Level] Evento playerDeath recibido');
+      console.log('[Level] Estado del jugador al morir:', {
+        hasRespawnPoint: this.player.hasRespawnPoint,
+        respawnX: this.player.respawnX,
+        respawnY: this.player.respawnY,
+        state: this.player.state
+      });
+      
+      // Solo reiniciamos la escena si el jugador no tiene un punto de respawn
+      // El respawn se maneja directamente en el método die() del jugador
+      console.log('[Level] Reiniciando la escena...');
       this.scene.restart();
     });
   }

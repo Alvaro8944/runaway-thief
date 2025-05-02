@@ -215,6 +215,11 @@ this.bloquearmovimiento = false;
     });
     this.timerText = this.scene.add.text(0, 0, "Tiempo Restante:" + this.remainingtime / 1000);
     this.timerText.setScrollFactor(0);
+
+    // Punto de respawn
+    this.respawnX = x;
+    this.respawnY = y;
+    this.hasRespawnPoint = false;
   }
 
   // === MÉTODOS DE INTERFAZ ===
@@ -342,7 +347,7 @@ updateBullets() {
     super.preUpdate(time, delta);
 
     this.movimiento = false;
-    console.log(this.x + " "+  this.y);
+    //console.log(this.x + " "+  this.y);
     if (this.state === PLAYER_STATE.DEAD) return;
     
     // Actualizar UI en cada frame
@@ -1141,14 +1146,23 @@ updateBullets() {
   }
 
   die() {
+    console.log(`[Player] Método die() llamado. hasRespawnPoint: ${this.hasRespawnPoint}, respawnX: ${this.respawnX}, respawnY: ${this.respawnY}`);
     this.state = PLAYER_STATE.DEAD;
     this.play('player_death', true);
     this.setVelocity(0);
     this.body.setAllowGravity(false);
     
     this.once('animationcomplete-player_death', () => {
-      // Emitir evento de muerte para que la escena lo maneje
-      this.scene.events.emit('playerDeath');
+      console.log(`[Player] Animación de muerte completada. hasRespawnPoint: ${this.hasRespawnPoint}`);
+      // Si tiene un punto de respawn, revivir allí en lugar de emitir el evento de muerte
+      if (this.hasRespawnPoint) {
+        console.log(`[Player] Tiene punto de respawn, llamando a respawn()`);
+        this.respawn();
+      } else {
+        console.log(`[Player] No tiene punto de respawn, emitiendo evento playerDeath`);
+        // Emitir evento de muerte para que la escena lo maneje
+        this.scene.events.emit('playerDeath');
+      }
     });
   }
 
@@ -1209,5 +1223,62 @@ updateBullets() {
       yoyo: true,
       repeat: 2
     });
+  }
+
+  /**
+   * Establece un punto de respawn para el jugador
+   * @param {number} x - Coordenada X del punto de respawn
+   * @param {number} y - Coordenada Y del punto de respawn
+   */
+  setRespawnPoint(x, y) {
+    console.log(`[Player] setRespawnPoint llamado con coordenadas (${x}, ${y})`);
+    this.respawnX = x;
+    this.respawnY = y;
+    this.hasRespawnPoint = true;
+    console.log(`[Player] hasRespawnPoint establecido a: ${this.hasRespawnPoint}`);
+    
+    console.log(`[Player] Punto de respawn establecido en (${x}, ${y})`);
+  }
+
+  /**
+   * Revive al jugador en el último punto de respawn
+   */
+  respawn() {
+    console.log(`[Player] Método respawn() llamado. Posición actual: (${this.x}, ${this.y})`);
+    console.log(`[Player] Respawneando en: (${this.respawnX}, ${this.respawnY})`);
+    
+    // Restaurar salud
+    this.health = this.maxHealth;
+    
+    // Reposicionar en el punto de respawn
+    this.setPosition(this.respawnX, this.respawnY);
+    
+    // Restablecer estado y física
+    this.state = PLAYER_STATE.IDLE;
+    this.body.setAllowGravity(true);
+    this.setCollideWorldBounds(true);
+    this.alpha = 1;
+    
+    // Dar un período de invulnerabilidad al respawnear
+    this.isInvulnerable = true;
+    this.lastHitTime = this.scene.time.now;
+    
+    // Efecto de parpadeo al respawnear
+    this.scene.tweens.add({
+      targets: this,
+      alpha: 0.5,
+      duration: 100,
+      yoyo: true,
+      repeat: 10
+    });
+    
+    // Reproducir animación idle
+    const idleAnim = this.hasObject ? 'idle_shoot' : 'idle';
+    this.play(idleAnim, true);
+    
+    // Actualizar UI
+    this.updateUI();
+    
+    console.log(`[Player] Jugador respawneado en (${this.respawnX}, ${this.respawnY})`);
   }
 }

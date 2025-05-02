@@ -59,6 +59,8 @@ export default class Barril extends Phaser.Physics.Arcade.Sprite {
         return 'BarrilVeneno';
       case 'impulso':
         return 'BarrilImpulso';
+      case 'respawn':
+        return 'BarrilNormal';
       default:
         return 'BarrilNormal';
     }
@@ -109,17 +111,17 @@ export default class Barril extends Phaser.Physics.Arcade.Sprite {
           // Buscar propiedades personalizadas como el tipo
           if (barril.properties && Array.isArray(barril.properties)) {
             // Buscar la propiedad "Tipo" dentro del array de propiedades
-            const tipoProperty = barril.properties.find(prop => prop.name === 'tipo');
+            const tipoProperty = barril.properties.find(prop => 
+              prop.name === 'tipo' || prop.name === 'Tipo');
             if (tipoProperty) {
               tipo = tipoProperty.value;
-              console.log(`Barril de tipo: ${tipo}`);
             }
           }
           
           // Crear el sprite del barril según su tipo
           let barrilSprite;
           
-          switch (tipo) {
+          switch (tipo.toLowerCase()) {
             case 'cura':
               barrilSprite = new BarrilCura(
                 scene,
@@ -152,6 +154,14 @@ export default class Barril extends Phaser.Physics.Arcade.Sprite {
               );
               break;
               
+            case 'respawn':
+              barrilSprite = new BarrilRespawn(
+                scene,
+                barril.x + 16,
+                barril.y - 16
+              );
+              break;
+              
             default:
               barrilSprite = new Barril(
                 scene,
@@ -164,7 +174,9 @@ export default class Barril extends Phaser.Physics.Arcade.Sprite {
           }
           
           // Añadir el barril al grupo
-          barrilesGroup.add(barrilSprite);
+          if (barrilSprite) {
+            barrilesGroup.add(barrilSprite);
+          }
         });
         
         console.log(`Creados ${barrilesLayer.objects.length} barriles desde la capa ${layerName}`);
@@ -644,5 +656,295 @@ export class BarrilImpulso extends Barril {
       
       emitter.explode(15);
     }
+  }
+}
+
+/**
+ * Clase específica para el barril de respawn (punto de control)
+ * @extends Barril
+ */
+export class BarrilRespawn extends Barril {
+  /**
+   * Constructor del barril de respawn
+   * @param {Phaser.Scene} scene - La escena a la que pertenece este barril
+   * @param {number} x - Posición X del barril
+   * @param {number} y - Posición Y del barril
+   */
+  constructor(scene, x, y) {
+    super(scene, x, y, 'respawn');
+    
+    // Inicialización de propiedades específicas
+    this.activated = false;
+    
+    // Aplicar un tinte sutil para diferenciar este barril
+    this.setTint(0x88ccff);
+    
+    // Añadir un efecto de brillo alrededor del barril cuando se activa
+    this.glowEffect = this.scene.add.sprite(this.x, this.y, 'BarrilNormal');
+    this.glowEffect.setVisible(false);
+    this.glowEffect.setDepth(this.depth - 1); // Por debajo del barril
+    this.glowEffect.setScale(1.2);
+    this.glowEffect.setAlpha(0.6);
+    this.glowEffect.setTint(0x2299ff);
+    
+    // Añadir animación de brillo
+    this.glowTween = this.scene.tweens.add({
+      targets: this.glowEffect,
+      alpha: { from: 0.6, to: 0.2 },
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      paused: true
+    });
+    
+    // Añadir luz puntual para el barril
+    this.light = this.scene.add.pointlight(this.x, this.y, 0x44aaff, 40, 0.05);
+    if (this.light) {
+      this.light.scrollFactorX = this.scrollFactorX;
+      this.light.scrollFactorY = this.scrollFactorY;
+      
+      // Añadir un efecto de pulso a la luz
+      this.lightTween = this.scene.tweens.add({
+        targets: this.light,
+        intensity: 0.1,
+        duration: 1500,
+        yoyo: true,
+        repeat: -1
+      });
+    }
+    
+    // Crear un pequeño indicador sobre el barril
+    this.indicadorCheckpoint = this.scene.add.sprite(this.x, this.y - 30, 'BarrilNormal');
+    if (this.indicadorCheckpoint) {
+      this.indicadorCheckpoint.setScale(0.4);
+      this.indicadorCheckpoint.setAlpha(0.7);
+      this.indicadorCheckpoint.setTint(0x44aaff);
+      
+      // Animar el indicador
+      this.scene.tweens.add({
+        targets: this.indicadorCheckpoint,
+        y: this.y - 35,
+        duration: 1200,
+        yoyo: true,
+        repeat: -1
+      });
+    }
+    
+    // Radio de detección para activar el checkpoint (en píxeles)
+    this.detectionRadius = 50;
+    
+    // Efecto de pulso para visualizar el radio de detección
+    const pulseCircle = this.scene.add.circle(this.x, this.y, this.detectionRadius, 0x44aaff, 0.1);
+    pulseCircle.setDepth(this.depth - 2);
+    this.scene.tweens.add({
+      targets: pulseCircle,
+      scale: 1.2,
+      alpha: 0,
+      duration: 2000,
+      repeat: -1
+    });
+    
+    // Comprobar proximidad del jugador periódicamente
+    scene.time.addEvent({
+      delay: 200, // Comprobar cada 200ms para mayor precisión
+      callback: this.checkPlayerProximity,
+      callbackScope: this,
+      loop: true
+    });
+  }
+  
+  /**
+   * Verificar si el jugador está cerca para activar el checkpoint
+   */
+  checkPlayerProximity() {
+    if (this.activated || !this.scene || !this.scene.player) return;
+    
+    const distance = Phaser.Math.Distance.Between(
+      this.x, this.y,
+      this.scene.player.x, this.scene.player.y
+    );
+    
+    if (distance < this.detectionRadius) {
+      this.activar(this.scene.player);
+    }
+  }
+  
+  /**
+   * Configura las propiedades específicas del barril de respawn
+   * @override
+   */
+  configurarPorTipo() {
+    this.setName('barrilRespawn');
+    this.body.setImmovable(true);
+  }
+  
+  /**
+   * Activa el punto de control
+   * @param {Player} player - El jugador que activó el punto de control
+   */
+  activar(player) {
+    if (this.activated) return; // Si ya está activado, no hacer nada
+    
+    this.activated = true;
+    this.glowEffect.setVisible(true);
+    
+    // Efecto visual de activación más destacado
+    this.scene.tweens.add({
+      targets: this,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      duration: 300,
+      yoyo: true,
+      repeat: 1
+    });
+    
+    // Efecto de ondas en el suelo
+    for (let i = 0; i < 3; i++) {
+      const ring = this.scene.add.circle(this.x, this.y, 10 + (i * 15), 0x44aaff, 0.7 - (i * 0.2));
+      ring.setDepth(this.depth - 3);
+      
+      this.scene.tweens.add({
+        targets: ring,
+        scale: 4,
+        alpha: 0,
+        duration: 1000 + (i * 200),
+        onComplete: () => ring.destroy()
+      });
+    }
+    
+    // Iniciar animación de brillo
+    if (this.glowTween && !this.glowTween.isPlaying()) {
+      this.glowTween.play();
+    }
+    
+    // Aumentar la intensidad de la luz si existe
+    if (this.light) {
+      this.scene.tweens.add({
+        targets: this.light,
+        intensity: 0.2,
+        radius: 60,
+        duration: 500
+      });
+    }
+    
+    // Crear efecto de partículas de ascensión
+    if (this.scene.particles) {
+      const emitter = this.scene.particles.createEmitter({
+        x: this.x,
+        y: this.y,
+        speed: { min: 30, max: 80 },
+        angle: { min: 240, max: 300 },
+        scale: { start: 0.8, end: 0 },
+        lifespan: 1000,
+        blendMode: 'ADD',
+        tint: 0x44aaff
+      });
+      
+      // Emitir varias partículas y luego detener
+      emitter.explode(20);
+      this.scene.time.delayedCall(500, () => {
+        emitter.stop();
+      });
+    }
+    
+    // Guardar la posición como punto de control del jugador
+    if (player.setRespawnPoint) {
+      player.setRespawnPoint(this.x, this.y);
+    } else {
+      // Si el método no existe en el jugador, lo añadimos
+      player.respawnX = this.x;
+      player.respawnY = this.y;
+      player.hasRespawnPoint = true;
+    }
+    
+    // Reproducir un sonido
+    if (this.scene.sound && this.scene.cache.audio.exists('baseball')) {
+      this.scene.sound.play('baseball', { volume: 0.6, detune: -400 }); // Tono más grave para el checkpoint
+    }
+    
+    
+    // Mostrar un mensaje destacado
+    const text = this.scene.add.text(this.x, this.y - 40, "CHECKPOINT", {
+      fontSize: '16px',
+      fontStyle: 'bold',
+      fill: '#ffffff',
+      stroke: '#0055aa',
+      strokeThickness: 4,
+      fontFamily: 'Arial'
+    }).setOrigin(0.5);
+    
+    // Animación para que el texto suba y desaparezca con escala
+    this.scene.tweens.add({
+      targets: text,
+      y: this.y - 80,
+      alpha: 0,
+      scale: 1.5,
+      duration: 2000,
+      ease: 'Power2',
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+    
+    // Eliminar el indicador, ya no se necesita
+    if (this.indicadorCheckpoint) {
+      this.scene.tweens.add({
+        targets: this.indicadorCheckpoint,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => {
+          this.indicadorCheckpoint.destroy();
+          this.indicadorCheckpoint = null;
+        }
+      });
+    }
+  }
+  
+  /**
+   * Los métodos activarEfecto y handleCollision ya no son necesarios porque usamos
+   * exclusivamente el sistema de proximidad, pero los mantenemos vacíos para compatibilidad
+   * con el sistema de colisiones existente
+   */
+  activarEfecto(player) {
+
+  }
+  
+  handleCollision(player) {
+
+  }
+  
+  /**
+   * Método que se llama cuando se destruye el barril
+   * @override
+   */
+  destroy() {
+    // Detener y destruir el tween de la luz si existe
+    if (this.lightTween) {
+      this.lightTween.stop();
+      this.lightTween = null;
+    }
+    
+    // Destruir la luz si existe
+    if (this.light) {
+      this.light.destroy();
+      this.light = null;
+    }
+    
+    if (this.glowEffect && this.glowEffect.destroy) {
+      this.glowEffect.destroy();
+      this.glowEffect = null;
+    }
+    
+    if (this.glowTween && this.glowTween.stop) {
+      this.glowTween.stop();
+      this.glowTween = null;
+    }
+    
+    if (this.indicadorCheckpoint && this.indicadorCheckpoint.destroy) {
+      this.indicadorCheckpoint.destroy();
+      this.indicadorCheckpoint = null;
+    }
+    
+    super.destroy();
   }
 } 

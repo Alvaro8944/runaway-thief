@@ -368,8 +368,10 @@ export class AttackingEnemy3 extends Enemy3 {
     } 
 
 
+    
+
     const overlap = Phaser.Geom.Intersects.RectangleToRectangle(this.getBounds(), this.player.getBounds());
-    if (overlap) {          
+    if (overlap && this.state === ENEMY_STATE.ATTACKING ) {          
       this.attackDamageDealt = true;
       this.player.takeDamage(this.damage, this); 
       this.die(); // El alien muere al golpear 
@@ -404,6 +406,8 @@ export class AttackingEnemy3 extends Enemy3 {
  
       this.state = ENEMY_STATE.HURT;
       this.play(this.config.hurtAnim);
+
+      
       this.once(`animationcomplete-${this.config.hurtAnim}`, () => {
         if (this.health <= 0) {
           this.die();

@@ -62,15 +62,15 @@ export default class Level extends Phaser.Scene {
 
 // En create()
 const bgFar = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'CaveBackground')
-.setOrigin(0)
-.setDepth(-20)
-.setScale(1.2)
-.setScrollFactor(0);  // fijado a cámara
+   .setOrigin(0)
+   .setDepth(-20)
+   .setScale(1.2)
+   .setScrollFactor(0);  // fijado a cámara
 const bgNear = this.add.tileSprite(0, 30, this.scale.width, this.scale.height, 'CaveBackgroundFirst')
-.setOrigin(0)
-.setDepth(-10)
-.setScale(1)
-.setScrollFactor(0);
+  .setOrigin(0)
+  .setDepth(-10)
+  .setScale(1)
+  .setScrollFactor(0);
 
 // guardamos referencias:
 this.bgFar = bgFar;
@@ -265,7 +265,7 @@ damageArea(x, y, radius, damage) {
      // Posiciones de enemigos tipo 3
      const enemy3Positions = [
       //{ x: 500, y: 700, type: 'smart' },
-      //{ x: 500, y: 700, type: 'attacking' }
+      { x: 500, y: 700, type: 'attacking' }
       //{ x: 500, y: 700, type: 'patrolling' }
 
     ];
@@ -707,8 +707,7 @@ damageArea(x, y, radius, damage) {
  this.bgNear.tilePositionX = cam.scrollX * 0.8;
 
 
- 
-    
+
     try {
       // Verificar la superposición con las escaleras antes de resetear
       const isOnLadder = this.physics.overlap(this.player, this.ladders);

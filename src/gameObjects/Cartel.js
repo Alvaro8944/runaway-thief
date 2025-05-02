@@ -411,18 +411,6 @@ export default class Cartel extends Phaser.Physics.Arcade.Sprite {
             if (contenidoProperty) {
               contenido = contenidoProperty.value;
             }
-            
-            // Buscar la propiedad "mensaje" dentro del array de propiedades
-            const mensajeProperty = cartel.properties.find(prop => prop.name === 'mensaje');
-            if (mensajeProperty) {
-              mensaje = mensajeProperty.value;
-            }
-            
-            // Buscar la propiedad "escala" dentro del array de propiedades
-            const escalaProperty = cartel.properties.find(prop => prop.name === 'escala');
-            if (escalaProperty) {
-              scale = escalaProperty.value;
-            }
           }
           
           // Crear el sprite del cartel

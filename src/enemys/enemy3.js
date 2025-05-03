@@ -42,7 +42,7 @@ export class Enemy3 extends BaseEnemy {
     //ATRIBUTOS ÚNICOS DE LA MAQUINA VOLADORA
     this.body.allowGravity = false;
     this.originPosition = new Phaser.Math.Vector2(x, y); // Guardamos posición de origen
-    this.patrolOffset = 30; // Máximo que puede alejarse de origen
+    this.patrolOffset = 50; // Máximo que puede alejarse de origen
     this.randomMoveTimer = 0;
     this.originalSpeed = this.speed;
     this.isSprinting = false;
@@ -135,11 +135,6 @@ export class Enemy3 extends BaseEnemy {
 
     if (this.state === ENEMY_STATE.DEAD) return;
 
-    // Actualizar posición del hitbox de ataque
-    if (this.attackHitbox) {
-      const offsetX = this.flipX ? -30 : 30;
-      this.attackHitbox.setPosition(this.x + offsetX, this.y);
-    }
 
     // Solo si hay jugador y no está atacando:
     if (this.player && !this.isAttacking) {

@@ -7,6 +7,7 @@ export function createAllAnimations(scene) {
   createEnemyAnimations(scene);
   createEnemy2Animations(scene);
   createEnemy3Animations(scene);
+  createBossAnimations(scene);
   createWeaponAnimations(scene);
 }
 
@@ -247,6 +248,68 @@ export function createEnemy3Animations(scene) {
 }
 
 
+export function createBossAnimations(scene) {
+  scene.anims.create({
+    key: 'boss_idle',
+    frames: scene.anims.generateFrameNumbers('boss_idle', { start: 0, end: 3 }),
+    frameRate: 10,
+    repeat: -1
+  });
+
+  scene.anims.create({
+    key: 'boss_walk',
+    frames: scene.anims.generateFrameNumbers('boss_walk', { start: 0, end: 5 }),
+    frameRate: 6,
+    repeat: -1
+  });
+
+
+  scene.anims.create({
+    key: 'boss_attack1',
+    frames: scene.anims.generateFrameNumbers('boss_attack1', { start: 0, end: 5 }),
+    frameRate: 10,
+    repeat: 0
+  });
+
+
+  scene.anims.create({
+    key: 'boss_attack2',
+    frames: scene.anims.generateFrameNumbers('boss_attack2', { start: 0, end: 5 }),
+    frameRate: 10,
+    repeat: 0
+  });
+
+
+
+  // Animación de recibir daño (hurt)
+  scene.anims.create({
+    key: 'boss_hurt',
+    frames: scene.anims.generateFrameNumbers('boss_hurt', { start: 0, end: 1 }),
+    frameRate: 10,
+    repeat: 0
+  });
+  
+
+  // Animación de muerte
+  scene.anims.create({
+    key: 'boss_die',
+    frames: scene.anims.generateFrameNumbers('boss_die', { start: 0, end: 5 }),
+    frameRate: 10,
+    repeat: 0
+  });
+
+  // Animación de muerte
+  scene.anims.create({
+    key: 'boss_special',
+    frames: scene.anims.generateFrameNumbers('boss_special', { start: 0, end: 5 }),
+    frameRate: 5,
+    repeat: 0
+  });
+
+
+}
+
+
 
 /**
  * Crea las animaciones de armas y efectos
@@ -273,6 +336,16 @@ export function createWeaponAnimations(scene) {
     frames: [{ key: 'bullet', frame: 0 }],
     frameRate: 10
   });
+
+
+    // BOSSBULLET
+    scene.anims.create({
+      key: 'bossBullet',
+      frames: [{ key: 'bossBullet', frame: 0 }],
+      frameRate: 10
+    });
+
+    
 
   // Effect
   scene.anims.create({

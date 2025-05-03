@@ -38,6 +38,15 @@ import enemy3_die from '../../assets/Enemies/5/Death.png';
 
 
 
+//BOSS 
+import boss_idle from '../../assets/Enemies/Boss/Idle.png';
+import boss_walk from '../../assets/Enemies/Boss/Walk.png';
+import boss_hurt from '../../assets/Enemies/Boss/Hurt.png';
+import boss_attack1 from '../../assets/Enemies/Boss/Attack1.png';
+import boss_attack2 from '../../assets/Enemies/Boss/Attack3.png';
+import boss_die from '../../assets/Enemies/Boss/Death.png';
+import boss_special from '../../assets/Enemies/Boss/Special.png';
+
 
 //PLAYER SHOOT HAND
 import hand3 from '../../assets/players/main_character_shoot_hands/3.png';
@@ -63,6 +72,11 @@ import jetpack from '../../assets/Objects/jetpackPequeño.png';
 
 //BULLET
 import bullet from '../../assets/Bullets/5.png';
+
+
+//BULLET
+import bossBullet from '../../assets/Bullets/Projectile.png';
+
 
 //SHOOT EFFECT
 import effect from '../../assets/Shoot_effects/9_1.png';
@@ -241,6 +255,37 @@ export function loadEnemySprites(scene) {
   });
 
 
+  // BOSS
+  scene.load.spritesheet('boss_idle', boss_idle, {
+    frameWidth: 96,
+    frameHeight: 96
+  });
+  scene.load.spritesheet('boss_walk', boss_walk, {
+    frameWidth: 96,
+    frameHeight: 96
+  });
+  scene.load.spritesheet('boss_hurt', boss_hurt, {
+    frameWidth: 96,
+    frameHeight: 96
+  });
+  scene.load.spritesheet('boss_attack1', boss_attack1, {
+    frameWidth: 96,
+    frameHeight: 96
+  });
+  scene.load.spritesheet('boss_attack2', boss_attack2, {
+    frameWidth: 96,
+    frameHeight: 96
+  });
+  scene.load.spritesheet('boss_die', boss_die, {
+    frameWidth: 96,
+    frameHeight: 96
+  });
+
+  scene.load.spritesheet('boss_special', boss_special, {
+    frameWidth: 96,
+    frameHeight: 96
+  });
+
 
 
 }
@@ -281,6 +326,14 @@ export function loadWeaponSprites(scene) {
     frameWidth: 15, 
     frameHeight: 4 
   });
+
+
+  scene.load.spritesheet('bossBullet', bossBullet, { 
+    frameWidth: 13, 
+    frameHeight: 10 
+  });
+
+
   
   scene.load.spritesheet('effect', effect, { 
     frameWidth: 288, 

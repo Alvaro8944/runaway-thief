@@ -94,8 +94,6 @@ export class Enemy2 extends BaseEnemy {
       // Asegurar que la bala no esté afectada por la gravedad
       bullet.body.allowGravity = false;
       
-      // Efecto visual de disparo (opcional)
-      this.scene.cameras.main.shake(100, 0.005);
     }
   }
 

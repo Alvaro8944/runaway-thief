@@ -66,8 +66,8 @@ export class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
 
     // Actualizar posición del hitbox de ataque
     if (this.attackHitbox) {
-      const offsetX = this.flipX ? -30 : 30;
-      this.attackHitbox.setPosition(this.x + offsetX, this.y);
+      const offsetX = this.flipX ? 23 : 0;
+      this.setOffset( offsetX, this.offsetY);
     }
 
     // Las clases hijas sobrescriben este método para implementar su propia lógica de IA
@@ -120,7 +120,7 @@ export class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
     
     // Activar hitbox de ataque
     this.attackHitbox.body.enable = true;
-    
+
     // Reproducir animación de ataque
     this.play(this.config.attackAnim, true);
 

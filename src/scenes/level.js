@@ -3,6 +3,7 @@ import Player from '../player.js';
 import { Enemy1, STATE, PatrollingEnemy } from '../enemys/enemy1.js';
 import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemys/enemy2.js';
 import { Enemy3, STATE3, PatrollingEnemy3, AttackingEnemy3, SmartEnemy3  } from '../enemys/enemy3.js';
+import { Boss, STATEBOSS } from '../enemys/boss.js';
 import Pincho from '../gameObjects/Pincho.js';
 import Escalera from '../gameObjects/Escalera.js';
 import BolaGrande from '../gameObjects/BolaGrande.js';
@@ -243,7 +244,7 @@ damageArea(x, y, radius, damage) {
     
     // Posiciones de enemigos tipo 2
     const enemy2Positions = [
-      //{ x: 700, y: 1750, type: 'normal' },
+      //{ x: 500, y: 700, type: 'normal' },
       //{ x: 3200, y: 1150, type: 'patrolling' },
       //{ x: 3650, y: 1250, type: 'patrolling' },
       //{ x: 3400, y: 2000, type: 'normal' },
@@ -275,6 +276,10 @@ damageArea(x, y, radius, damage) {
     ];
 
 
+    const bossPosition = [
+      { x: 300, y: 700}
+    ];
+
     
     
     // Crear enemigos tipo 1
@@ -285,6 +290,10 @@ damageArea(x, y, radius, damage) {
 
     // Crear enemigos tipo 3
     enemy3Positions.forEach(pos => this.createEnemy3(pos));
+
+    // Crear boss
+    bossPosition.forEach(pos => this.createBoss(pos));
+
 
   }
   
@@ -485,6 +494,52 @@ damageArea(x, y, radius, damage) {
   }
 
 
+
+
+  createBoss(pos) {
+    const enemy = new Boss(this, pos.x, pos.y);
+    
+    enemy.player = this.player;
+    enemy.map = this.map;
+    this.enemies.add(enemy);
+    
+    // Configurar colisiones
+    this.physics.add.collider(enemy, this.layerSuelo);
+    
+    // Colisión jugador-enemigo
+    this.physics.add.overlap(
+      this.player,
+      enemy,
+      (player, enemySprite) => {
+        if (!enemySprite || !player) return;
+        if (enemySprite.state !== STATEBOSS.DEAD && 
+            enemySprite.state !== STATEBOSS.HURT && 
+            !player.isInvulnerable) {
+          if (enemySprite.state === STATEBOSS.ATTACKING && !enemySprite.attackDamageDealt) {
+            player.takeDamage(enemySprite.damage, enemySprite);
+            enemySprite.attackDamageDealt = true;
+          }
+        }
+      },
+      null,
+      this
+    );
+    
+    // Colisión bala-enemigo
+    this.physics.add.overlap(
+      enemy,
+      this.bullets,
+      (enemySprite, bullet) => {
+        if (!enemySprite || !bullet) return;
+        if (enemySprite.state !== STATEBOSS.DEAD) {
+          enemySprite.takeDamage(bullet.damage);
+          bullet.destroy();
+        }
+      },
+      null,
+      this
+    );
+  }
 
 
 

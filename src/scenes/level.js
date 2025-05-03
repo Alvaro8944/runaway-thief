@@ -47,8 +47,14 @@ export default class Level extends Phaser.Scene {
       loop: true
     });
 
-
-
+    // Escuchar evento de objeto desbloqueado
+    this.events.on('objetoDesbloqueado', (datos) => {
+      console.log(`Objeto desbloqueado: ${datos.nombre} en (${datos.x}, ${datos.y})`);
+      
+      this.mostrarNotificacionObjeto(datos.nombre, datos.x, datos.y);
+      
+      this.darObjetoAJugador(datos.nombre);
+    });
 
     this.events.on('bulletReachedTarget',
       (x, y, bullet) => {
@@ -59,54 +65,46 @@ export default class Level extends Phaser.Scene {
       }
     );
 
+    // En create()
+    const bgFar = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'CaveBackground')
+      .setOrigin(0)
+      .setDepth(-20)
+      .setScale(1.2)
+      .setScrollFactor(0);  // fijado a cámara
+    const bgNear = this.add.tileSprite(0, 30, this.scale.width, this.scale.height, 'CaveBackgroundFirst')
+      .setOrigin(0)
+      .setDepth(-10)
+      .setScale(1)
+      .setScrollFactor(0);
 
-
-
-// En create()
-const bgFar = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'CaveBackground')
-   .setOrigin(0)
-   .setDepth(-20)
-   .setScale(1.2)
-   .setScrollFactor(0);  // fijado a cámara
-const bgNear = this.add.tileSprite(0, 30, this.scale.width, this.scale.height, 'CaveBackgroundFirst')
-  .setOrigin(0)
-  .setDepth(-10)
-  .setScale(1)
-  .setScrollFactor(0);
-
-// guardamos referencias:
-this.bgFar = bgFar;
-this.bgNear = bgNear;
-
+    // guardamos referencias:
+    this.bgFar = bgFar;
+    this.bgNear = bgNear;
   }
   
+  /**
+   * Hace daño a todos los enemigos que caigan dentro de un radio
+   * @param {number} x 
+   * @param {number} y 
+   * @param {number} radius 
+   * @param {number} damage 
+   */
+  damageArea(x, y, radius, damage) {
+    // dibujar un círculo de debug
+    const g = this.add.graphics({ x, y });
+    g.fillStyle(0xff3000, 0.5);
+    g.fillCircle(0, 0, radius);
+    this.time.delayedCall(200, () => g.destroy());
 
-
-   /**
- * Hace daño a todos los enemigos que caigan dentro de un radio
- * @param {number} x 
- * @param {number} y 
- * @param {number} radius 
- * @param {number} damage 
- */
-damageArea(x, y, radius, damage) {
-  // dibujar un círculo de debug
-  const g = this.add.graphics({ x, y });
-  g.fillStyle(0xff3000, 0.5);
-  g.fillCircle(0, 0, radius);
-  this.time.delayedCall(200, () => g.destroy());
-
-  // Itera sobre tu grupo de enemigos
-  this.enemies.children.iterate(enemy => {
-    if (!enemy || enemy.state === 'DEAD') return;
-    const d = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
-    if (d <= radius*2) {
-      enemy.takeDamage(damage, /*opcional: fuente=*/null);
-    }
-  });
-}
-
-
+    // Itera sobre tu grupo de enemigos
+    this.enemies.children.iterate(enemy => {
+      if (!enemy || enemy.state === 'DEAD') return;
+      const d = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
+      if (d <= radius*2) {
+        enemy.takeDamage(damage, /*opcional: fuente=*/null);
+      }
+    });
+  }
 
   setupMap() {
     const map = this.make.tilemap({ key: 'map' });
@@ -228,8 +226,6 @@ damageArea(x, y, radius, damage) {
   createEnemies() {
     // Posiciones de enemigos tipo 1
     const enemyPositions = [
-
-
       { x: 2000, y: 350, type: 'patrolling' },
       { x: 2300, y: 350, type: 'patrolling' },
       { x: 3200, y: 300, type: 'patrolling' },
@@ -239,7 +235,6 @@ damageArea(x, y, radius, damage) {
       { x: 4040, y: 400, type: 'patrolling' },
       { x: 3900, y: 350, type: 'patrolling' },
       { x: 4200, y: 100, type: 'patrolling' }
-
     ];
     
     // Posiciones de enemigos tipo 2
@@ -277,7 +272,7 @@ damageArea(x, y, radius, damage) {
 
 
     const bossPosition = [
-      //{ x: 300, y: 700}
+      { x: 300, y: 700}
     ];
 
     
@@ -780,12 +775,10 @@ damageArea(x, y, radius, damage) {
       right: Phaser.Input.Keyboard.KeyCodes.D,
       jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
       cambiarWeapon: Phaser.Input.Keyboard.KeyCodes.X,
-      sacarEscudo: Phaser.Input.Keyboard.KeyCodes.ONE,
-      sacarArmaOne: Phaser.Input.Keyboard.KeyCodes.TWO,
-      sacarArmaTwo: Phaser.Input.Keyboard.KeyCodes.THREE,
-      sacarArmaThree: Phaser.Input.Keyboard.KeyCodes.FOUR
-      
-
+      sacarEscudo: Phaser.Input.Keyboard.KeyCodes.FOUR,     // Tecla 4: Escudo
+      sacarArmaOne: Phaser.Input.Keyboard.KeyCodes.ONE,     // Tecla 1: Rifle (arma principal)
+      sacarArmaTwo: Phaser.Input.Keyboard.KeyCodes.TWO,     // Tecla 2: Escopeta
+      sacarArmaThree: Phaser.Input.Keyboard.KeyCodes.THREE  // Tecla 3: Arma explosiva
     });
   }
 
@@ -869,5 +862,231 @@ damageArea(x, y, radius, damage) {
     } else {
       console.log('No se encontraron puntos de spawn para bolas en el mapa');
     }
+  }
+
+  /**
+   * Muestra una notificación visual destacada cuando se desbloquea un objeto
+   * @param {string} nombreObjeto - Nombre del objeto desbloqueado
+   * @param {number} x - Posición X donde se desbloqueó
+   * @param {number} y - Posición Y donde se desbloqueó
+   */
+  mostrarNotificacionObjeto(nombreObjeto, x, y) {
+    // Crear un contenedor para la notificación
+    const notificationContainer = this.add.container(this.cameras.main.centerX, 100);
+    notificationContainer.setDepth(1000); // Asegurar que esté por encima de todo
+    
+    // Fondo de la notificación
+    const bg = this.add.rectangle(0, 0, 400, 80, 0x000000, 0.7);
+    bg.setStrokeStyle(3, this.getColorForObject(nombreObjeto));
+    
+    // Título de la notificación
+    const title = this.add.text(0, -20, '¡OBJETO DESBLOQUEADO!', {
+      fontFamily: 'Arial',
+      fontSize: '18px',
+      fontStyle: 'bold',
+      color: '#ffffff',
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Texto con el nombre del objeto
+    const objectText = this.add.text(0, 10, this.getDisplayNameForObject(nombreObjeto), {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      fontStyle: 'bold',
+      color: this.getColorHexForObject(nombreObjeto),
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Añadir al contenedor
+    notificationContainer.add([bg, title, objectText]);
+    
+    // Animación de entrada
+    notificationContainer.setAlpha(0);
+    notificationContainer.setScale(0.8);
+    
+    this.tweens.add({
+      targets: notificationContainer,
+      y: 120,
+      alpha: 1,
+      scale: 1,
+      duration: 500,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // Pequeño efecto de rebote
+        this.tweens.add({
+          targets: notificationContainer,
+          y: 130,
+          duration: 200,
+          yoyo: true,
+          repeat: 1
+        });
+        
+        // Mantener visible y luego desaparecer
+        this.time.delayedCall(3000, () => {
+          this.tweens.add({
+            targets: notificationContainer,
+            y: 80,
+            alpha: 0,
+            scale: 0.8,
+            duration: 500,
+            ease: 'Back.easeIn',
+            onComplete: () => {
+              notificationContainer.destroy();
+            }
+          });
+        });
+      }
+    });
+    
+    // Crear un efecto de partículas en la posición del objeto
+    if (this.particles) {
+      const color = this.getColorNumberForObject(nombreObjeto);
+      const emitter = this.particles.createEmitter({
+        x: x,
+        y: y,
+        speed: { min: 50, max: 150 },
+        angle: { min: 0, max: 360 },
+        scale: { start: 0.8, end: 0 },
+        lifespan: 1500,
+        blendMode: 'ADD',
+        tint: color
+      });
+      
+      // Emitir partículas y luego detener
+      emitter.explode(40);
+      this.time.delayedCall(1500, () => {
+        emitter.stop();
+      });
+    }
+  }
+  
+  /**
+   * Aplica el efecto del objeto desbloqueado al jugador
+   * @param {string} nombreObjeto - Nombre del objeto a dar al jugador
+   */
+  darObjetoAJugador(nombreObjeto) {
+    if (!this.player) return;
+    
+    // Diferentes efectos según el tipo de objeto
+    switch (nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        this.player.darJetpack();
+        break;
+        
+      case 'escopeta':
+        this.player.darEscopeta();
+        break;
+
+      case 'rifle':
+        this.player.darRifle();
+        break;
+        
+      case 'explosivo':
+        this.player.darArmaExplosiva();
+        break;
+        
+      case 'paracaidas':
+        this.player.darParacaidas();
+        break;
+        
+      case 'escudo':
+        this.player.activarEscudo();
+        break;
+        
+      case 'velocidad':
+        this.player.aumentarVelocidad();
+        break;
+        
+      default:
+        console.log(`Objeto no reconocido: ${nombreObjeto}`);
+        break;
+    }
+  }
+  
+  /**
+   * Devuelve un color adecuado para cada tipo de objeto
+   * @param {string} nombreObjeto - Nombre del objeto
+   * @returns {number} - Color en formato 0xRRGGBB
+   */
+  getColorNumberForObject(nombreObjeto) {
+    switch (nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        return 0x44aaff;
+      case 'escopeta':
+        return 0xff5544;
+      case 'rifle':
+        return 0x33bbaa;
+      case 'paracaidas':
+        return 0x66ee66;
+      case 'escudo':
+        return 0xaaaaff;
+      case 'velocidad':
+        return 0xffaa44;
+      case 'explosivo':
+        return 0xff8800;
+      default:
+        return 0xffffff;
+    }
+  }
+  
+  /**
+   * Devuelve el color en formato CSS para cada tipo de objeto
+   * @param {string} nombreObjeto - Nombre del objeto
+   * @returns {string} - Color en formato #RRGGBB
+   */
+  getColorHexForObject(nombreObjeto) {
+    switch (nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        return '#44aaff';
+      case 'escopeta':
+        return '#ff5544';
+      case 'rifle':
+        return '#33bbaa';
+      case 'paracaidas':
+        return '#66ee66';
+      case 'escudo':
+        return '#aaaaff';
+      case 'velocidad':
+        return '#ffaa44';
+      case 'explosivo':
+        return '#ff8800';
+      default:
+        return '#ffffff';
+    }
+  }
+  
+  /**
+   * Devuelve el nombre a mostrar en la notificación para cada tipo de objeto
+   * @param {string} nombreObjeto - Nombre interno del objeto
+   * @returns {string} - Nombre formateado para mostrar
+   */
+  getDisplayNameForObject(nombreObjeto) {
+    switch (nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        return '¡JETPACK!';
+      case 'escopeta':
+        return '¡ESCOPETA!';
+      case 'rifle':
+        return '¡RIFLE!';
+      case 'paracaidas':
+        return '¡PARACAÍDAS!';
+      case 'escudo':
+        return '¡ESCUDO PROTECTOR!';
+      case 'velocidad':
+        return '¡VELOCIDAD TURBO!';
+      case 'explosivo':
+        return '¡ARMA EXPLOSIVA!';
+      default:
+        return nombreObjeto.toUpperCase();
+    }
+  }
+  
+  /**
+   * Devuelve el color en formato 0xRRGGBB para el stroke del rectángulo
+   * @param {string} nombreObjeto - Nombre del objeto
+   * @returns {number} - Color en formato 0xRRGGBB
+   */
+  getColorForObject(nombreObjeto) {
+    return this.getColorNumberForObject(nombreObjeto);
   }
 }

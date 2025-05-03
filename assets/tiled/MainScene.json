@@ -3666,14 +3666,14 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"arma",
+                         "name":"objeto",
                          "type":"string",
                          "value":"escopeta"
                         }, 
                         {
                          "name":"tipo",
                          "type":"string",
-                         "value":"arma"
+                         "value":"objeto"
                         }],
                  "rotation":0,
                  "type":"Barril",

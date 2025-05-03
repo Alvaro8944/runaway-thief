@@ -12,7 +12,7 @@ export const PLAYER_STATE = {
 };
 
 // Constantes para la configuración del jugador
-const PLAYER_CONFIG = {
+export const PLAYER_CONFIG = {
   // Movimiento
   NORMAL_SPEED: 180,
   PARACHUTE_SPEED: 50,
@@ -24,12 +24,13 @@ const PLAYER_CONFIG = {
   DAMAGE: 20,
   
   // Arma y munición
-  MAX_AMMO: 6,
+  RIFLE_AMMO: 10,       // munición para el rifle 
+  SHOTGUN_AMMO: 12,     // munición para la escopeta
+  EXPLOSIVE_AMMO: 3,   // munición para arma explosiva
   SHOT_COOLDOWN: 350,   // ms entre disparos
-  RELOAD_TIME: 1500,     // ms para recargar
+  RELOAD_TIME: 1500,    // ms para recargar
   BULLET_SPEED: 800,    // velocidad de las balas
  
-
   // Colisiones y física
   BOUNCE: 0.1,
   HITBOX_WIDTH: 20,
@@ -52,7 +53,11 @@ const PLAYER_CONFIG = {
   KNOCKBACK_DURATION: 200,
   
   // Escaleras
-  CLIMB_SOUND_DELAY: 980 // ms entre sonidos de escalera
+  CLIMB_SOUND_DELAY: 980, // ms entre sonidos de escalera
+  
+  // Duración de los power-ups
+  SHIELD_DURATION: 10000,       // 10 segundos de escudo
+  SPEED_BOOST_DURATION: 15000   // 15 segundos de velocidad aumentada
 };
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
@@ -87,12 +92,35 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.damage = PLAYER_CONFIG.DAMAGE;
     
     // ===== Atributos de arma y munición =====
-    this.hasWeapon = true;
-    this.hasWeapon1 = true;
-    this.hasWeapon2 = false;
-    this.hasWeapon3 = false;
-    this.ammo = PLAYER_CONFIG.MAX_AMMO;
-    this.maxAmmo = PLAYER_CONFIG.MAX_AMMO;
+    // Sistema de armas mejorado
+    this.unlockedWeapons = {
+      none: true,      // Sin arma (estado inicial)
+      rifle: false,    // Rifle (arma principal) inicialmente bloqueado
+      shotgun: false,  // Escopeta inicialmente bloqueada
+      explosive: false // Arma explosiva inicialmente bloqueada
+    };
+    this.activeWeapon = 'none';   // Comenzar sin arma
+    
+    // Variable para compatibilidad con código antiguo
+    this.hasWeapon = false;       // Se actualizará cuando cambie activeWeapon
+
+    // Munición para cada tipo de arma (nuevo sistema)
+    this.weaponAmmo = {
+      rifle: 0,
+      shotgun: 0,
+      explosive: 0
+    };
+    
+    // Munición máxima para cada tipo de arma
+    this.weaponMaxAmmo = {
+      rifle: PLAYER_CONFIG.RIFLE_AMMO,
+      shotgun: PLAYER_CONFIG.SHOTGUN_AMMO,
+      explosive: PLAYER_CONFIG.EXPLOSIVE_AMMO
+    };
+    
+    // Variables de control para recarga
+    this.ammo = 0;              // Munición del arma activa (para compatibilidad)
+    this.maxAmmo = 0;           // Munición máxima del arma activa (para compatibilidad)
     this.lastShotTime = 0;
     this.shotCooldown = PLAYER_CONFIG.SHOT_COOLDOWN;
     this.isReloading = false;
@@ -101,14 +129,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.bulletSpeed = PLAYER_CONFIG.BULLET_SPEED;
     this.explosiveBullets = [];
 
-
-
     // ====COSAS DEL ESCUDO=====
-    this.hasEscudo = false;
-   
+    this.hasUnlockedShield = false;  // El escudo está bloqueado inicialmente
+    this.hasEscudo = false;          // Sin escudo activo al inicio
+    this.escudoActive = false;       // Para controlar si el escudo está activado
+    this.escudoDuration = PLAYER_CONFIG.SHIELD_DURATION; // Duración del escudo
+    this.escudoStartTime = 0;        // Tiempo de inicio del escudo
+    this.escudoWarningShown = false; // Para controlar mensaje de escudo por acabarse
+
+    // ====VARIABLES DE OBJETOS ESPECIALES====
+    this.hasJetpack = false;     // Sin jetpack al inicio
+    this.hasParacaidas = false;  // Sin paracaídas al inicio
+    this.hasSpeedBoost = false;  // Sin boost de velocidad al inicio
+    this.speedBoostActive = false; // Para controlar si el boost está activo
+    this.speedBoostStartTime = 0;  // Tiempo de inicio del boost
+    this.originalSpeed = this.normalSpeed; // Velocidad original para restaurar después
 
     // ====TENER OBJETO EN GENERAL=====
-    this.hasObject = this.hasWeapon || this.hasEscudo;
+    this.hasObject = false;      // Al inicio no tenemos ningún objeto
 
     // ===== Atributos de estado =====
     this.hasFloatingObject = false;
@@ -151,43 +189,48 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Mano y arma
     this.hand = scene.add.sprite(x, y, 'hand3').setOrigin(0.45, 0.5);
     this.hand.setDepth(this.depth - 1);
+    this.hand.setVisible(false); // Oculta al inicio, se muestra al tener un arma
+
+    // Crear sprites para las diferentes armas
     this.mainWeapon = scene.add.sprite(this.x, this.y, 'weapon').setOrigin(1.3, 0.5);
     this.explosiveWeapon = scene.add.sprite(this.x, this.y, 'explosiveWeapon').setOrigin(1.3, 0.7);
     this.shotgunWeapon = scene.add.sprite(this.x, this.y, 'shotgunWeapon').setOrigin(1.3, 0.5);
 
-    //EL ARMA VISIBLE SERÁ "WEAPON" Y LA IREMOS REASIGNANDO
-    this.weapon = this.mainWeapon;
+    // Por defecto, todas las armas están ocultas
+    this.mainWeapon.setVisible(false);
+    this.shotgunWeapon.setVisible(false);
+    this.explosiveWeapon.setVisible(false);
 
-    this.escudo = scene.physics.add.sprite(this.x, this.y, 'escudo').setOrigin(1, 0.5); 
-    this.escudo.setSize(20, 25); 
-    this.escudo.body.setEnable(this.hasEscudo);
+    // Referencia al arma activa (inicialmente ninguna)
+    this.weapon = null;
 
-    this.weapon.setDepth(this.hand.depth - 1);
-    /*
-    this.mainWeapon.setDepth(this.hand.depth - 1);
-    this.explosiveWeapon.setDepth(this.hand.depth - 1);
-    this.shotgunWeapon.setDepth(this.hand.depth - 1);
-    */
-    this.escudo.setDepth(this.hand.depth - 1);
-    this.escudo.setVisible(this.hasEscudo); 
+    // Escudo
+    this.escudo = scene.physics.add.sprite(this.x, this.y, 'escudo').setOrigin(1, 0.5);
+    this.escudo.setSize(20, 25);
+    this.escudo.body.setEnable(false);
+    this.escudo.setVisible(false);
 
     // Paracaídas
     this.parachute = scene.add.sprite(this.x, this.y, 'parachute').setOrigin(0.57, 1.1);
     this.parachute.setDepth(this.depth - 3);
+    this.parachute.setVisible(false); // Oculto hasta que se desbloquee
 
-        // Jetpack
-        this.jetpack = scene.add.sprite(this.x, this.y, 'jetpack').setOrigin(0.55, 0.3);
-        this.jetpack.setDepth(this.depth - 3);
+    // Jetpack
+    this.jetpack = scene.add.sprite(this.x, this.y, 'jetpack').setOrigin(0.55, 0.3);
+    this.jetpack.setDepth(this.depth - 3);
+    this.jetpack.setVisible(false); // Oculto hasta que se desbloquee
 
-
-
-        // Variables para el tiempo de uso y recarga
-this.floatingEnergy = 400; // Máxima energía
-this.floatingEnergyMax = 400;
-this.floatingEnergyDrainRate = 1; // Cuánto se gasta por frame
-this.floatingEnergyRechargeRate = 1; // Cuánto se recarga por frame
-this.isRecharging = false; // Indica si está recargando
-this.bloquearmovimiento = false;
+    // Variables para el tiempo de uso y recarga
+    this.floatingEnergy = 400; // Máxima energía
+    this.floatingEnergyMax = 400;
+    this.floatingEnergyDrainRate = 1; // Cuánto se gasta por frame
+    this.floatingEnergyRechargeRate = 1; // Cuánto se recarga por frame
+    this.isRecharging = false; // Indica si está recargando
+    this.bloquearmovimiento = false;
+    
+    // Banderas para controlar mensajes del jetpack
+    this.lowEnergyWarningShown = false;
+    this.energyDepletedMessageShown = false;
 
     // ===== Inicialización =====
     // Iniciar con la animación idle
@@ -296,7 +339,6 @@ updateBullets() {
   
   // Actualizar todos los elementos de la interfaz
   updateUI() {
-
     // Actualizar barra de salud
     this.healthBar.clear();   
     // Borde de la barra
@@ -325,14 +367,46 @@ updateBullets() {
     this.uiContainer.add(this.healthText);
     
     // Actualizar texto de munición
-    let ammoText = this.ammo + '/' + this.maxAmmo;
-    if (this.isReloading) {
-      // Mostrar una indicación visual de recarga
-      const progress = Math.min(1, (this.scene.time.now - this.reloadStartTime) / this.reloadTime);
-      const dots = '.'.repeat(Math.floor(progress * 3) + 1);
-      ammoText = "Recargando" + dots;
+    let ammoText = "";
+    
+    // Si tenemos un arma equipada, mostrar su información
+    if (this.activeWeapon !== 'none') {
+      let weaponName = "";
+      switch (this.activeWeapon) {
+        case 'rifle':
+          weaponName = "Rifle";
+          break;
+        case 'shotgun':
+          weaponName = "Escopeta";
+          break;
+        case 'explosive':
+          weaponName = "Explosiva";
+          break;
+      }
+      
+      // Mostrar nombre del arma y munición actual/máxima
+      ammoText = `${weaponName}: ${this.ammo}/${this.maxAmmo}`;
+      
+      // Si está recargando, mostrar indicación
+      if (this.isReloading) {
+        const progress = Math.min(1, (this.scene.time.now - this.reloadStartTime) / this.reloadTime);
+        const dots = '.'.repeat(Math.floor(progress * 3) + 1);
+        ammoText = `${weaponName}: Recargando${dots}`;
+      }
+    } else if (this.hasEscudo) {
+      // Si tiene el escudo activo
+      ammoText = "Escudo activo";
+      if (this.escudoActive) {
+        // Mostrar tiempo restante si está activo
+        const remainingTime = Math.max(0, Math.ceil((this.escudoDuration - (this.scene.time.now - this.escudoStartTime)) / 1000));
+        ammoText += ` (${remainingTime}s)`;
+      }
+    } else {
+      // Sin arma equipada
+      ammoText = "Sin arma";
     }
-    this.ammoText.setText('Munición: ' + ammoText);
+    
+    this.ammoText.setText(ammoText);
     
     // Actualizar texto de puntuación
     this.scoreText.setText('Puntuación: ' + this.score);
@@ -358,9 +432,18 @@ updateBullets() {
 
     // Comprobar si la recarga ha terminado
     if (this.isReloading && time - this.reloadStartTime >= this.reloadTime) {
+      // Recargar el arma activa
       this.ammo = this.maxAmmo;
+      // Actualizar el contador de munición del tipo de arma actual
+      if (this.activeWeapon !== 'none') {
+        this.weaponAmmo[this.activeWeapon] = this.ammo;
+      }
+      
       this.isReloading = false;
-      this.scene.sound.play('disparo', { volume: 0.1 }); // Sonido de recarga completada
+      this.scene.sound.play('disparo', { volume: 0.2, detune: -600 });
+      
+      // Actualizar UI con la nueva munición
+      this.updateUI();
     }
 
     // Actualizar invulnerabilidad
@@ -369,17 +452,117 @@ updateBullets() {
       this.alpha = 1;
     }
 
+    // Comprobar si el escudo ha expirado
+    if (this.escudoActive && time - this.escudoStartTime >= this.escudoDuration) {
+      // Desactivar el escudo
+      this.escudoActive = false;
+      this.hasEscudo = false;
+      
+      // Efecto visual de desactivación
+      this.scene.tweens.add({
+        targets: this.escudo,
+        alpha: 0,
+        scale: 1.2,
+        duration: 500,
+        onComplete: () => {
+          // Ocultar el escudo
+          this.escudo.setVisible(false);
+          this.escudo.body.setEnable(false);
+          this.escudo.setAlpha(1);
+          this.escudo.setScale(1);
+          
+          // Notificar al jugador que se acabó el escudo
+          const text = this.scene.add.text(this.x, this.y - 50, "¡Escudo desactivado!", {
+            fontSize: '16px',
+            fontStyle: 'bold',
+            fill: '#aaaaff',
+            stroke: '#000000',
+            strokeThickness: 3
+          }).setOrigin(0.5);
+          
+          this.scene.tweens.add({
+            targets: text,
+            y: this.y - 80,
+            alpha: 0,
+            duration: 1500,
+            onComplete: () => {
+              text.destroy();
+            }
+          });
+        }
+      });
+    } 
+    // Mostrar advertencia cuando el escudo está por expirar
+    else if (this.escudoActive && !this.escudoWarningShown && 
+      time - this.escudoStartTime >= this.escudoDuration * 0.75) {
+      // Mostrar advertencia
+      const text = this.scene.add.text(this.x, this.y - 50, "¡Escudo por expirar!", {
+        fontSize: '14px',
+        fontStyle: 'bold',
+        fill: '#aaaaff',
+        stroke: '#000000',
+        strokeThickness: 3
+      }).setOrigin(0.5);
+      
+      this.scene.tweens.add({
+        targets: text,
+        y: this.y - 70,
+        alpha: 0,
+        duration: 1000,
+        onComplete: () => {
+          text.destroy();
+        }
+      });
+      
+      // Marcar que ya mostramos la advertencia
+      this.escudoWarningShown = true;
+    }
+
+    // Comprobar si el boost de velocidad ha expirado
+    if (this.speedBoostActive && time - this.speedBoostStartTime >= PLAYER_CONFIG.SPEED_BOOST_DURATION) {
+      // Desactivar el boost
+      this.speedBoostActive = false;
+      this.hasSpeedBoost = false;
+      
+      // Restaurar velocidad normal
+      this.normalSpeed = this.originalSpeed;
+      this.speed = this.normalSpeed;
+      
+      // Detener partículas
+      if (this.speedParticles) {
+        this.speedParticles.stop();
+      }
+      
+      // Notificar al jugador que se acabó el impulso
+      const text = this.scene.add.text(this.x, this.y - 50, "¡Velocidad normal!", {
+        fontSize: '16px',
+        fontStyle: 'bold',
+        fill: '#ffaa44',
+        stroke: '#000000',
+        strokeThickness: 3
+      }).setOrigin(0.5);
+      
+      this.scene.tweens.add({
+        targets: text,
+        y: this.y - 80,
+        alpha: 0,
+        duration: 1500,
+        onComplete: () => {
+          text.destroy();
+        }
+      });
+    }
+
     if (this.isKnockedBack) return;
 
     if (!this.scene.keys) return;
     
-    // ===== LÓGICA DEL PARACAÍDAS =====
-    // Activar/desactivar paracaídas según los controles
+    // ===== LÓGICA DEL PARACAÍDAS Y JETPACK =====
+    // Solo permitir activación si están desbloqueados
+    this.parachuteActivated = this.hasParacaidas && this.scene.keys.down.isDown && !this.body.onFloor() && !this.jetpackActivated;
+    this.jetpackActivated = this.hasJetpack && this.scene.keys.up.isDown && !this.parachuteActivated;
 
-    this.parachuteActivated = (this.scene.keys.down.isDown && !this.body.onFloor() && !this.jetpackActivated);
-    this.jetpackActivated = this.scene.keys.up.isDown && !this.parachuteActivated;
-
-    this.hasFloatingObject = ( (this.jetpackActivated || this.parachuteActivated ) && !this.isClimbing && this.floatingEnergy > 0);
+    this.hasFloatingObject = ((this.jetpackActivated || this.parachuteActivated) && !this.isClimbing && this.floatingEnergy > 0);
     this.parachute.setVisible(this.hasFloatingObject && this.parachuteActivated);
     this.jetpack.setVisible(this.hasFloatingObject && this.jetpackActivated);
     
@@ -391,15 +574,43 @@ updateBullets() {
 
       else if(this.jetpackActivated) {
         
-        this.speed = this.floatingSpeed*3;
-        this.isRecharging = false; // Mientras esté en el aire, no recarga
+        this.speed = this.floatingSpeed * 2.5;
+        this.isRecharging = false;
       }
 
       if (this.parachuteActivated)this.parachute.setPosition(this.x, this.y);
       if(this.jetpackActivated) {
         
         this.jetpack.setPosition(this.x, this.y);
-        this.createJetpackEffect()
+        this.createJetpackEffect();
+        
+        // Mostrar advertencia cuando la energía está baja
+        if (this.floatingEnergy <= this.floatingEnergyMax * 0.2 && !this.lowEnergyWarningShown) {
+          const text = this.scene.add.text(this.x, this.y - 50, "¡Energía baja!", {
+            fontSize: '14px',
+            fontStyle: 'bold',
+            fill: '#ff4444',
+            stroke: '#000000',
+            strokeThickness: 3
+          }).setOrigin(0.5);
+          
+          this.scene.tweens.add({
+            targets: text,
+            y: this.y - 70,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => {
+              text.destroy();
+            }
+          });
+          
+          this.lowEnergyWarningShown = true;
+          
+          // Restablecer flag después de un tiempo para poder mostrar otra advertencia
+          this.scene.time.delayedCall(3000, () => {
+            this.lowEnergyWarningShown = false;
+          });
+        }
       }
 
 
@@ -436,6 +647,34 @@ updateBullets() {
      }
 
     }
+    
+    // Si se agota la energía, mostrar mensaje
+    if (this.hasJetpack && this.floatingEnergy === 0 && this.jetpackActivated && !this.energyDepletedMessageShown) {
+      const text = this.scene.add.text(this.x, this.y - 50, "¡Jetpack sin energía!", {
+        fontSize: '16px',
+        fontStyle: 'bold',
+        fill: '#ff4444',
+        stroke: '#000000',
+        strokeThickness: 3
+      }).setOrigin(0.5);
+      
+      this.scene.tweens.add({
+        targets: text,
+        y: this.y - 80,
+        alpha: 0,
+        duration: 1500,
+        onComplete: () => {
+          text.destroy();
+        }
+      });
+      
+      this.energyDepletedMessageShown = true;
+      
+      // Restablecer la bandera después de un tiempo
+      this.scene.time.delayedCall(5000, () => {
+        this.energyDepletedMessageShown = false;
+      });
+    }
 
     
     // Determinar las animaciones según el estado
@@ -448,93 +687,143 @@ updateBullets() {
 
     // Agregar tecla R para recargar manualmente
     const keyR = this.scene.input.keyboard.addKey('R');
-    if (Phaser.Input.Keyboard.JustDown(keyR) && !this.isReloading && this.ammo < this.maxAmmo && this.hasWeapon) {
+    if (Phaser.Input.Keyboard.JustDown(keyR) && !this.isReloading && this.ammo < this.maxAmmo && this.activeWeapon !== 'none') {
       this.reload();
     }
 
-    // SACAR arma1
-    if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArmaOne)) {
-      this.hasWeapon = true;
-      this.hasWeapon1 = true;
-      this.weapon = this.mainWeapon;
-      this.weapon.setVisible(true);   
-      this.hand.setVisible(true);   
-
-      this.hasEscudo = false;
-      this.escudo.setVisible(this.hasEscudo); 
-      this.escudo.body.setEnable(this.hasEscudo);
-      this.escudo.body.reset();
-
-      this.hasWeapon2 = false;
-      this.hasWeapon3 = false;
-      this.explosiveWeapon.setVisible(this.hasWeapon2);
-      this.shotgunWeapon.setVisible(this.hasWeapon3);
-    }
-
-    // SACAR arma2
+    // SACAR arma shotgun (tecla 2)
     if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArmaTwo)) {
-      this.hasWeapon = true;
-      this.hasWeapon2 = true;
-      this.weapon = this.explosiveWeapon;
-      this.weapon.setVisible(true);   
-      this.hand.setVisible(true);   
-
-      this.hasEscudo = false;
-      this.escudo.setVisible(this.hasEscudo); 
-      this.escudo.body.setEnable(this.hasEscudo);
-      this.escudo.body.reset();
-
-      this.hasWeapon1 = false;
-      this.hasWeapon3 = false;
-      this.mainWeapon.setVisible(this.hasWeapon1);
-      this.shotgunWeapon.setVisible(this.hasWeapon3);
+      if (this.unlockedWeapons.shotgun) {
+        this.activeWeapon = 'shotgun';
+        this.updateWeaponType();
+        
+        // Desactivar escudo si estaba activo
+        this.hasEscudo = false;
+        this.escudo.setVisible(false);
+        this.escudo.body.setEnable(false);
+      } else {
+        // Mostrar mensaje de que no tiene esta arma
+        const text = this.scene.add.text(this.x, this.y - 50, "¡Arma no disponible!", {
+          fontSize: '14px',
+          fontStyle: 'bold',
+          fill: '#ff4444',
+          stroke: '#000000',
+          strokeThickness: 3
+        }).setOrigin(0.5);
+        
+        this.scene.tweens.add({
+          targets: text,
+          y: this.y - 70,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => {
+            text.destroy();
+          }
+        });
+      }
     }
 
-
-     // SACAR arma3
-     if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArmaThree)) {
-      this.hasWeapon = true;
-      this.hasWeapon3 = true;
-      this.weapon = this.shotgunWeapon;
-      this.weapon.setVisible(true);   
-      this.hand.setVisible(true);   
-
-      this.hasEscudo = false;
-      this.escudo.setVisible(this.hasEscudo); 
-      this.escudo.body.setEnable(this.hasEscudo);
-      this.escudo.body.reset();
-
-      this.hasWeapon1 = false;
-      this.hasWeapon2 = false;
-      this.mainWeapon.setVisible(this.hasWeapon1);
-      this.explosiveWeapon.setVisible(this.hasWeapon2);
+    // SACAR arma explosiva (tecla 3)
+    if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArmaThree)) {
+      if (this.unlockedWeapons.explosive) {
+        this.activeWeapon = 'explosive';
+        this.updateWeaponType();
+        
+        // Desactivar escudo si estaba activo
+        this.hasEscudo = false;
+        this.escudo.setVisible(false);
+        this.escudo.body.setEnable(false);
+      } else {
+        // Mostrar mensaje de que no tiene esta arma
+        const text = this.scene.add.text(this.x, this.y - 50, "¡Arma no disponible!", {
+          fontSize: '14px',
+          fontStyle: 'bold',
+          fill: '#ff4444',
+          stroke: '#000000',
+          strokeThickness: 3
+        }).setOrigin(0.5);
+        
+        this.scene.tweens.add({
+          targets: text,
+          y: this.y - 70,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => {
+            text.destroy();
+          }
+        });
+      }
     }
 
+    // SACAR arma básica/rifle (tecla 1)
+    if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarArmaOne)) {
+      if (this.unlockedWeapons.rifle) {
+        this.activeWeapon = 'rifle';
+        this.updateWeaponType();
+        
+        // Desactivar escudo si estaba activo
+        this.hasEscudo = false;
+        this.escudo.setVisible(false);
+        this.escudo.body.setEnable(false);
+      } else {
+        // Mostrar mensaje de que no tiene esta arma sin cambiar el arma activa
+        const text = this.scene.add.text(this.x, this.y - 50, "¡Rifle no disponible!", {
+          fontSize: '14px',
+          fontStyle: 'bold',
+          fill: '#33bbaa',
+          stroke: '#000000',
+          strokeThickness: 3
+        }).setOrigin(0.5);
+        
+        this.scene.tweens.add({
+          targets: text,
+          y: this.y - 70,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => {
+            text.destroy();
+          }
+        });
+        
+        // No desactivar el arma actual ni el escudo - mantener el estado actual
+      }
+    }
 
-
-
-
-
-
-    // SACAR escudo
+    // ACTIVAR escudo (tecla 4)
     if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarEscudo)) {
-      
-      this.hasEscudo = true;
-      this.escudo.setVisible(this.hasEscudo);   
-      this.hand.setVisible(this.hasEscudo); 
-      this.escudo.body.setEnable(this.hasEscudo);
-      this.escudo.body.reset();
-
-      this.hasWeapon = false;
-      this.hasWeapon1 = false;
-      this.hasWeapon2 = false;
-      this.hasWeapon3 = false;
-      this.weapon.setVisible(this.hasWeapon);  
-      this.mainWeapon.setVisible(this.hasWeapon1);
-      this.explosiveWeapon.setVisible(this.hasWeapon2);
-      this.shotgunWeapon.setVisible(this.hasWeapon3);
+      if (this.hasUnlockedShield) {
+        // Desactivar arma actual
+        this.activeWeapon = 'none';
+        this.updateWeaponType();
+        
+        // Activar escudo
+        this.hasEscudo = true;
+        this.hasObject = true;
+        this.escudo.setVisible(true);
+        this.hand.setVisible(true);
+        this.escudo.body.setEnable(true);
+        this.escudo.body.reset(this.x, this.y);
+      } else {
+        // Mostrar mensaje de que no tiene el escudo
+        const text = this.scene.add.text(this.x, this.y - 50, "¡Escudo no disponible!", {
+          fontSize: '14px',
+          fontStyle: 'bold',
+          fill: '#aaaaff',
+          stroke: '#000000',
+          strokeThickness: 3
+        }).setOrigin(0.5);
+        
+        this.scene.tweens.add({
+          targets: text,
+          y: this.y - 70,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => {
+            text.destroy();
+          }
+        });
+      }
     }
-
 
     // Lógica de escalada
     if (this.canClimb) {
@@ -743,23 +1032,28 @@ updateBullets() {
   // === MÉTODOS DE ARMA Y DISPARO ===
   
   reload() {
-    if (this.isReloading || this.ammo === this.maxAmmo) return;
+    // No recargar si no tenemos un arma, si ya estamos recargando, o si ya tenemos munición completa
+    if (this.activeWeapon === 'none' || this.isReloading || this.ammo === this.maxAmmo) return;
     
     this.isReloading = true;
     this.reloadStartTime = this.scene.time.now;
+    
     // Reproducir sonido de inicio de recarga
-    //this.scene.sound.play('escaleras', { volume: 0.3 });
+    this.scene.sound.play('disparo', { volume: 0.2, detune: -600 });
   }
 
   shoot() {
-  
+    // Si no tenemos un arma equipada, no podemos disparar
+    if (this.activeWeapon === 'none') return;
 
-     // Si nos quedamos sin munición, iniciar recarga automática
-     if (this.ammo <= 0) {
+    // Si nos quedamos sin munición, iniciar recarga automática
+    if (this.ammo <= 0) {
       this.reload();
+      return;
     }
-    // Si estamos recargando o no tenemos munición, no podemos disparar
-    if (this.isReloading || this.ammo <= 0 || !this.hasWeapon) return;
+    
+    // Si estamos recargando, no podemos disparar
+    if (this.isReloading) return;
     
     // Comprobar cooldown entre disparos
     if (this.scene.time.now - this.lastShotTime < this.shotCooldown) return;
@@ -767,39 +1061,77 @@ updateBullets() {
     // Registrar tiempo de disparo para cooldown
     this.lastShotTime = this.scene.time.now;
 
-
     // Calcular ángulo de disparo
     let angle = this.weapon.rotation;
-
-
     if (this.flipX) {
       angle += Math.PI;
     }
     
-
     let bulletX = this.weapon.x + Math.cos(angle) * 20;
     let bulletY = this.weapon.y + Math.sin(angle) * 20;
     let bullet;
 
+    // Comportamiento específico según el arma activa
+    switch (this.activeWeapon) {
+      case 'shotgun':
+        // Lógica de la escopeta:
+        // Si no tenemos suficiente munición, recargar
+        if (this.ammo < 6) {
+          this.reload();
+          return;
+        }
 
+        // Posición base del disparo
+        let baseX = this.shotgunWeapon.x;
+        let baseY = this.shotgunWeapon.y;
+        let spread = Phaser.Math.DegToRad(15); // Dispersión de 15 grados en total
+    
+        for (let i = 0; i < 5; i++) {
+          // Calcula un ángulo con cierta dispersión (centrado en el "angle" original)
+          let offset = spread * ((i - 2) / 2); // -1.5, -0.75, 0, 0.75, 1.5
+          let angleWithSpread = angle + offset;
+    
+          let bulletX = baseX + Math.cos(angleWithSpread) * 20;
+          let bulletY = baseY + Math.sin(angleWithSpread) * 20;
+    
+          bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+          bullet.setRotation(angleWithSpread);
+          bullet.lifespan = 300;
+          bullet.damage = this.damage;
+          bullet.dispersion = true;
+          bullet.setVelocity(Math.cos(angleWithSpread) * this.bulletSpeed, Math.sin(angleWithSpread) * this.bulletSpeed); 
+          bullet.body.allowGravity = false;
+        }
 
-    if(this.hasWeapon1){
+        this.ammo -= 6;
+        // Guardar en el sistema de munición por arma
+        this.weaponAmmo.shotgun = this.ammo;
+        break;
 
-      bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
-      bullet.setRotation(this.weapon.rotation);
-      bullet.damage = this.damage;
-      bullet.setVelocity(Math.cos(angle) * this.bulletSpeed, Math.sin(angle) * this.bulletSpeed); 
-      bullet.body.allowGravity = false;
+      case 'rifle':
+        // Lógica del rifle:
+        // Un disparo preciso con buen alcance
+        bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
+        bullet.setRotation(angle);
+        bullet.lifespan = 800; // Mayor alcance que la escopeta
+        bullet.damage = this.damage;
+        bullet.dispersion = false;
+        bullet.setVelocity(Math.cos(angle) * this.bulletSpeed * 1.2, Math.sin(angle) * this.bulletSpeed * 1.2); // Más rápida
+        bullet.body.allowGravity = false;
 
-    // Gasta (-1) de monición
-    this.ammo--;
-    }
-    else if(this.hasWeapon2){
+        // El rifle consume 1 bala por disparo
+        this.ammo -= 1;
+        // Guardar en el sistema de munición por arma
+        this.weaponAmmo.rifle = this.ammo;
+        break;
 
-      if (this.ammo < 3) {
-        this.reload();
-        return;
-       }
+      case 'explosive':
+        // Lógica del arma explosiva:
+        // Si no tenemos suficiente munición, recargar
+        if (this.ammo < 3) {
+          this.reload();
+          return;
+        }
 
         const pointer = this.scene.input.activePointer;
         const worldPointer = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
@@ -810,52 +1142,25 @@ updateBullets() {
         bullet.body.allowGravity = false;
 
         if (bullet) {
-        bullet.targetX = worldPointer.x;
-        bullet.targetY = worldPointer.y;
+          bullet.targetX = worldPointer.x;
+          bullet.targetY = worldPointer.y;
         }
-        //En este caso, meterla en la lista de balas explosivas
+        // En este caso, meterla en la lista de balas explosivas
         this.explosiveBullets.push(bullet);
-        // Gasta (-3) de monición
+        // Gasta (-3) de munición
         this.ammo -= 3;
-        if(this.ammo < 0) this.ammo = 0;
+        if (this.ammo < 0) this.ammo = 0;
+        // Guardar en el sistema de munición por arma
+        this.weaponAmmo.explosive = this.ammo;
+        break;
     }
-    else if (this.hasWeapon3) {
 
-      if (this.ammo < 6) {
-       this.reload();
-       return;
-      }
-
-      // Posición base del disparo
-      let baseX = this.shotgunWeapon.x;
-      let baseY = this.shotgunWeapon.y;
-      let spread = Phaser.Math.DegToRad(15); // Dispersión de 15 grados en total
-  
-      for (let i = 0; i < 5; i++) {
-          // Calcula un ángulo con cierta dispersión (centrado en el "angle" original)
-          let offset = spread * ((i - 2) / 2); // -1.5, -0.75, 0, 0.75, 1.5
-          let angleWithSpread = angle + offset;
-  
-          let bulletX = baseX + Math.cos(angleWithSpread) * 20;
-          let bulletY = baseY + Math.sin(angleWithSpread) * 20;
-  
-          bullet = this.scene.bullets.create(bulletX, bulletY, 'bullet');
-          bullet.setRotation(angleWithSpread);
-          bullet.lifespan = 300;
-          bullet.damage = this.damage;
-          bullet.dispersion = true;
-          bullet.setVelocity(Math.cos(angleWithSpread) * this.bulletSpeed, Math.sin(angleWithSpread) * this.bulletSpeed); 
-          bullet.body.allowGravity = false;
-
-      }
-
-      //EN EL CASO DE LA ESCOPETA, GASTA TODA LA MONICIÓN 
-      this.ammo = 0;
-  }
-
-     //EFECTO Y SONIDO
+    // EFECTO Y SONIDO
     this.createShootEffect(angle, this.weapon);
     this.scene.sound.play('disparo');
+    
+    // Actualizar la UI después de disparar
+    this.updateUI();
   }
 
 
@@ -906,6 +1211,9 @@ updateBullets() {
   
 
   updateHand() {
+    // Si no tenemos un arma u objeto activo, no actualizar la mano
+    if (!this.hasObject) return;
+
     const pointer = this.scene.input.activePointer;
     const worldPointer = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
     let angle = Phaser.Math.Angle.Between(this.x, this.y, worldPointer.x, worldPointer.y);
@@ -918,19 +1226,16 @@ updateBullets() {
     const minAngle = -Math.PI / 2;
     const maxAngle = Math.PI / 2;
 
-    if(!this.flipX){
-      if(angle > maxAngle || angle < minAngle ){
+    if (!this.flipX) {
+      if (angle > maxAngle || angle < minAngle) {
         this.setFlipX(true);
       }   
+    } else {
+      if (angle > maxAngle || angle < minAngle) {
+        this.setFlipX(false);
       }
-      else{
-        if(angle > maxAngle || angle < minAngle ){
-          this.setFlipX(false);
-        }
-      }
-  
+    }
 
-    
     const shoulderOffsetX = 0;
     const shoulderOffsetY = 1.5;
     const shoulderX = this.x + shoulderOffsetX * (this.flipX ? -1 : 1);
@@ -939,11 +1244,8 @@ updateBullets() {
     this.hand.setPosition(shoulderX, shoulderY);
     this.hand.setRotation(angle);
 
-
     this.updateObject();
     this.ajustarDireccion();
-
-
   }
 
 
@@ -954,61 +1256,44 @@ updateBullets() {
 
 
   updateObject() {
-    if(this.hasWeapon){
-
-
+    // Si tenemos un arma activa (distinta a 'none')
+    if (this.activeWeapon !== 'none' && this.weapon) {
       this.weapon.setPosition(this.hand.x, this.hand.y);
       this.weapon.setRotation(this.hand.rotation);
-
-    }
-    else if(this.hasEscudo){
-
+    } 
+    // Si tenemos un escudo activo
+    else if (this.hasEscudo) {
       this.escudo.setRotation(this.hand.rotation);
- 
- 
-        // Simulamos la "rotación" del hitbox calculando el offset inverso
-        let angle = this.hand.rotation;
-        let distancia; // La distancia desde el centro que quieras
-        let offsetX, offsetY;
- 
-        if (!this.flipX) {
 
-          distancia = 10;
+      // Simulamos la "rotación" del hitbox calculando el offset inverso
+      let angle = this.hand.rotation;
+      let distancia; // La distancia desde el centro que quieras
+      let offsetX, offsetY;
 
-          offsetX = Math.cos(angle + Math.PI ) * distancia + 33;
-          offsetY = -Math.sin(angle + Math.PI ) * distancia ;
+      if (!this.flipX) {
+        distancia = 10;
+        offsetX = Math.cos(angle + Math.PI) * distancia + 33;
+        offsetY = -Math.sin(angle + Math.PI) * distancia;
+      } else {
+        distancia = 10;
+        offsetX = Math.cos(angle + Math.PI) * distancia + 15;
+        offsetY = Math.sin(angle + Math.PI) * distancia;
+      }
 
-
-         } else {
-        
-          distancia = 10;
-
-         offsetX = Math.cos(angle + Math.PI ) * distancia + 15;
-         offsetY = Math.sin(angle + Math.PI ) * distancia ;
-
-        }
-
-
- 
-        this.escudo.body.setOffset(offsetX, offsetY);
- 
- 
-     }
+      this.escudo.body.setOffset(offsetX, offsetY);
+    }
   }
 
   ajustarDireccion() {
-
     this.hand.setScale(!this.flipX ? -1 : 1, 1);
 
-     if(this.hasWeapon) {      
+    if (this.activeWeapon !== 'none' && this.weapon) {
       this.weapon.setScale(!this.flipX ? -1 : 1, 1);
-     }
-     else if(this.hasEscudo) {
-
+    }
+    else if (this.hasEscudo) {
       this.escudo.setScale(!this.flipX ? -1 : 1, 1);
       this.escudo.body.reset(this.hand.x, this.hand.y);
-
-      }
+    }
   }
 
   // === MÉTODOS DE DAÑO Y SALUD ===
@@ -1280,5 +1565,451 @@ updateBullets() {
     this.updateUI();
     
     console.log(`[Player] Jugador respawneado en (${this.respawnX}, ${this.respawnY})`);
+  }
+
+  /**
+   * Da al jugador el rifle (arma principal) con un número específico de balas
+   * @param {number} bullets - Cantidad de balas para el rifle
+   */
+  darRifle(bullets = PLAYER_CONFIG.RIFLE_AMMO) {
+    //this.scene.sound.play('take_item', { volume: 0.7 });
+    
+    // Desbloquear el rifle (arma principal)
+    this.unlockedWeapons.rifle = true;
+    
+    // Asignar munición al rifle
+    this.weaponAmmo.rifle = bullets;
+    
+    // Activar el rifle como arma activa
+    this.activeWeapon = 'rifle';
+    this.updateWeaponType();
+    
+    // Mostrar un mensaje de información sobre cómo usar el arma
+    const text = this.scene.add.text(this.x, this.y - 60, "¡Usa el rifle con LMB!", {
+      fontSize: '14px',
+      fontStyle: 'bold',
+      fill: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    this.scene.tweens.add({
+      targets: text,
+      y: this.y - 90,
+      alpha: 0,
+      duration: 2000,
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+    
+    // Temporizador para mostrar un mensaje cuando la munición está baja
+    this.scene.time.addEvent({
+      delay: 1000,
+      callback: () => {
+        if (this.activeWeapon === 'rifle' && this.ammo <= 5 && this.ammo > 0) {
+          const text = this.scene.add.text(this.x, this.y - 50, `¡${this.ammo} balas restantes!`, {
+            fontSize: '14px',
+            fontStyle: 'bold',
+            fill: '#ffaa44',
+            stroke: '#000000',
+            strokeThickness: 3
+          }).setOrigin(0.5);
+          
+          this.scene.tweens.add({
+            targets: text,
+            y: this.y - 70,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => {
+              text.destroy();
+            }
+          });
+        }
+      },
+      callbackScope: this,
+      repeat: bullets - 1
+    });
+  }
+
+  /**
+   * Da al jugador la escopeta con un número específico de balas
+   * @param {number} bullets - Cantidad de balas para la escopeta
+   */
+  darEscopeta(bullets = PLAYER_CONFIG.SHOTGUN_AMMO) {
+    //this.scene.sound.play('take_item', { volume: 0.7 });
+    
+    // Desbloquear la escopeta
+    this.unlockedWeapons.shotgun = true;
+    
+    // Asignar munición a la escopeta
+    this.weaponAmmo.shotgun = bullets;
+    
+    // Activar la escopeta como arma activa
+    this.activeWeapon = 'shotgun';
+    this.updateWeaponType();
+    
+    // Mostrar un mensaje de información sobre cómo usar el arma
+    const text = this.scene.add.text(this.x, this.y - 60, "¡Usa la escopeta con LMB!", {
+      fontSize: '14px',
+      fontStyle: 'bold',
+      fill: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    this.scene.tweens.add({
+      targets: text,
+      y: this.y - 90,
+      alpha: 0,
+      duration: 2000,
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+    
+    this.scene.time.addEvent({
+      delay: 1000,
+      callback: () => {
+        if (this.activeWeapon === 'shotgun' && this.ammo <= 5 && this.ammo > 0) {
+          const text = this.scene.add.text(this.x, this.y - 50, `¡${this.ammo} balas restantes!`, {
+            fontSize: '14px',
+            fontStyle: 'bold',
+            fill: '#ffaa44',
+            stroke: '#000000',
+            strokeThickness: 3
+          }).setOrigin(0.5);
+          
+          this.scene.tweens.add({
+            targets: text,
+            y: this.y - 70,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => {
+              text.destroy();
+            }
+          });
+        }
+      },
+      callbackScope: this,
+      repeat: bullets - 1
+    });
+  }
+  
+  /**
+   * Da al jugador el arma explosiva con un número específico de balas
+   * @param {number} bullets - Cantidad de balas para el arma explosiva
+   */
+  darArmaExplosiva(bullets = PLAYER_CONFIG.EXPLOSIVE_AMMO) {
+    //this.scene.sound.play('take_item', { volume: 0.7 });
+    
+    // Desbloquear el arma explosiva
+    this.unlockedWeapons.explosive = true;
+    
+    // Asignar munición al arma explosiva
+    this.weaponAmmo.explosive = bullets;
+    
+    // Activar el arma explosiva como arma activa
+    this.activeWeapon = 'explosive';
+    this.updateWeaponType();
+    
+    // Mostrar un mensaje de información sobre cómo usar el arma
+    const text = this.scene.add.text(this.x, this.y - 60, "¡Usa el arma explosiva con LMB!", {
+      fontSize: '14px',
+      fontStyle: 'bold',
+      fill: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    this.scene.tweens.add({
+      targets: text,
+      y: this.y - 90,
+      alpha: 0,
+      duration: 2000,
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+    
+    // Temporizador para mostrar un mensaje cuando la munición está baja
+    this.scene.time.addEvent({
+      delay: 1000,
+      callback: () => {
+        if (this.activeWeapon === 'explosive' && this.ammo <= 3 && this.ammo > 0) {
+          const text = this.scene.add.text(this.x, this.y - 50, `¡${this.ammo} balas explosivas restantes!`, {
+            fontSize: '14px',
+            fontStyle: 'bold',
+            fill: '#ff6644',
+            stroke: '#000000',
+            strokeThickness: 3
+          }).setOrigin(0.5);
+          
+          this.scene.tweens.add({
+            targets: text,
+            y: this.y - 70,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => {
+              text.destroy();
+            }
+          });
+        }
+      },
+      callbackScope: this,
+      repeat: bullets - 1
+    });
+  }
+
+  /**
+   * Actualiza el tipo de arma actual según activeWeapon
+   */
+  updateWeaponType() {
+    // Ocultar todas las armas
+    this.mainWeapon.setVisible(false);
+    this.explosiveWeapon.setVisible(false);
+    this.shotgunWeapon.setVisible(false);
+
+    // Si estábamos usando un arma antes, guardar su munición actual
+    if (this.weapon && this.activeWeapon !== 'none') {
+      this.weaponAmmo[this.activeWeapon] = this.ammo;
+    }
+
+    // Mostrar el arma seleccionada según activeWeapon
+    switch (this.activeWeapon) {
+      case 'none':
+        this.weapon = null;
+        this.hand.setVisible(false);
+        this.hasObject = false;
+        this.hasWeapon = false; // Actualizar para compatibilidad
+        // No hay munición para mostrar
+        this.ammo = 0;
+        this.maxAmmo = 0;
+        break;
+      case 'shotgun':
+        this.weapon = this.shotgunWeapon;
+        this.shotgunWeapon.setVisible(true);
+        this.shotCooldown = PLAYER_CONFIG.SHOT_COOLDOWN * 4;
+        this.damage = PLAYER_CONFIG.DAMAGE * 2;
+        this.hand.setVisible(true);
+        this.hasObject = true;
+        this.hasWeapon = true;
+        this.reloadTime = PLAYER_CONFIG.RELOAD_TIME * 2;
+        // Restaurar la munición de la escopeta
+        this.ammo = this.weaponAmmo.shotgun;
+        this.maxAmmo = this.weaponMaxAmmo.shotgun;
+        break;
+      case 'rifle':
+        this.weapon = this.mainWeapon;
+        this.mainWeapon.setVisible(true);
+        this.shotCooldown = PLAYER_CONFIG.SHOT_COOLDOWN * 0.8; // Más rápido para el rifle
+        this.damage = PLAYER_CONFIG.DAMAGE * 1.5; // Daño aumentado
+        this.hand.setVisible(true);
+        this.hasObject = true;
+        this.hasWeapon = true; // Actualizar para compatibilidad
+        // Restaurar la munición del rifle
+        this.ammo = this.weaponAmmo.rifle;
+        this.maxAmmo = this.weaponMaxAmmo.rifle;
+        break;
+      case 'explosive':
+        this.weapon = this.explosiveWeapon;
+        this.explosiveWeapon.setVisible(true);
+        this.shotCooldown = PLAYER_CONFIG.SHOT_COOLDOWN * 2; // Mucho más lento
+        this.damage = PLAYER_CONFIG.DAMAGE * 3; // Daño muy aumentado
+        this.hand.setVisible(true);
+        this.hasObject = true;
+        this.hasWeapon = true; // Actualizar para compatibilidad
+        // Restaurar la munición del arma explosiva
+        this.ammo = this.weaponAmmo.explosive;
+        this.maxAmmo = this.weaponMaxAmmo.explosive;
+        break;
+      default:
+        this.weapon = null;
+        this.hand.setVisible(false);
+        this.hasObject = false;
+        this.hasWeapon = false; // Actualizar para compatibilidad
+        this.ammo = 0;
+        this.maxAmmo = 0;
+    }
+    
+    // Establecer la profundidad correcta si hay un arma activa
+    if (this.weapon) {
+      this.weapon.setDepth(this.hand.depth - 1);
+    }
+
+    // Actualizar la UI para mostrar la munición correcta
+    this.updateUI();
+  }
+
+  /**
+   * Da al jugador la habilidad de usar el escudo
+   */
+  darEscudo() {
+    //this.scene.sound.play('take_item', { volume: 0.7 });
+    
+    // Desbloquear el escudo
+    this.hasUnlockedShield = true;
+    
+    // Mostrar un mensaje informativo
+    const text = this.scene.add.text(this.x, this.y - 60, "¡Usa el escudo con la tecla 4!", {
+      fontSize: '14px',
+      fontStyle: 'bold',
+      fill: '#aaaaff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    this.scene.tweens.add({
+      targets: text,
+      y: this.y - 90,
+      alpha: 0,
+      duration: 2000,
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+  }
+
+  /**
+   * Activa el jetpack por un tiempo determinado
+   * @param {number} duration - Duración en milisegundos (controla la cantidad de energía)
+   */
+  darJetpack() {
+    //this.scene.sound.play('take_item', { volume: 0.7 });
+    
+    // Desbloquear el jetpack
+    this.hasJetpack = true;
+    
+    // La energía se consumirá gradualmente en preUpdate cuando se use
+    this.floatingEnergy = this.floatingEnergyMax * 2;
+    
+    // Mostrar un mensaje informativo
+    const text = this.scene.add.text(this.x, this.y - 60, "¡Usa el jetpack con ↑ en el aire!", {
+      fontSize: '14px',
+      fontStyle: 'bold',
+      fill: '#44aaff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    this.scene.tweens.add({
+      targets: text,
+      y: this.y - 90,
+      alpha: 0,
+      duration: 2000,
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+  }
+
+  /**
+   * Activa un escudo protector temporal
+   * @param {number} duration - Duración en milisegundos
+   */
+  activarEscudo(duration = PLAYER_CONFIG.SHIELD_DURATION) {
+    //this.scene.sound.play('take_item', { volume: 0.7 });
+    
+    // Desactivar arma actual temporalmente y guardar referencia
+    const weaponActivo = this.activeWeapon; // Guardamos el arma activa para restaurarla después
+    this.activeWeapon = 'none';
+    this.updateWeaponType();
+    
+    // Activar el escudo
+    this.hasEscudo = true;
+    this.hasObject = true;
+    this.escudo.setVisible(true);
+    this.escudo.body.setEnable(true);
+    this.hand.setVisible(true);
+    
+    // Guardar el tiempo de inicio
+    this.escudoActive = true;
+    this.escudoStartTime = this.scene.time.now;
+    
+    // Efecto visual de activación
+    this.scene.tweens.add({
+      targets: this.escudo,
+      alpha: { from: 0.4, to: 0.8 },
+      scale: { from: 0.8, to: 1 },
+      duration: 500,
+      yoyo: true,
+      repeat: 2
+    });
+    
+    // El escudo se desactivará en preUpdate después de que pase el tiempo
+  }
+
+  /**
+   * Aumenta la velocidad del jugador temporalmente
+   * @param {number} duration - Duración en milisegundos
+   */
+  aumentarVelocidad(duration = PLAYER_CONFIG.SPEED_BOOST_DURATION) {
+    //this.scene.sound.play('take_item', { volume: 0.7 });
+    
+    // Guardar la velocidad original
+    const velocidadOriginal = this.normalSpeed;
+    
+    // Activar el boost de velocidad
+    this.hasSpeedBoost = true;
+    this.speedBoostActive = true;
+    this.speedBoostStartTime = this.scene.time.now;
+    
+    // Aumentar la velocidad
+    this.normalSpeed = velocidadOriginal * 1.5;
+    this.speed = this.normalSpeed;
+    
+    // Efecto visual
+    this.scene.tweens.add({
+      targets: this,
+      alpha: 0.7,
+      duration: 200,
+      yoyo: true,
+      repeat: 3
+    });
+    
+    // Partículas de velocidad
+    if (this.scene.particles) {
+      this.speedParticles = this.scene.particles.createEmitter({
+        follow: this,
+        followOffset: { x: -20, y: 0 },
+        speed: { min: 10, max: 30 },
+        scale: { start: 0.4, end: 0 },
+        lifespan: 400,
+        blendMode: 'ADD',
+        tint: 0xffaa44,
+        frequency: 20
+      });
+    }
+    
+    // El boost se desactivará en preUpdate después de que pase el tiempo
+  }
+
+  /**
+   * Activa el paracaídas para el jugador
+   */
+  darParacaidas() {
+    //this.scene.sound.play('take_item', { volume: 0.7 });
+    
+    // Activar el paracaídas
+    this.hasParacaidas = true;
+    
+    // Mostrar un mensaje informativo
+    const text = this.scene.add.text(this.x, this.y - 60, "¡Usa el paracaídas con ↓ en el aire!", {
+      fontSize: '14px',
+      fontStyle: 'bold',
+      fill: '#66ee66',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    this.scene.tweens.add({
+      targets: text,
+      y: this.y - 90,
+      alpha: 0,
+      duration: 2000,
+      onComplete: () => {
+        text.destroy();
+      }
+    });
   }
 }

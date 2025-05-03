@@ -33,9 +33,9 @@ export default class Barril extends Phaser.Physics.Arcade.Sprite {
       this.setScale(scale);
     }
     
-    // Configurar el cuerpo físico
-    this.body.setSize(32, 32); // Ajustar el hitbox para que sea más preciso
-    this.body.setOffset(0, 0); // Ajustar el offset para alinear con el sprite
+    // Configurar el cuerpo físico básico (será ajustado por configurarPorTipo)
+    this.body.setSize(32, 32);
+    this.body.setOffset(0, 0);
     this.body.setImmovable(true);
     this.body.allowGravity = false;
     
@@ -161,7 +161,24 @@ export default class Barril extends Phaser.Physics.Arcade.Sprite {
                 barril.y - 16
               );
               break;
+            case 'objeto':
+              // Obtener el contenido del barril de las propiedades
+              let contenidoObjeto = "desconocido";
+              if (barril.properties && Array.isArray(barril.properties)) {
+                const contenidoProperty = barril.properties.find(prop => 
+                  prop.name === 'contenido' || prop.name === 'objeto');
+                if (contenidoProperty) {
+                  contenidoObjeto = contenidoProperty.value;
+                }
+              }
               
+              barrilSprite = new BarrilObjeto(
+                scene,
+                barril.x + 16,
+                barril.y - 16,
+                contenidoObjeto
+              );
+              break;
             default:
               barrilSprite = new Barril(
                 scene,
@@ -245,6 +262,11 @@ export class BarrilCura extends Barril {
    */
   configurarPorTipo() {
     this.cantidadCura = 20;
+    
+    // Deshabilitar colisiones para este tipo de barril
+    if (this.body) {
+      this.body.checkCollision.none = true; // Deshabilitar todas las colisiones
+    }
   }
   
   /**
@@ -487,6 +509,12 @@ export class BarrilExplosivo extends Barril {
   configurarPorTipo() {
     this.daño = 30;
     this.radioExplosion = 100;
+    
+    // Este barril sí puede tener colisiones, pero podemos ajustarlas si es necesario
+    if (this.body) {
+      this.body.setSize(28, 28); // Ajustar el hitbox para ser un poco más preciso
+      this.body.setOffset(2, 2);
+    }
   }
   
   /**
@@ -551,6 +579,11 @@ export class BarrilVeneno extends Barril {
   configurarPorTipo() {
     this.daño = 15;
     this.duracionVeneno = 5000; // 5 segundos
+    
+    // Deshabilitar colisiones para este tipo de barril
+    if (this.body) {
+      this.body.checkCollision.none = true; // Deshabilitar todas las colisiones
+    }
   }
   
   /**
@@ -615,6 +648,11 @@ export class BarrilImpulso extends Barril {
    */
   configurarPorTipo() {
     this.fuerzaImpulso = 400;
+    
+    // Deshabilitar colisiones para este tipo de barril
+    if (this.body) {
+      this.body.checkCollision.none = true; // Deshabilitar todas las colisiones
+    }
   }
   
   /**
@@ -775,7 +813,11 @@ export class BarrilRespawn extends Barril {
    */
   configurarPorTipo() {
     this.setName('barrilRespawn');
-    this.body.setImmovable(true);
+    
+    // Deshabilitar colisiones para este tipo de barril
+    if (this.body) {
+      this.body.checkCollision.none = true; // Deshabilitar todas las colisiones
+    }
   }
   
   /**
@@ -943,6 +985,592 @@ export class BarrilRespawn extends Barril {
     if (this.indicadorCheckpoint && this.indicadorCheckpoint.destroy) {
       this.indicadorCheckpoint.destroy();
       this.indicadorCheckpoint = null;
+    }
+    
+    super.destroy();
+  }
+}
+
+/**
+ * Clase específica para el barril que contiene objetos desbloqueables
+ * @extends Barril
+ */
+export class BarrilObjeto extends Barril {
+  /**
+   * Constructor del barril de objetos
+   * @param {Phaser.Scene} scene - La escena a la que pertenece este barril
+   * @param {number} x - Posición X del barril
+   * @param {number} y - Posición Y del barril
+   * @param {string} nombreObjeto - Nombre del objeto que contiene (por defecto: "desconocido")
+   */
+  constructor(scene, x, y, nombreObjeto = "desconocido") {
+    console.log("nombreObjeto", nombreObjeto);
+    super(scene, x, y, 'normal');
+    
+    // Guardar el nombre del objeto que contiene
+    this.nombreObjeto = nombreObjeto;
+    
+    // Estado del barril
+    this.abierto = false;
+    
+    // Aplicar un tinte dorado para indicar que es un barril con objeto
+    this.setTint(0xffdd44);
+    
+    // Agregar un efecto de brillo alrededor del barril
+    this.glowEffect = this.scene.add.sprite(this.x, this.y, 'BarrilNormal');
+    this.glowEffect.setDepth(this.depth - 1);
+    this.glowEffect.setScale(1.2);
+    this.glowEffect.setAlpha(0.4);
+    this.glowEffect.setTint(0xffdd44);
+    
+    // Añadir animación de brillo pulsante
+    this.glowTween = this.scene.tweens.add({
+      targets: this.glowEffect,
+      alpha: { from: 0.4, to: 0.1 },
+      duration: 1200,
+      yoyo: true,
+      repeat: -1
+    });
+    
+    // Añadir una luz para el barril
+    this.light = this.scene.add.pointlight(this.x, this.y, 0xffdd44, 40, 0.05);
+    if (this.light) {
+      this.light.scrollFactorX = this.scrollFactorX;
+      this.light.scrollFactorY = this.scrollFactorY;
+      
+      // Animación de la luz
+      this.lightTween = this.scene.tweens.add({
+        targets: this.light,
+        intensity: 0.08,
+        duration: 1500,
+        yoyo: true,
+        repeat: -1
+      });
+    }
+    
+    // Crear el icono o silueta del objeto
+    this.crearIconoObjeto();
+    
+    // Radio de detección para activar el barril
+    this.detectionRadius = 50;
+    
+    // Comprobar proximidad del jugador periódicamente
+    scene.time.addEvent({
+      delay: 200,
+      callback: this.checkPlayerProximity,
+      callbackScope: this,
+      loop: true
+    });
+    
+    // Inicializar el objeto flotante (aparecerá cuando se active)
+    this.objetoFlotante = null;
+  }
+  
+  /**
+   * Configura las propiedades específicas del barril de objetos
+   * @override
+   */
+  configurarPorTipo() {
+    this.setName('barrilObjeto');
+    this.body.setImmovable(true);
+    
+    // Este tipo de barril sí debe tener colisiones activas
+    if (this.body) {
+      this.body.setSize(32, 32); // Mantener el hitbox estándar
+      this.body.checkCollision.none = false; // Asegurar que las colisiones están activas
+    }
+  }
+  
+  /**
+   * Crea un icono o silueta del objeto encima del barril
+   */
+  crearIconoObjeto() {
+    // Determinar qué textura usar según el nombre del objeto
+    let textura;
+    let color = 0xffffff; // Color por defecto
+    
+    // Personalizar según el tipo de objeto
+    switch (this.nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        textura = 'jetpack'; // Usar textura existente como placeholder
+        color = 0x44aaff;
+        break;
+      case 'escopeta':
+        textura = 'shotgunWeapon';
+        color = 0xff5544;
+        break;
+      case 'paracaidas':
+        textura = 'parachute';
+        color = 0x66ee66;
+        break;
+      case 'escudo':
+        textura = 'shield';
+        color = 0x44ffaa;
+        break;
+      case 'velocidad':
+        textura = 'speedBoost';
+        color = 0xffaa22;
+        break;
+      default:
+        textura = 'BarrilNormal';
+        color = 0xffffff;
+    }
+    
+    // Crear el icono flotante sobre el barril - Ahora con tamaño mucho mayor y sin elementos de fondo
+    this.iconoObjeto = this.scene.add.sprite(this.x, this.y - 45, textura);
+    this.iconoObjeto.setScale(1.6); // Aumentado aún más para compensar la falta del brillo de fondo
+    this.iconoObjeto.setAlpha(1.0); // Completamente opaco
+    this.iconoObjeto.setTint(color);
+    this.iconoObjeto.setDepth(this.depth + 2); // Asegurar que esté por encima del barril
+    
+    // No crear el iconoGlow, eliminado completamente
+    
+    // Añadir una animación de flotación mejorada
+    this.scene.tweens.add({
+      targets: this.iconoObjeto,
+      y: this.y - 55, // Mayor rango de movimiento
+      duration: 1500,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    
+    // Añadir una animación de rotación más suave
+    this.scene.tweens.add({
+      targets: this.iconoObjeto,
+      angle: 360,
+      duration: 8000, // Más lento para una rotación más suave
+      repeat: -1,
+      ease: 'Linear'
+    });
+    
+    // Opcional: Efecto de partículas alrededor del icono para darle más presencia
+    if (this.scene.particles) {
+      const emitter = this.scene.particles.createEmitter({
+        x: { min: -5, max: 5 },
+        y: { min: -5, max: 5 },
+        speed: { min: 10, max: 30 },
+        alpha: { start: 0.6, end: 0 },
+        scale: { start: 0.1, end: 0 },
+        lifespan: { min: 600, max: 800 },
+        blendMode: 'ADD',
+        tint: color,
+        frequency: 200, 
+        quantity: 1
+      });
+      
+      emitter.startFollow(this.iconoObjeto);
+      
+      // Guardar referencia para limpieza
+      this.iconoEmitter = emitter;
+    }
+  }
+  
+  /**
+   * Verifica si el jugador está cerca para activar el barril
+   */
+  checkPlayerProximity() {
+    if (this.abierto || !this.scene || !this.scene.player) return;
+    
+    const distance = Phaser.Math.Distance.Between(
+      this.x, this.y,
+      this.scene.player.x, this.scene.player.y
+    );
+    
+    if (distance < this.detectionRadius) {
+      this.abrirBarril(this.scene.player);
+    }
+  }
+  
+  /**
+   * Abre el barril y revela el objeto que contiene
+   * @param {Player} player - El jugador que activó el barril
+   */
+  abrirBarril(player) {
+    if (this.abierto) return; // Si ya está abierto, no hacer nada
+    
+    this.abierto = true;
+    
+    // Efecto de "romper" el barril
+    this.scene.tweens.add({
+      targets: this,
+      scaleX: 1.3,
+      scaleY: 0.7,
+      duration: 150,
+      yoyo: true,
+      onComplete: () => {
+        // Crear partículas de madera rota
+        if (this.scene.particles) {
+          const emitter = this.scene.particles.createEmitter({
+            x: this.x,
+            y: this.y,
+            speed: { min: 30, max: 80 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 0.6, end: 0 },
+            lifespan: 800,
+            tint: [0xbb8844, 0x997755, 0xaa8866], // Solo tonos de madera (sin rojos)
+            quantity: 3 // Emitir de pocas en pocas para mejor control
+          });
+          
+          // Emitir varias partículas y luego detener
+          emitter.explode(25); // Aumentado a 25 partículas
+          this.scene.time.delayedCall(200, () => {
+            emitter.stop();
+          });
+        }
+        
+        // Hacer que el barril desaparezca completamente con una animación
+        this.scene.tweens.add({
+          targets: this,
+          alpha: 0,
+          scale: 0.2,
+          y: this.y + 25, // El barril se hunde más
+          duration: 300,
+          ease: 'Sine.easeIn',
+          onComplete: () => {
+            // El efecto de brillo también desaparece
+            if (this.glowEffect) {
+              this.scene.tweens.add({
+                targets: this.glowEffect,
+                alpha: 0,
+                scale: 0.2,
+                duration: 200,
+                onComplete: () => {
+                  this.glowEffect.setVisible(false);
+                }
+              });
+            }
+            
+            // Ocultar completamente el barril pero mantenerlo en escena para eventos
+            this.setVisible(false);
+          }
+        });
+      }
+    });
+    
+    // Crear el objeto flotante que sale del barril
+    this.crearObjetoFlotante();
+    
+    // Aumentar la intensidad de la luz brevemente antes de que desaparezca con el barril
+    if (this.light) {
+      this.scene.tweens.add({
+        targets: this.light,
+        intensity: 0.3,
+        radius: 80,
+        duration: 200,
+        yoyo: true,
+        onComplete: () => {
+          // Hacer que la luz desaparezca gradualmente
+          this.scene.tweens.add({
+            targets: this.light,
+            intensity: 0,
+            radius: 20,
+            duration: 300,
+            onComplete: () => {
+              if (this.light) {
+                this.light.setVisible(false);
+              }
+            }
+          });
+        }
+      });
+    }
+    
+    // Efecto de partículas doradas más intenso para la liberación
+    if (this.scene.particles) {
+      const emitter = this.scene.particles.createEmitter({
+        x: this.x,
+        y: this.y - 10, // Ligeramente más arriba
+        speed: { min: 20, max: 80 }, // Mayor velocidad
+        angle: { min: 220, max: 320 }, // Más amplio
+        scale: { start: 0.8, end: 0 }, // Partículas más grandes
+        lifespan: 1500,
+        blendMode: 'ADD',
+        tint: 0xffdd44 // Solo dorado, sin rojos
+      });
+      
+      emitter.explode(30); // Aumentado de 25 a 30 partículas
+      this.scene.time.delayedCall(500, () => {
+        emitter.stop();
+      });
+    }
+    
+    // Reproducir un sonido de descubrimiento
+    if (this.scene.sound && this.scene.cache.audio.exists('baseball')) {
+      // Reutilizar el sonido existente con un tono diferente
+      this.scene.sound.play('baseball', { volume: 0.6, detune: 600 });
+    }
+    
+    // Mostrar un mensaje con el nombre del objeto
+    const nombreMostrado = this.getNombreObjetoFormateado();
+    const text = this.scene.add.text(this.x, this.y - 45, nombreMostrado, {
+      fontSize: '18px', // Texto más grande
+      fontStyle: 'bold',
+      fill: '#ffffff',
+      stroke: '#663300',
+      strokeThickness: 4,
+      fontFamily: 'Arial'
+    }).setOrigin(0.5);
+    
+    // Animación para el texto
+    this.scene.tweens.add({
+      targets: text,
+      y: this.y - 90, // Sube más alto
+      alpha: 0,
+      scale: 1.5, // Escala mayor
+      duration: 2500,
+      ease: 'Power2',
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+    
+    // Notificar que se ha desbloqueado un objeto
+    this.scene.events.emit('objetoDesbloqueado', {
+      nombre: this.nombreObjeto,
+      x: this.x,
+      y: this.y
+    });
+    
+    // Eliminar el icono original y su emisor de partículas, ya no se necesitan
+    if (this.iconoEmitter) {
+      this.iconoEmitter.stop();
+      this.iconoEmitter = null;
+    }
+    
+    if (this.iconoObjeto) {
+      this.scene.tweens.add({
+        targets: this.iconoObjeto,
+        alpha: 0,
+        scale: 0.2,
+        duration: 300,
+        onComplete: () => {
+          if (this.iconoObjeto) {
+            this.iconoObjeto.destroy();
+            this.iconoObjeto = null;
+          }
+        }
+      });
+    }
+  }
+  
+  /**
+   * Obtiene el nombre del objeto formateado para mostrar
+   * @returns {string} Nombre formateado
+   */
+  getNombreObjetoFormateado() {
+    const nombre = this.nombreObjeto.toUpperCase();
+    
+    // Formatear según el tipo
+    switch (this.nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        return '¡JETPACK!';
+      case 'escopeta':
+        return '¡ESCOPETA!';
+      case 'paracaidas':
+        return '¡PARACAÍDAS!';
+      default:
+        return `¡${nombre}!`;
+    }
+  }
+  
+  /**
+   * Crea el objeto flotante que aparece al abrir el barril
+   */
+  crearObjetoFlotante() {
+    // Determinar qué textura usar según el nombre del objeto
+    let textura = 'BarrilNormal'; // Textura por defecto
+    let color = 0xffffff; // Color por defecto
+    
+    // Personalizar según el tipo de objeto
+    switch (this.nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        textura = 'jetpack';
+        color = 0x44aaff;
+        break;
+      case 'escopeta':
+        textura = 'shotgunWeapon';
+        color = 0xff5544;
+        break;
+      case 'paracaidas':
+        textura = 'parachute';
+        color = 0x66ee66;
+        break;
+      case 'escudo':
+        textura = 'shield';
+        color = 0x44ffaa;
+        break;
+      case 'velocidad':
+        textura = 'speedBoost';
+        color = 0xffaa22;
+        break;
+      default:
+        textura = 'BarrilNormal';
+        color = 0xffffff;
+    }
+    
+    // Crear el objeto flotante con un efecto de aparición
+    this.objetoFlotante = this.scene.add.sprite(this.x, this.y, textura);
+    this.objetoFlotante.setScale(0.2); // Comienza pequeño
+    this.objetoFlotante.setAlpha(0.5);
+    this.objetoFlotante.setTint(color);
+    this.objetoFlotante.setDepth(this.depth + 5);
+    
+    // Animación para que crezca a su tamaño final
+    this.scene.tweens.add({
+      targets: this.objetoFlotante,
+      scale: 1.5, // Tamaño aún mayor que antes (1.2 -> 1.5)
+      alpha: 1,
+      y: this.y - 35, // Sube más alto al crecer
+      duration: 600, // Más tiempo para la animación
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // Iniciar animación de flotación continua
+        this.scene.tweens.add({
+          targets: this.objetoFlotante,
+          y: this.y - 50, // Mayor altura de flotación
+          duration: 2000,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        });
+        
+        // Añadir animación más pronunciada de rotación
+        this.scene.tweens.add({
+          targets: this.objetoFlotante,
+          angle: { from: -10, to: 10 }, // Mayor ángulo de rotación para más dinamismo
+          duration: 2500,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        });
+        
+        // Efecto de partículas brillantes alrededor del objeto
+        if (this.scene.particles) {
+          const emitter = this.scene.particles.createEmitter({
+            x: { min: -10, max: 10 },
+            y: { min: -10, max: 10 },
+            speed: { min: 10, max: 30 },
+            alpha: { start: 0.6, end: 0 },
+            scale: { start: 0.2, end: 0 },
+            lifespan: { min: 800, max: 1200 },
+            blendMode: 'ADD',
+            tint: color,
+            frequency: 100, // Emisión cada 100ms
+            quantity: 1
+          });
+          
+          emitter.startFollow(this.objetoFlotante);
+          
+          // Guardar referencia para limpieza
+          this.particleEmitter = emitter;
+        }
+      }
+    });
+    
+    // No crear ningún sprite de fondo, solo los rayos de luz
+    this.crearRayosLuz(this.x, this.y, color);
+  }
+  
+  /**
+   * Crea rayos de luz que emanan del objeto
+   * @param {number} x - Posición X
+   * @param {number} y - Posición Y
+   * @param {number} color - Color de los rayos
+   */
+  crearRayosLuz(x, y, color) {
+    // Crear varios rayos en diferentes ángulos
+    for (let i = 0; i < 6; i++) { // Reducido de 8 a 6 rayos
+      const angulo = (i * 60) * (Math.PI / 180); // Ajustado para 6 rayos (360/6 = 60 grados)
+      const distancia = 55; // Mayor distancia para los rayos
+      
+      const rayo = this.scene.add.line(
+        x, y,
+        0, 0,
+        Math.cos(angulo) * distancia, Math.sin(angulo) * distancia,
+        color, 0.5 // Reducida la opacidad de 0.6 a 0.5
+      );
+      
+      rayo.setLineWidth(1.5); // Reducido de 2 a 1.5
+      rayo.setDepth(this.depth + 3);
+      rayo.setBlendMode('ADD');
+      
+      // Añadir referencia para poder destruirlo después
+      if (!this.rayosLuz) this.rayosLuz = [];
+      this.rayosLuz.push(rayo);
+      
+      // Animación para los rayos
+      this.scene.tweens.add({
+        targets: rayo,
+        alpha: { from: 0.5, to: 0.05 }, // Mucho menos visible en su mínimo
+        lineWidth: { from: 1.5, to: 0.5 },
+        duration: 1500,
+        yoyo: true,
+        repeat: -1,
+        delay: i * 100
+      });
+    }
+  }
+  
+  /**
+   * Método que se llama cuando se destruye el barril
+   * @override
+   */
+  destroy() {
+    // Detener y destruir el tween de la luz si existe
+    if (this.lightTween) {
+      this.lightTween.stop();
+      this.lightTween = null;
+    }
+    
+    // Destruir la luz si existe
+    if (this.light) {
+      this.light.destroy();
+      this.light = null;
+    }
+    
+    // Destruir el efecto de brillo
+    if (this.glowEffect) {
+      this.glowEffect.destroy();
+      this.glowEffect = null;
+    }
+    
+    if (this.glowTween) {
+      this.glowTween.stop();
+      this.glowTween = null;
+    }
+    
+    // Destruir el icono del objeto y su emisor de partículas
+    if (this.iconoObjeto) {
+      this.iconoObjeto.destroy();
+      this.iconoObjeto = null;
+    }
+    
+    if (this.iconoEmitter) {
+      this.iconoEmitter.stop();
+      this.iconoEmitter = null;
+    }
+    
+    // Destruir el objeto flotante
+    if (this.objetoFlotante) {
+      this.objetoFlotante.destroy();
+      this.objetoFlotante = null;
+    }
+    
+    // Destruir el emisor de partículas
+    if (this.particleEmitter) {
+      this.particleEmitter.stop();
+      this.particleEmitter = null;
+    }
+    
+    // Destruir los rayos de luz
+    if (this.rayosLuz && this.rayosLuz.length > 0) {
+      this.rayosLuz.forEach(rayo => {
+        if (rayo && rayo.destroy) {
+          rayo.destroy();
+        }
+      });
+      this.rayosLuz = null;
     }
     
     super.destroy();

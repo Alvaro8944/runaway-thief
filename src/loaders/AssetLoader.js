@@ -105,6 +105,8 @@ import Tileset3 from '../../assets/tiled/Tileset3.png';
 import MainScene from '../../assets/tiled/MainScene.json';
 import MainScene2 from '../../assets/tiled/MainScene2.json';
 import MainScene3 from '../../assets/tiled/MainScene3.json';
+import MainScene31 from '../../assets/tiled/MainScene31.json';
+import MainScene32 from '../../assets/tiled/MainScene32.json';
 import Nivel3 from '../../assets/tiled/Nivel3.json';
 import ladder from '../../assets/tiled/Objects/Resized/escalera.png';
 import pichos_arriba from '../../assets/tiled/Objects/Resized/pinchos_grandes_arriba.png';
@@ -391,6 +393,8 @@ export function loadTilemapAssets(scene) {
   scene.load.tilemapTiledJSON('map', MainScene);
   scene.load.tilemapTiledJSON('map2', MainScene2);
   scene.load.tilemapTiledJSON('map3', MainScene3);
+  scene.load.tilemapTiledJSON('map31', MainScene31);
+  scene.load.tilemapTiledJSON('map32', MainScene32);
 }
 
 /**

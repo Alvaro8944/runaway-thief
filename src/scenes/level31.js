@@ -3,20 +3,18 @@ import Player from '../player.js';
 import { Enemy1, STATE, PatrollingEnemy } from '../enemys/enemy1.js';
 import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemys/enemy2.js';
 import { Enemy3, STATE3, PatrollingEnemy3, AttackingEnemy3, SmartEnemy3  } from '../enemys/enemy3.js';
-import { Boss, STATEBOSS } from '../enemys/boss.js';
 import Pincho from '../gameObjects/Pincho.js';
 import Escalera from '../gameObjects/Escalera.js';
 import BolaGrande from '../gameObjects/BolaGrande.js';
 import Diamante from '../gameObjects/Diamante.js';
 import Barril from '../gameObjects/Barril.js';
 import RocaDestructible from '../gameObjects/RocaDestructible.js';
-import Cartel from '../gameObjects/cartel.js';
 
 const SPIKE_DAMAGE = 20;
 
-export default class Level extends Phaser.Scene {
+export default class Level31 extends Phaser.Scene {
   constructor() {
-    super({ key: 'level' });
+    super({ key: 'level31' });
   }
 
   create() {
@@ -64,15 +62,15 @@ export default class Level extends Phaser.Scene {
 
 // En create()
 const bgFar = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'CaveBackground')
-   .setOrigin(0)
-   .setDepth(-20)
-   .setScale(1.2)
-   .setScrollFactor(0);  // fijado a cámara
+.setOrigin(0)
+.setDepth(-20)
+.setScale(1.2)
+.setScrollFactor(0);  // fijado a cámara
 const bgNear = this.add.tileSprite(0, 30, this.scale.width, this.scale.height, 'CaveBackgroundFirst')
-  .setOrigin(0)
-  .setDepth(-10)
-  .setScale(1)
-  .setScrollFactor(0);
+.setOrigin(0)
+.setDepth(-10)
+.setScale(1)
+.setScrollFactor(0);
 
 // guardamos referencias:
 this.bgFar = bgFar;
@@ -109,7 +107,7 @@ damageArea(x, y, radius, damage) {
 
 
   setupMap() {
-    const map = this.make.tilemap({ key: 'map' });
+    const map = this.make.tilemap({ key: 'map31' });
     this.map = map; // Guardar referencia para uso en otros métodos
     
     const tileset = map.addTilesetImage('Tileset', 'tiles');
@@ -144,9 +142,6 @@ damageArea(x, y, radius, damage) {
 
     // Crear rocas destructibles desde el mapa
     this.rocas = RocaDestructible.createFromMap(this, this.map, 'RocasDestructibles');
-    
-    // Crear carteles desde el mapa
-    this.carteles = Cartel.createFromMap(this, this.map, 'Carteles');
     
     // Añadir colisión entre bolas y suelo
     this.physics.add.collider(this.bolas, this.layerSuelo);
@@ -230,38 +225,14 @@ damageArea(x, y, radius, damage) {
     const enemyPositions = [
 
 
-      { x: 2000, y: 350, type: 'patrolling' },
-      { x: 2300, y: 350, type: 'patrolling' },
-      { x: 3200, y: 300, type: 'patrolling' },
-      { x: 3940, y: 800, type: 'patrolling' },
-      { x: 4040, y: 800, type: 'patrolling' },
-      { x: 4600, y: 700, type: 'patrolling' },
-      { x: 4040, y: 400, type: 'patrolling' },
-      { x: 3900, y: 350, type: 'patrolling' },
-      { x: 4200, y: 100, type: 'patrolling' }
+      //{ x: 2700, y: 320, type: 'patrolling' },
+      //{ x: 3000, y: 650, type: 'patrolling' }
 
     ];
     
     // Posiciones de enemigos tipo 2
     const enemy2Positions = [
-      //{ x: 500, y: 700, type: 'normal' },
-      //{ x: 3200, y: 1150, type: 'patrolling' },
-      //{ x: 3650, y: 1250, type: 'patrolling' },
-      //{ x: 3400, y: 2000, type: 'normal' },
-      //{ x: 3500, y: 2000, type: 'normal' },
-
-      //{ x: 4403, y: 1570, type: 'patrolling' },
-      //{ x: 5111, y: 1602, type: 'patrolling' },
-      //{ x: 5628, y: 1250, type: 'patrolling' },
-      //{ x: 6303, y: 1122, type: 'patrolling' },
-
-
-      //{ x: 6461, y: 930, type: 'patrolling' },    //ESTATICO
-      //{ x: 6151, y: 930, type: 'patrolling' }   //ESTATICO
-
-      //{ x: 7134, y: 1058, type: 'patrolling' },
-      //{ x: 7134, y: 1058, type: 'patrolling' },
-      //{ x: 7734, y: 962, type: 'patrolling' }
+      //{ x: 520, y: 500, type: 'patrolling' },
 
 
     ];
@@ -271,14 +242,9 @@ damageArea(x, y, radius, damage) {
      const enemy3Positions = [
       //{ x: 500, y: 700, type: 'smart' },
       //{ x: 500, y: 700, type: 'attacking' }
-      //{ x: 500, y: 700, type: 'patrolling' }
 
     ];
 
-
-    const bossPosition = [
-      //{ x: 300, y: 700}
-    ];
 
     
     
@@ -290,10 +256,6 @@ damageArea(x, y, radius, damage) {
 
     // Crear enemigos tipo 3
     enemy3Positions.forEach(pos => this.createEnemy3(pos));
-
-    // Crear boss
-    bossPosition.forEach(pos => this.createBoss(pos));
-
 
   }
   
@@ -496,52 +458,6 @@ damageArea(x, y, radius, damage) {
 
 
 
-  createBoss(pos) {
-    const enemy = new Boss(this, pos.x, pos.y);
-    
-    enemy.player = this.player;
-    enemy.map = this.map;
-    this.enemies.add(enemy);
-    
-    // Configurar colisiones
-    this.physics.add.collider(enemy, this.layerSuelo);
-    
-    // Colisión jugador-enemigo
-    this.physics.add.overlap(
-      this.player,
-      enemy,
-      (player, enemySprite) => {
-        if (!enemySprite || !player) return;
-        if (enemySprite.state !== STATEBOSS.DEAD && 
-            enemySprite.state !== STATEBOSS.HURT && 
-            !player.isInvulnerable) {
-          if (enemySprite.state === STATEBOSS.ATTACKING && !enemySprite.attackDamageDealt) {
-            player.takeDamage(enemySprite.damage, enemySprite);
-            enemySprite.attackDamageDealt = true;
-          }
-        }
-      },
-      null,
-      this
-    );
-    
-    // Colisión bala-enemigo
-    this.physics.add.overlap(
-      enemy,
-      this.bullets,
-      (enemySprite, bullet) => {
-        if (!enemySprite || !bullet) return;
-        if (enemySprite.state !== STATEBOSS.DEAD) {
-          enemySprite.takeDamage(bullet.damage);
-          bullet.destroy();
-        }
-      },
-      null,
-      this
-    );
-  }
-
-
 
   
   /**
@@ -557,30 +473,6 @@ damageArea(x, y, radius, damage) {
     // Colisión jugador-rocas destructibles
     if (this.rocas) {
       this.physics.add.collider(this.player, this.rocas);
-    }
-    
-    // Colisión jugador-barriles
-    if (this.barriles) {
-      // Colisión física normal con los barriles (el jugador no los atraviesa)
-      this.physics.add.collider(this.player, this.barriles);
-      
-      // Detección de interacción con los barriles (para activar sus efectos)
-      this.physics.add.overlap(
-        this.player,
-        this.barriles,
-        (player, barril) => {
-          // Los barriles de respawn ahora se activan por proximidad, no por colisión
-          if (barril.tipo !== 'respawn') {
-            if (barril.handleCollision) {
-              barril.handleCollision(player);
-            } else if (barril.activarEfecto) {
-              barril.activarEfecto(player);
-            }
-          }
-        },
-        null,
-        this
-      );
     }
     
     // Colisión balas-suelo
@@ -720,7 +612,7 @@ damageArea(x, y, radius, damage) {
           // Evitar múltiples transiciones
           if (this.isTransitioning) return;
           this.isTransitioning = true;
-          console.log('Iniciando transición al nivel 2');
+          console.log('Iniciando transición al nivel 3');
           
           // Desactivar controles del jugador
           this.player.body.setVelocity(0, 0);
@@ -731,8 +623,8 @@ damageArea(x, y, radius, damage) {
           
           // Transición al boot2
           this.time.delayedCall(1000, () => {
-            console.log('Cambiando a escena boot2');
-            this.scene.start('boot2', { 
+            console.log('Cambiando a escena boot32');
+            this.scene.start('boot32', { 
               playerHealth: this.player.health,
               playerScore: this.player.score 
             });
@@ -745,17 +637,7 @@ damageArea(x, y, radius, damage) {
     
     // Eventos de muerte
     this.events.on('playerDeath', () => {
-      console.log('[Level] Evento playerDeath recibido');
-      console.log('[Level] Estado del jugador al morir:', {
-        hasRespawnPoint: this.player.hasRespawnPoint,
-        respawnX: this.player.respawnX,
-        respawnY: this.player.respawnY,
-        state: this.player.state
-      });
-      
-      // Solo reiniciamos la escena si el jugador no tiene un punto de respawn
-      // El respawn se maneja directamente en el método die() del jugador
-      console.log('[Level] Reiniciando la escena...');
+      console.log('Game Over - Player died');
       this.scene.restart();
     });
   }
@@ -799,8 +681,8 @@ damageArea(x, y, radius, damage) {
  // la capa más cercana, más rápido:
  this.bgNear.tilePositionX = cam.scrollX * 0.8;
 
-
-
+ 
+    
     try {
       // Verificar la superposición con las escaleras antes de resetear
       const isOnLadder = this.physics.overlap(this.player, this.ladders);

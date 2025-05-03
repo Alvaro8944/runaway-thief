@@ -1321,7 +1321,7 @@
                         {
                          "name":"direccion",
                          "type":"string",
-                         "value":""
+                         "value":"abajo"
                         }],
                  "rotation":0,
                  "type":"Pincho",
@@ -1339,7 +1339,7 @@
                         {
                          "name":"direccion",
                          "type":"string",
-                         "value":""
+                         "value":"abajo"
                         }],
                  "rotation":0,
                  "type":"Pincho",
@@ -1357,7 +1357,7 @@
                         {
                          "name":"direccion",
                          "type":"string",
-                         "value":""
+                         "value":"abajo"
                         }],
                  "rotation":0,
                  "type":"Pincho",
@@ -1375,7 +1375,7 @@
                         {
                          "name":"direccion",
                          "type":"string",
-                         "value":""
+                         "value":"abajo"
                         }],
                  "rotation":0,
                  "type":"Pincho",
@@ -1393,7 +1393,7 @@
                         {
                          "name":"direccion",
                          "type":"string",
-                         "value":""
+                         "value":"abajo"
                         }],
                  "rotation":0,
                  "type":"Pincho",

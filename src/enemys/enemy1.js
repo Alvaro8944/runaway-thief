@@ -67,7 +67,7 @@ export class Enemy1 extends BaseEnemy {
     // Actualizar posición del hitbox de ataque
     if (this.attackHitbox) {
       const offsetX = this.flipX ? 23 : 0;
-      this.setOffset( offsetX, this.offsetY);
+      this.setOffset( offsetX, 13);
     }
 
 

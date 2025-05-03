@@ -67,7 +67,7 @@ export class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
     // Actualizar posición del hitbox de ataque
     if (this.attackHitbox) {
       const offsetX = this.flipX ? 23 : 0;
-      this.setOffset( offsetX, this.offsetY);
+      this.setOffset( offsetX, 13);
     }
 
     // Las clases hijas sobrescriben este método para implementar su propia lógica de IA

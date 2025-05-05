@@ -81,6 +81,21 @@ import bossBullet from '../../assets/Bullets/Projectile.png';
 //SHOOT EFFECT
 import effect from '../../assets/Shoot_effects/9_1.png';
 
+//ICONOS
+import healthIcon from '../../assets/ui/health_icon.png';
+import ammoIcon from '../../assets/ui/ammo_icon.png';
+import shieldIcon from '../../assets/ui/shield_icon.png';
+import jetpackIcon from '../../assets/ui/jetpack_icon.png';
+import speedIcon from '../../assets/ui/speed_icon.png';
+import parachuteIcon from '../../assets/ui/parachute_icon.png';
+import panelBackground from '../../assets/ui/panel_background.png';
+import weaponSlot from '../../assets/ui/weapon_slot.png';
+import weaponSlotActive from '../../assets/ui/weapon_slot_active.png';
+import cooldownIndicator from '../../assets/ui/cooldown_indicator.png';
+import energyBar from '../../assets/ui/energy_bar.png';
+
+
+
 
 
 
@@ -319,11 +334,6 @@ export function loadWeaponSprites(scene) {
     frameHeight: 11 
   });
 
-  scene.load.spritesheet('escudo', escudo, { 
-    frameWidth: 30, 
-    frameHeight: 30 
-  });
-
   scene.load.spritesheet('bullet', bullet, { 
     frameWidth: 15, 
     frameHeight: 4 
@@ -345,8 +355,28 @@ export function loadWeaponSprites(scene) {
 
 }
 
-
-
+/**
+ * Carga los sprites para la interfaz de usuario
+ * @param {Phaser.Scene} scene - La escena donde se cargarán los assets
+ */
+export function loadUISprites(scene) {
+  // Cargar iconos para la UI
+  scene.load.image('ui_health', healthIcon);
+  scene.load.image('ui_ammo', ammoIcon);
+  scene.load.image('ui_shield', shieldIcon);
+  scene.load.image('ui_jetpack', jetpackIcon);
+  scene.load.image('ui_speed', speedIcon);
+  scene.load.image('ui_parachute', parachuteIcon);
+  
+  // Fondos y bordes
+  scene.load.image('ui_panel', panelBackground);
+  scene.load.image('ui_slot', weaponSlot);
+  scene.load.image('ui_slot_active', weaponSlotActive);
+  
+  // Indicadores y barras
+  scene.load.image('ui_cooldown', cooldownIndicator);
+  scene.load.image('ui_energy_bar', energyBar);
+}
 
 export function loadObjectSprites(scene) {
   scene.load.spritesheet('parachute', parachute, { 
@@ -358,6 +388,12 @@ export function loadObjectSprites(scene) {
   scene.load.spritesheet('jetpack', jetpack, { 
     frameWidth: 40, 
     frameHeight: 40 
+  });
+
+  // Cargar sprite del escudo para la UI
+  scene.load.spritesheet('escudo', escudo, {
+    frameWidth: 30,
+    frameHeight: 30
   });
 
   scene.load.image('ladder2', ladder);

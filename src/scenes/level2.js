@@ -3,16 +3,20 @@ import Player from '../player.js';
 import { Enemy1, STATE, PatrollingEnemy } from '../enemys/enemy1.js';
 import { Enemy2, STATE2, PatrollingEnemy2 } from '../enemys/enemy2.js';
 import { Enemy3, STATE3, PatrollingEnemy3, AttackingEnemy3, SmartEnemy3  } from '../enemys/enemy3.js';
+import { Boss, STATEBOSS } from '../enemys/boss.js';
 import Pincho from '../gameObjects/Pincho.js';
 import Escalera from '../gameObjects/Escalera.js';
 import BolaGrande from '../gameObjects/BolaGrande.js';
 import Diamante from '../gameObjects/Diamante.js';
 import Barril from '../gameObjects/Barril.js';
 import RocaDestructible from '../gameObjects/RocaDestructible.js';
+import Cartel from '../gameObjects/cartel.js';
+import gameData from '../data/GameData';
+import GameUI from '../UI/GameUI';
 
 const SPIKE_DAMAGE = 20;
 
-export default class Level2 extends Phaser.Scene {
+export default class Level extends Phaser.Scene {
   constructor() {
     super({ key: 'level2' });
   }
@@ -28,6 +32,9 @@ export default class Level2 extends Phaser.Scene {
     this.player = new Player(this, 0, 0);
     this.player.setPosition(100, 750); // Posición inicial
     
+    // Cargar estado guardado (útil cuando se inicia desde el selector de niveles)
+    gameData.loadPlayerState(this.player);
+    
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)
     this.createGameObjects();
     
@@ -37,6 +44,9 @@ export default class Level2 extends Phaser.Scene {
     // Configurar cámara y controles
     this.setupCameraAndControls();
     
+    // Crear el sistema de UI
+    this.gameUI = new GameUI(this, this.player);
+    
     // A intervalos aleatorios, crear bolas que caen (lluvia de bolas)
     this.time.addEvent({
       delay: 20000, // Cada 20 segundos
@@ -45,8 +55,14 @@ export default class Level2 extends Phaser.Scene {
       loop: true
     });
 
-
-
+    // Escuchar evento de objeto desbloqueado
+    this.events.on('objetoDesbloqueado', (datos) => {
+      console.log(`Objeto desbloqueado: ${datos.nombre} en (${datos.x}, ${datos.y})`);
+      
+      this.mostrarNotificacionObjeto(datos.nombre, datos.x, datos.y);
+      
+      this.darObjetoAJugador(datos.nombre);
+    });
 
     this.events.on('bulletReachedTarget',
       (x, y, bullet) => {
@@ -57,54 +73,46 @@ export default class Level2 extends Phaser.Scene {
       }
     );
 
+    // En create()
+    const bgFar = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'CaveBackground')
+      .setOrigin(0)
+      .setDepth(-20)
+      .setScale(1.2)
+      .setScrollFactor(0);  // fijado a cámara
+    const bgNear = this.add.tileSprite(0, 30, this.scale.width, this.scale.height, 'CaveBackgroundFirst')
+      .setOrigin(0)
+      .setDepth(-10)
+      .setScale(1)
+      .setScrollFactor(0);
 
-
-
-// En create()
-const bgFar = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'CaveBackground')
-.setOrigin(0)
-.setDepth(-20)
-.setScale(1.2)
-.setScrollFactor(0);  // fijado a cámara
-const bgNear = this.add.tileSprite(0, 30, this.scale.width, this.scale.height, 'CaveBackgroundFirst')
-.setOrigin(0)
-.setDepth(-10)
-.setScale(1)
-.setScrollFactor(0);
-
-// guardamos referencias:
-this.bgFar = bgFar;
-this.bgNear = bgNear;
-
+    // guardamos referencias:
+    this.bgFar = bgFar;
+    this.bgNear = bgNear;
   }
   
+  /**
+   * Hace daño a todos los enemigos que caigan dentro de un radio
+   * @param {number} x 
+   * @param {number} y 
+   * @param {number} radius 
+   * @param {number} damage 
+   */
+  damageArea(x, y, radius, damage) {
+    // dibujar un círculo de debug
+    const g = this.add.graphics({ x, y });
+    g.fillStyle(0xff3000, 0.5);
+    g.fillCircle(0, 0, radius);
+    this.time.delayedCall(200, () => g.destroy());
 
-
-   /**
- * Hace daño a todos los enemigos que caigan dentro de un radio
- * @param {number} x 
- * @param {number} y 
- * @param {number} radius 
- * @param {number} damage 
- */
-damageArea(x, y, radius, damage) {
-  // dibujar un círculo de debug
-  const g = this.add.graphics({ x, y });
-  g.fillStyle(0xff3000, 0.5);
-  g.fillCircle(0, 0, radius);
-  this.time.delayedCall(200, () => g.destroy());
-
-  // Itera sobre tu grupo de enemigos
-  this.enemies.children.iterate(enemy => {
-    if (!enemy || enemy.state === 'DEAD') return;
-    const d = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
-    if (d <= radius*2) {
-      enemy.takeDamage(damage, /*opcional: fuente=*/null);
-    }
-  });
-}
-
-
+    // Itera sobre tu grupo de enemigos
+    this.enemies.children.iterate(enemy => {
+      if (!enemy || enemy.state === 'DEAD') return;
+      const d = Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y);
+      if (d <= radius*2) {
+        enemy.takeDamage(damage, /*opcional: fuente=*/null);
+      }
+    });
+  }
 
   setupMap() {
     const map = this.make.tilemap({ key: 'map2' });
@@ -143,6 +151,9 @@ damageArea(x, y, radius, damage) {
     // Crear rocas destructibles desde el mapa
     this.rocas = RocaDestructible.createFromMap(this, this.map, 'RocasDestructibles');
     
+    // Crear carteles desde el mapa
+    this.carteles = Cartel.createFromMap(this, this.map, 'Carteles');
+    
     // Añadir colisión entre bolas y suelo
     this.physics.add.collider(this.bolas, this.layerSuelo);
     
@@ -150,16 +161,26 @@ damageArea(x, y, radius, damage) {
     this.enemies = this.add.group();
     this.createEnemies();
     
-    // Buscar zona de final de nivel si existe
-    const finNivelLayer = this.map.getObjectLayer('FinNivel');
-    if (finNivelLayer && finNivelLayer.objects && finNivelLayer.objects.length > 0) {
-      this.finNivel = this.add.zone(0, 0, 32, 64);
-      this.physics.world.enable(this.finNivel);
-      const finNivelObj = finNivelLayer.objects[0];
-      this.finNivel.setPosition(finNivelObj.x, finNivelObj.y);
-      this.finNivel.body.setAllowGravity(false);
-      this.finNivel.body.moves = false;
-    }
+    // Crear manualmente una zona de fin de nivel en la parte alta del mapa
+    // Esto reemplaza la búsqueda de la capa 'FinNivel' que no existe en el JSON
+    // La zona se coloca donde estaba la escalera más alta
+    const ZONE_WIDTH = 100;  // Ancho suficiente para detectar al jugador
+    const ZONE_HEIGHT = 32; // Altura pequeña para activarse solo en la parte superior
+    
+    // Posición aproximada donde debería estar el fin del nivel
+    // Ajusta estas coordenadas según la ubicación correcta en tu mapa
+    const END_POSITION_X = 9560; 
+    const END_POSITION_Y = 15;
+    
+    this.finNivel = this.add.zone(END_POSITION_X, END_POSITION_Y, ZONE_WIDTH, ZONE_HEIGHT);
+    this.physics.world.enable(this.finNivel);
+    this.finNivel.body.setAllowGravity(false);
+    this.finNivel.body.moves = false;
+    
+    // Añadir un sprite visible (solo para debug) que muestre dónde está la zona
+    // Puedes comentar o eliminar estas líneas en producción
+    const debugSprite = this.add.rectangle(END_POSITION_X, END_POSITION_Y, ZONE_WIDTH, ZONE_HEIGHT, 0xff0000, 0.3);
+    debugSprite.setDepth(100);
   }
   
   setupBulletGroups() {
@@ -479,6 +500,52 @@ damageArea(x, y, radius, damage) {
 
 
 
+  createBoss(pos) {
+    const enemy = new Boss(this, pos.x, pos.y);
+    
+    enemy.player = this.player;
+    enemy.map = this.map;
+    this.enemies.add(enemy);
+    
+    // Configurar colisiones
+    this.physics.add.collider(enemy, this.layerSuelo);
+    
+    // Colisión jugador-enemigo
+    this.physics.add.overlap(
+      this.player,
+      enemy,
+      (player, enemySprite) => {
+        if (!enemySprite || !player) return;
+        if (enemySprite.state !== STATEBOSS.DEAD && 
+            enemySprite.state !== STATEBOSS.HURT && 
+            !player.isInvulnerable) {
+          if (enemySprite.state === STATEBOSS.ATTACKING && !enemySprite.attackDamageDealt) {
+            player.takeDamage(enemySprite.damage, enemySprite);
+            enemySprite.attackDamageDealt = true;
+          }
+        }
+      },
+      null,
+      this
+    );
+    
+    // Colisión bala-enemigo
+    this.physics.add.overlap(
+      enemy,
+      this.bullets,
+      (enemySprite, bullet) => {
+        if (!enemySprite || !bullet) return;
+        if (enemySprite.state !== STATEBOSS.DEAD) {
+          enemySprite.takeDamage(bullet.damage);
+          bullet.destroy();
+        }
+      },
+      null,
+      this
+    );
+  }
+
+
 
   
   /**
@@ -494,6 +561,30 @@ damageArea(x, y, radius, damage) {
     // Colisión jugador-rocas destructibles
     if (this.rocas) {
       this.physics.add.collider(this.player, this.rocas);
+    }
+    
+    // Colisión jugador-barriles
+    if (this.barriles) {
+      // Colisión física normal con los barriles (el jugador no los atraviesa)
+      this.physics.add.collider(this.player, this.barriles);
+      
+      // Detección de interacción con los barriles (para activar sus efectos)
+      this.physics.add.overlap(
+        this.player,
+        this.barriles,
+        (player, barril) => {
+          // Los barriles de respawn ahora se activan por proximidad, no por colisión
+          if (barril.tipo !== 'respawn') {
+            if (barril.handleCollision) {
+              barril.handleCollision(player);
+            } else if (barril.activarEfecto) {
+              barril.activarEfecto(player);
+            }
+          }
+        },
+        null,
+        this
+      );
     }
     
     // Colisión balas-suelo
@@ -592,25 +683,54 @@ damageArea(x, y, radius, damage) {
       );
     }
     
-    // Colisión jugador-balas enemigas
+    // Cambiar la colisión jugador-balas enemigas para manejar el escudo como protección general
+    // En setupCollisions() reemplazar la parte de colisiones con el escudo y balas enemigas
     if (this.enemyBullets) {
-      this.physics.add.overlap(
-        this.player.escudo,
-        this.enemyBullets,
-        (escudo, enemyBullet) => {
-          if (!enemyBullet) return;
-          enemyBullet.destroy(); 
-        },
-        null,
-        this
-      );
-
       this.physics.add.overlap(
         this.player,
         this.enemyBullets,
         (player, enemyBullet) => {
           if (!player || !enemyBullet) return;
-          if (!player.isInvulnerable) {
+          
+          // Si el escudo está activo, las balas son destruidas sin dañar al jugador
+          if (player.shieldActive) {
+            // Crear un efecto de impacto en el escudo
+            const impactX = enemyBullet.x;
+            const impactY = enemyBullet.y;
+            
+            // Efecto de ondas en el punto de impacto
+            const ripple = this.add.graphics();
+            ripple.fillStyle(0x88ffff, 0.7);
+            ripple.fillCircle(impactX, impactY, 5);
+            ripple.lineStyle(2, 0xaaddff, 0.8);
+            ripple.strokeCircle(impactX, impactY, 5);
+            
+            // Animación de ondas expandiéndose
+            this.tweens.add({
+              targets: ripple,
+              scale: 2,
+              alpha: 0,
+              duration: 300,
+              onUpdate: () => {
+                ripple.clear();
+                ripple.fillStyle(0x88ffff, ripple.alpha * 0.7);
+                ripple.fillCircle(impactX, impactY, 5);
+                ripple.lineStyle(2, 0xaaddff, ripple.alpha * 0.8);
+                ripple.strokeCircle(impactX, impactY, 5);
+              },
+              onComplete: () => ripple.destroy()
+            });
+            
+            // Sonido de rebote si existe
+            if (this.sound.get('shield_impact')) {
+              this.sound.play('shield_impact', { volume: 0.3 });
+            }
+            
+            // Destruir la bala enemiga
+            enemyBullet.destroy();
+          }
+          // Si no tiene escudo y no es invulnerable, recibe daño
+          else if (!player.isInvulnerable) {
             player.takeDamage(enemyBullet.damage, enemyBullet.owner);
             enemyBullet.destroy();
           }
@@ -639,16 +759,28 @@ damageArea(x, y, radius, damage) {
           this.player.body.setVelocity(0, 0);
           this.player.body.allowGravity = false;
           
+          // Guardar el estado completo del jugador
+          gameData.savePlayerState(this.player);
+          
           // Efecto de fade out
           this.cameras.main.fadeOut(1000, 0, 0, 0);
           
-          // Transición al boot2
+          // Transición al boot3
           this.time.delayedCall(1000, () => {
             console.log('Cambiando a escena boot3');
-            this.scene.start('boot3', { 
-              playerHealth: this.player.health,
-              playerScore: this.player.score 
-            });
+            // Limpiar referencias antes de cambiar de escena
+            // Desactivar actualizaciones en objetos que podrían causar problemas
+            if (this.gameUI) {
+              this.gameUI.update = () => {}; // Reemplazar con función vacía para evitar actualizaciones
+              this.gameUI.destroy();
+              this.gameUI = null;
+            }
+            
+            // Desactivar eventos y timers
+            this.events.off('update');
+            
+            // Usar switch en lugar de start para una transición más limpia
+            this.scene.switch('boot3');
           });
         },
         null,
@@ -658,7 +790,17 @@ damageArea(x, y, radius, damage) {
     
     // Eventos de muerte
     this.events.on('playerDeath', () => {
-      console.log('Game Over - Player died');
+      console.log('[Level] Evento playerDeath recibido');
+      console.log('[Level] Estado del jugador al morir:', {
+        hasRespawnPoint: this.player.hasRespawnPoint,
+        respawnX: this.player.respawnX,
+        respawnY: this.player.respawnY,
+        state: this.player.state
+      });
+      
+      // Solo reiniciamos la escena si el jugador no tiene un punto de respawn
+      // El respawn se maneja directamente en el método die() del jugador
+      console.log('[Level] Reiniciando la escena...');
       this.scene.restart();
     });
   }
@@ -683,27 +825,23 @@ damageArea(x, y, radius, damage) {
       right: Phaser.Input.Keyboard.KeyCodes.D,
       jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
       cambiarWeapon: Phaser.Input.Keyboard.KeyCodes.X,
-      sacarEscudo: Phaser.Input.Keyboard.KeyCodes.ONE,
-      sacarArmaOne: Phaser.Input.Keyboard.KeyCodes.TWO,
-      sacarArmaTwo: Phaser.Input.Keyboard.KeyCodes.THREE,
-      sacarArmaThree: Phaser.Input.Keyboard.KeyCodes.FOUR
-      
-
+      sacarEscudo: Phaser.Input.Keyboard.KeyCodes.FOUR,     // Tecla 4: Escudo
+      sacarArmaOne: Phaser.Input.Keyboard.KeyCodes.ONE,     // Tecla 1: Rifle (arma principal)
+      sacarArmaTwo: Phaser.Input.Keyboard.KeyCodes.TWO,     // Tecla 2: Escopeta
+      sacarArmaThree: Phaser.Input.Keyboard.KeyCodes.THREE  // Tecla 3: Arma explosiva
     });
   }
 
   update() {
     if (!this.player) return;
 
-        // En update()
- const cam = this.cameras.main;
- // la capa de fondo lejano se mueve despacio:
- this.bgFar.tilePositionX = cam.scrollX * 0.2;
- // la capa más cercana, más rápido:
- this.bgNear.tilePositionX = cam.scrollX * 0.8;
+    // En update()
+    const cam = this.cameras.main;
+    // la capa de fondo lejano se mueve despacio:
+    this.bgFar.tilePositionX = cam.scrollX * 0.2;
+    // la capa más cercana, más rápido:
+    this.bgNear.tilePositionX = cam.scrollX * 0.8;
 
- 
-    
     try {
       // Verificar la superposición con las escaleras antes de resetear
       const isOnLadder = this.physics.overlap(this.player, this.ladders);
@@ -723,6 +861,11 @@ damageArea(x, y, radius, damage) {
             bola.update();
           }
         });
+      }
+      
+      // Actualizar UI
+      if (this.gameUI) {
+        this.gameUI.update();
       }
     } catch (error) {
       console.error('Error en update:', error);
@@ -772,5 +915,236 @@ damageArea(x, y, radius, damage) {
     } else {
       console.log('No se encontraron puntos de spawn para bolas en el mapa');
     }
+  }
+
+  /**
+   * Muestra una notificación visual destacada cuando se desbloquea un objeto
+   * @param {string} nombreObjeto - Nombre del objeto desbloqueado
+   * @param {number} x - Posición X donde se desbloqueó
+   * @param {number} y - Posición Y donde se desbloqueó
+   */
+  mostrarNotificacionObjeto(nombreObjeto, x, y) {
+    // Crear un contenedor para la notificación
+    const notificationContainer = this.add.container(this.cameras.main.centerX, 100);
+    notificationContainer.setDepth(1000); // Asegurar que esté por encima de todo
+    
+    // Fondo de la notificación
+    const bg = this.add.rectangle(0, 0, 400, 80, 0x000000, 0.7);
+    bg.setStrokeStyle(3, this.getColorForObject(nombreObjeto));
+    
+    // Título de la notificación
+    const title = this.add.text(0, -20, '¡OBJETO DESBLOQUEADO!', {
+      fontFamily: 'Arial',
+      fontSize: '18px',
+      fontStyle: 'bold',
+      color: '#ffffff',
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Texto con el nombre del objeto
+    const objectText = this.add.text(0, 10, this.getDisplayNameForObject(nombreObjeto), {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      fontStyle: 'bold',
+      color: this.getColorHexForObject(nombreObjeto),
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Añadir al contenedor
+    notificationContainer.add([bg, title, objectText]);
+    
+    // Animación de entrada
+    notificationContainer.setAlpha(0);
+    notificationContainer.setScale(0.8);
+    
+    this.tweens.add({
+      targets: notificationContainer,
+      y: 120,
+      alpha: 1,
+      scale: 1,
+      duration: 500,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // Pequeño efecto de rebote
+        this.tweens.add({
+          targets: notificationContainer,
+          y: 130,
+          duration: 200,
+          yoyo: true,
+          repeat: 1
+        });
+        
+        // Mantener visible y luego desaparecer
+        this.time.delayedCall(3000, () => {
+          this.tweens.add({
+            targets: notificationContainer,
+            y: 80,
+            alpha: 0,
+            scale: 0.8,
+            duration: 500,
+            ease: 'Back.easeIn',
+            onComplete: () => {
+              notificationContainer.destroy();
+            }
+          });
+        });
+      }
+    });
+    
+    // Crear un efecto de partículas en la posición del objeto
+    if (this.particles) {
+      const color = this.getColorNumberForObject(nombreObjeto);
+      const emitter = this.particles.createEmitter({
+        x: x,
+        y: y,
+        speed: { min: 50, max: 150 },
+        angle: { min: 0, max: 360 },
+        scale: { start: 0.8, end: 0 },
+        lifespan: 1500,
+        blendMode: 'ADD',
+        tint: color
+      });
+      
+      // Emitir partículas y luego detener
+      emitter.explode(40);
+      this.time.delayedCall(1500, () => {
+        emitter.stop();
+      });
+    }
+    
+    // Actualizar UI si existe
+    if (this.gameUI) {
+      this.gameUI.update();
+    }
+  }
+  
+  /**
+   * Aplica el efecto del objeto desbloqueado al jugador
+   * @param {string} nombreObjeto - Nombre del objeto a dar al jugador
+   */
+  darObjetoAJugador(nombreObjeto) {
+    if (!this.player) return;
+    
+    // Diferentes efectos según el tipo de objeto
+    switch (nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        this.player.darJetpack();
+        break;
+        
+      case 'escopeta':
+        this.player.darEscopeta();
+        break;
+
+      case 'rifle':
+        this.player.darRifle();
+        break;
+        
+      case 'explosivo':
+        this.player.darArmaExplosiva();
+        break;
+        
+      case 'paracaidas':
+        this.player.darParacaidas();
+        break;
+        
+      case 'escudo':
+        this.player.darEscudo();
+        break;
+        
+      case 'velocidad':
+        this.player.aumentarVelocidad();
+        break;
+        
+      default:
+        console.log(`Objeto no reconocido: ${nombreObjeto}`);
+        break;
+    }
+  }
+  
+  /**
+   * Devuelve un color adecuado para cada tipo de objeto
+   * @param {string} nombreObjeto - Nombre del objeto
+   * @returns {number} - Color en formato 0xRRGGBB
+   */
+  getColorNumberForObject(nombreObjeto) {
+    switch (nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        return 0x44aaff;
+      case 'escopeta':
+        return 0xff5544;
+      case 'rifle':
+        return 0x33bbaa;
+      case 'paracaidas':
+        return 0x66ee66;
+      case 'escudo':
+        return 0xaaaaff;
+      case 'velocidad':
+        return 0xffaa44;
+      case 'explosivo':
+        return 0xff8800;
+      default:
+        return 0xffffff;
+    }
+  }
+  
+  /**
+   * Devuelve el color en formato CSS para cada tipo de objeto
+   * @param {string} nombreObjeto - Nombre del objeto
+   * @returns {string} - Color en formato #RRGGBB
+   */
+  getColorHexForObject(nombreObjeto) {
+    switch (nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        return '#44aaff';
+      case 'escopeta':
+        return '#ff5544';
+      case 'rifle':
+        return '#33bbaa';
+      case 'paracaidas':
+        return '#66ee66';
+      case 'escudo':
+        return '#aaaaff';
+      case 'velocidad':
+        return '#ffaa44';
+      case 'explosivo':
+        return '#ff8800';
+      default:
+        return '#ffffff';
+    }
+  }
+  
+  /**
+   * Devuelve el nombre a mostrar en la notificación para cada tipo de objeto
+   * @param {string} nombreObjeto - Nombre interno del objeto
+   * @returns {string} - Nombre formateado para mostrar
+   */
+  getDisplayNameForObject(nombreObjeto) {
+    switch (nombreObjeto.toLowerCase()) {
+      case 'jetpack':
+        return '¡JETPACK!';
+      case 'escopeta':
+        return '¡ESCOPETA!';
+      case 'rifle':
+        return '¡RIFLE!';
+      case 'paracaidas':
+        return '¡PARACAÍDAS!';
+      case 'escudo':
+        return '¡ESCUDO PROTECTOR!';
+      case 'velocidad':
+        return '¡VELOCIDAD TURBO!';
+      case 'explosivo':
+        return '¡ARMA EXPLOSIVA!';
+      default:
+        return nombreObjeto.toUpperCase();
+    }
+  }
+  
+  /**
+   * Devuelve el color en formato 0xRRGGBB para el stroke del rectángulo
+   * @param {string} nombreObjeto - Nombre del objeto
+   * @returns {number} - Color en formato 0xRRGGBB
+   */
+  getColorForObject(nombreObjeto) {
+    return this.getColorNumberForObject(nombreObjeto);
   }
 }

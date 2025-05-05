@@ -11,6 +11,8 @@ import Diamante from '../gameObjects/Diamante.js';
 import Barril from '../gameObjects/Barril.js';
 import RocaDestructible from '../gameObjects/RocaDestructible.js';
 import Cartel from '../gameObjects/cartel.js';
+import gameData from '../data/GameData';
+import GameUI from '../UI/GameUI';
 
 const SPIKE_DAMAGE = 20;
 
@@ -30,6 +32,9 @@ export default class Level extends Phaser.Scene {
     this.player = new Player(this, 0, 0);
     this.player.setPosition(100, 750); // Posición inicial
     
+    // Cargar estado guardado (útil cuando se inicia desde el selector de niveles)
+    gameData.loadPlayerState(this.player);
+    
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)
     this.createGameObjects();
     
@@ -38,6 +43,9 @@ export default class Level extends Phaser.Scene {
     
     // Configurar cámara y controles
     this.setupCameraAndControls();
+    
+    // Crear el sistema de UI
+    this.gameUI = new GameUI(this, this.player);
     
     // A intervalos aleatorios, crear bolas que caen (lluvia de bolas)
     this.time.addEvent({
@@ -153,16 +161,26 @@ export default class Level extends Phaser.Scene {
     this.enemies = this.add.group();
     this.createEnemies();
     
-    // Buscar zona de final de nivel si existe
-    const finNivelLayer = this.map.getObjectLayer('FinNivel');
-    if (finNivelLayer && finNivelLayer.objects && finNivelLayer.objects.length > 0) {
-      this.finNivel = this.add.zone(0, 0, 32, 64);
-      this.physics.world.enable(this.finNivel);
-      const finNivelObj = finNivelLayer.objects[0];
-      this.finNivel.setPosition(finNivelObj.x, finNivelObj.y);
-      this.finNivel.body.setAllowGravity(false);
-      this.finNivel.body.moves = false;
-    }
+    // Crear manualmente una zona de fin de nivel en la parte alta del mapa
+    // Esto reemplaza la búsqueda de la capa 'FinNivel' que no existe en el JSON
+    // La zona se coloca donde estaba la escalera más alta
+    const ZONE_WIDTH = 100;  // Ancho suficiente para detectar al jugador
+    const ZONE_HEIGHT = 32; // Altura pequeña para activarse solo en la parte superior
+    
+    // Posición aproximada donde debería estar el fin del nivel
+    // Ajusta estas coordenadas según la ubicación correcta en tu mapa
+    const END_POSITION_X = 4570; 
+    const END_POSITION_Y = 15;
+    
+    this.finNivel = this.add.zone(END_POSITION_X, END_POSITION_Y, ZONE_WIDTH, ZONE_HEIGHT);
+    this.physics.world.enable(this.finNivel);
+    this.finNivel.body.setAllowGravity(false);
+    this.finNivel.body.moves = false;
+    
+    // Añadir un sprite visible (solo para debug) que muestre dónde está la zona
+    // Puedes comentar o eliminar estas líneas en producción
+    // const debugSprite = this.add.rectangle(END_POSITION_X, END_POSITION_Y, ZONE_WIDTH, ZONE_HEIGHT, 0xff0000, 0.3);
+    // debugSprite.setDepth(100);
   }
   
   setupBulletGroups() {
@@ -674,25 +692,54 @@ export default class Level extends Phaser.Scene {
       );
     }
     
-    // Colisión jugador-balas enemigas
+    // Cambiar la colisión jugador-balas enemigas para manejar el escudo como protección general
+    // En setupCollisions() reemplazar la parte de colisiones con el escudo y balas enemigas
     if (this.enemyBullets) {
-      this.physics.add.overlap(
-        this.player.escudo,
-        this.enemyBullets,
-        (escudo, enemyBullet) => {
-          if (!enemyBullet) return;
-          enemyBullet.destroy(); 
-        },
-        null,
-        this
-      );
-
       this.physics.add.overlap(
         this.player,
         this.enemyBullets,
         (player, enemyBullet) => {
           if (!player || !enemyBullet) return;
-          if (!player.isInvulnerable) {
+          
+          // Si el escudo está activo, las balas son destruidas sin dañar al jugador
+          if (player.shieldActive) {
+            // Crear un efecto de impacto en el escudo
+            const impactX = enemyBullet.x;
+            const impactY = enemyBullet.y;
+            
+            // Efecto de ondas en el punto de impacto
+            const ripple = this.add.graphics();
+            ripple.fillStyle(0x88ffff, 0.7);
+            ripple.fillCircle(impactX, impactY, 5);
+            ripple.lineStyle(2, 0xaaddff, 0.8);
+            ripple.strokeCircle(impactX, impactY, 5);
+            
+            // Animación de ondas expandiéndose
+            this.tweens.add({
+              targets: ripple,
+              scale: 2,
+              alpha: 0,
+              duration: 300,
+              onUpdate: () => {
+                ripple.clear();
+                ripple.fillStyle(0x88ffff, ripple.alpha * 0.7);
+                ripple.fillCircle(impactX, impactY, 5);
+                ripple.lineStyle(2, 0xaaddff, ripple.alpha * 0.8);
+                ripple.strokeCircle(impactX, impactY, 5);
+              },
+              onComplete: () => ripple.destroy()
+            });
+            
+            // Sonido de rebote si existe
+            if (this.sound.get('shield_impact')) {
+              this.sound.play('shield_impact', { volume: 0.3 });
+            }
+            
+            // Destruir la bala enemiga
+            enemyBullet.destroy();
+          }
+          // Si no tiene escudo y no es invulnerable, recibe daño
+          else if (!player.isInvulnerable) {
             player.takeDamage(enemyBullet.damage, enemyBullet.owner);
             enemyBullet.destroy();
           }
@@ -721,16 +768,28 @@ export default class Level extends Phaser.Scene {
           this.player.body.setVelocity(0, 0);
           this.player.body.allowGravity = false;
           
+          // Guardar el estado completo del jugador
+          gameData.savePlayerState(this.player);
+          
           // Efecto de fade out
           this.cameras.main.fadeOut(1000, 0, 0, 0);
           
           // Transición al boot2
           this.time.delayedCall(1000, () => {
             console.log('Cambiando a escena boot2');
-            this.scene.start('boot2', { 
-              playerHealth: this.player.health,
-              playerScore: this.player.score 
-            });
+            // Limpiar referencias antes de cambiar de escena
+            // Desactivar actualizaciones en objetos que podrían causar problemas
+            if (this.gameUI) {
+              this.gameUI.update = () => {}; // Reemplazar con función vacía para evitar actualizaciones
+              this.gameUI.destroy();
+              this.gameUI = null;
+            }
+            
+            // Desactivar eventos y timers
+            this.events.off('update');
+            
+            // Usar switch en lugar de start para una transición más limpia
+            this.scene.switch('boot2');
           });
         },
         null,
@@ -785,14 +844,12 @@ export default class Level extends Phaser.Scene {
   update() {
     if (!this.player) return;
 
-        // En update()
- const cam = this.cameras.main;
- // la capa de fondo lejano se mueve despacio:
- this.bgFar.tilePositionX = cam.scrollX * 0.2;
- // la capa más cercana, más rápido:
- this.bgNear.tilePositionX = cam.scrollX * 0.8;
-
-
+    // En update()
+    const cam = this.cameras.main;
+    // la capa de fondo lejano se mueve despacio:
+    this.bgFar.tilePositionX = cam.scrollX * 0.2;
+    // la capa más cercana, más rápido:
+    this.bgNear.tilePositionX = cam.scrollX * 0.8;
 
     try {
       // Verificar la superposición con las escaleras antes de resetear
@@ -813,6 +870,11 @@ export default class Level extends Phaser.Scene {
             bola.update();
           }
         });
+      }
+      
+      // Actualizar UI
+      if (this.gameUI) {
+        this.gameUI.update();
       }
     } catch (error) {
       console.error('Error en update:', error);
@@ -958,6 +1020,11 @@ export default class Level extends Phaser.Scene {
         emitter.stop();
       });
     }
+    
+    // Actualizar UI si existe
+    if (this.gameUI) {
+      this.gameUI.update();
+    }
   }
   
   /**
@@ -990,7 +1057,7 @@ export default class Level extends Phaser.Scene {
         break;
         
       case 'escudo':
-        this.player.activarEscudo();
+        this.player.darEscudo();
         break;
         
       case 'velocidad':

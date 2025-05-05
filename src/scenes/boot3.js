@@ -1,4 +1,3 @@
-
 import Phaser from 'phaser';
 import * as AssetLoader from '../loaders/AssetLoader.js';
 import * as AnimationCreator from '../loaders/AnimationCreator.js';
@@ -21,6 +20,7 @@ export default class Boot3 extends Phaser.Scene {
     AssetLoader.loadWeaponSprites(this);
     AssetLoader.loadObjectSprites(this);
     AssetLoader.loadBackgroundSprites(this);
+    AssetLoader.loadUISprites(this);
   }
 
   create() {

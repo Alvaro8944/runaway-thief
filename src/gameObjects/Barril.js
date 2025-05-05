@@ -1091,29 +1091,26 @@ export class BarrilObjeto extends Barril {
     
     // Personalizar según el tipo de objeto
     switch (this.nombreObjeto.toLowerCase()) {
-      case 'jetpack':
-        textura = 'jetpack'; // Usar textura existente como placeholder
-        color = 0x44aaff;
-        break;
       case 'escopeta':
         textura = 'shotgunWeapon';
         color = 0xff5544;
+        break;
+      case 'jetpack':
+        textura = 'jetpack';
+        color = 0x44aaff;
         break;
       case 'paracaidas':
         textura = 'parachute';
         color = 0x66ee66;
         break;
       case 'escudo':
-        textura = 'shield';
+        textura = 'escudo';
         color = 0x44ffaa;
         break;
-      case 'velocidad':
-        textura = 'speedBoost';
-        color = 0xffaa22;
+      case 'rifle':
+        textura = 'weapon';
+        color = 0x44aaff;
         break;
-      default:
-        textura = 'BarrilNormal';
-        color = 0xffffff;
     }
     
     // Crear el icono flotante sobre el barril - Ahora con tamaño mucho mayor y sin elementos de fondo
@@ -1384,21 +1381,26 @@ export class BarrilObjeto extends Barril {
     
     // Personalizar según el tipo de objeto
     switch (this.nombreObjeto.toLowerCase()) {
-      case 'jetpack':
-        textura = 'jetpack';
-        color = 0x44aaff;
-        break;
+  
       case 'escopeta':
         textura = 'shotgunWeapon';
         color = 0xff5544;
+        break;
+      case 'jetpack':
+        textura = 'jetpack';
+        color = 0x44aaff;
         break;
       case 'paracaidas':
         textura = 'parachute';
         color = 0x66ee66;
         break;
       case 'escudo':
-        textura = 'shield';
+        textura = 'escudo';
         color = 0x44ffaa;
+        break;
+      case 'rifle':
+        textura = 'weapon';
+        color = 0x44aaff;
         break;
       case 'velocidad':
         textura = 'speedBoost';

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import gameData from '../data/GameData';
 
 /**
  * Clase para gestionar las escaleras en el juego
@@ -11,9 +12,8 @@ export default class Escalera extends Phaser.Physics.Arcade.Sprite {
    * @param {number} x - Posición X de la escalera
    * @param {number} y - Posición Y de la escalera
    * @param {number} height - Altura de la escalera
-   * @param {boolean} isTransitionPoint - Si esta escalera es un punto de transición entre niveles
    */
-  constructor(scene, x, y, height, isTransitionPoint = false) {
+  constructor(scene, x, y, height) {
     super(scene, x, y, 'ladder2');
     
     // Añadir el sprite a la escena
@@ -29,9 +29,6 @@ export default class Escalera extends Phaser.Physics.Arcade.Sprite {
     this.body.setImmovable(true);
     this.body.allowGravity = false;
     
-    // Marcar si esta escalera es un punto de transición
-    this.isTransitionPoint = isTransitionPoint;
-    
     // Referencia a la escena para poder acceder a sus métodos
     this.escena = scene;
   }
@@ -44,52 +41,6 @@ export default class Escalera extends Phaser.Physics.Arcade.Sprite {
     // Permitir al jugador escalar
     player.canClimb = true;
     player.currentLadder = this;
-    
-    // Si es la escalera de transición y el jugador está cerca de la parte superior
-    if (this.isTransitionPoint) {
-      // Calcular la distancia a la parte superior de la escalera
-      const distanciaAlTope = Math.abs(player.y - (this.y - this.displayHeight/2));
-      
-      // Zona amplia de detección cerca de la parte superior
-      if (distanciaAlTope < 50 && this.escena.keys.up.isDown) {
-        console.log('Detectada colisión con escalera de transición');
-        this.iniciarTransicion(player);
-      }
-    }
-  }
-  
-  /**
-   * Inicia el proceso de transición al siguiente nivel
-   * @param {Player} player - El jugador
-   */
-  iniciarTransicion(player) {
-    // Evitar múltiples transiciones
-    if (this.escena.isTransitioning) return;
-    this.escena.isTransitioning = true;
-    console.log('Iniciando transición al siguiente nivel');
-    
-    // Desactivar controles del jugador
-    player.body.setVelocity(0, 0);
-    player.body.allowGravity = false;
-    
-    // Efecto de fade out
-    this.escena.cameras.main.fadeOut(1000, 0, 0, 0);
-    
-    // Transición a la escena de boot correspondiente
-    this.escena.time.delayedCall(1000, () => {
-      console.log('Cambiando a la escena de boot');
-      
-      // Determinamos la siguiente escena basándonos en la escena actual
-      let nextScene = 'boot2';
-      if (this.escena.scene.key === 'level2') {
-        nextScene = 'boot3';
-      }
-      
-      this.escena.scene.start(nextScene, { 
-        playerHealth: player.health,
-        playerScore: player.score 
-      });
-    });
   }
   
   /**
@@ -113,35 +64,14 @@ export default class Escalera extends Phaser.Physics.Arcade.Sprite {
       const escalerasLayer = map.getObjectLayer(layerName);
       
       if (escalerasLayer && escalerasLayer.objects && escalerasLayer.objects.length > 0) {
-        // Encontrar la escalera más alta (Y más pequeña)
-        let escaleraMasAlta = escalerasLayer.objects[0];
-        escalerasLayer.objects.forEach(escalera => {
-          if (escalera.y < escaleraMasAlta.y) {
-            escaleraMasAlta = escalera;
-          }
-        });
-        
         // Crear todas las escaleras
         escalerasLayer.objects.forEach(escalera => {
-          // Determinar si esta es la escalera de transición
-          const isTransition = escalera === escaleraMasAlta;
-          
-          // Obtener cualquier propiedad personalizada de transición
-          let forceTransition = false;
-          if (escalera.properties && Array.isArray(escalera.properties)) {
-            const transitionProp = escalera.properties.find(prop => prop.name === 'isTransition');
-            if (transitionProp) {
-              forceTransition = transitionProp.value;
-            }
-          }
-          
           // Crear el sprite de la escalera
           const escaleraSprite = new Escalera(
             scene,
             escalera.x + escalera.width/2,
             escalera.y - escalera.height/2,
-            escalera.height,
-            isTransition || forceTransition
+            escalera.height
           );
           
           // Añadir la escalera al grupo

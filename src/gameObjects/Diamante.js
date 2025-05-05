@@ -107,6 +107,10 @@ export default class Diamante extends Phaser.Physics.Arcade.Sprite {
    */
   collect(player) {
     if (this.isCollected) return;
+
+    //Sonido de recogerlo
+    const sonido = this.scene.sound.add('DiamanteAudio');
+    sonido.play();
     
     // Marcar como recogido
     this.isCollected = true;

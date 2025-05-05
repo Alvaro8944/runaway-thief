@@ -139,6 +139,7 @@ import baseball from '../../assets/Sounds/baseball.wav';
 import Jump from '../../assets/Sounds/Jump.flac';
 import Escaleras from '../../assets/Sounds/Escaleras.wav';
 import Shootgun from '../../assets/Sounds/Shootgun.wav';
+import Diamante from '../../assets/Sounds/DiamanteCogido.wav';
 //BackGround
 import CaveBackground from '../../assets/Background/Cave.png';
 import CaveBackgroundFirst from '../../assets/Background/caveFirst.png';
@@ -445,6 +446,7 @@ export function loadSoundAssets(scene) {
   scene.load.audio('jump', Jump);
   scene.load.audio('escaleras', Escaleras);
   scene.load.audio('shootgun', Shootgun);
+  scene.load.audio('DiamanteAudio', Diamante);
 } 
 
 export function loadBackgroundSprites(scene){

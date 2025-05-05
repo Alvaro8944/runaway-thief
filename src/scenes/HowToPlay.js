@@ -1,4 +1,5 @@
 import BackgroudPixelado from '../../assets/MenuPrincipal/backgroundPixelado.jpg';
+import MenuPrincipal from '../../assets/MenuPrincipal/MenuPpal.png';
 import Atras from '../../assets/MenuPrincipal/BotAtras.png';
 import Guia from '../../assets/MenuPrincipal/ComoJugar.png';
 
@@ -9,7 +10,7 @@ export default class HowToPlay extends Phaser.Scene {
     }
     preload(){
        
-        this.load.image('backgroundPixelado',BackgroudPixelado);
+        this.load.image('MenuPpal',MenuPrincipal );
         this.load.image('Atras',Atras);
         this.load.image('Guia',Guia);
      
@@ -18,11 +19,11 @@ export default class HowToPlay extends Phaser.Scene {
 
 
 
-    this.add.image(400,300,'backgroundPixelado').setOrigin(0.5);
+      this.add.image(450,365,'MenuPpal').setOrigin(0.5);
 
-    const GuiaPost=this.add.image(700,300,'Guia').setInteractive();
+    const GuiaPost=this.add.image(450,400,'Guia').setInteractive();
 
-    const Regresar=this.add.image(700,450,'Atras').setInteractive();
+    const Regresar=this.add.image(450,550,'Atras').setInteractive();
     Regresar.on('pointerdown',()=>this.scene.start('MenuScene'));
 
 

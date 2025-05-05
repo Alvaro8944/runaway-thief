@@ -1,4 +1,5 @@
 import Backgroud from '../../assets/MenuPrincipal/background.png';
+import MenuPrincipal from '../../assets/MenuPrincipal/MenuPpal.png';
 import BackgroudPixelado from '../../assets/MenuPrincipal/backgroundPixelado.jpg';
 import Logo from '../../assets/MenuPrincipal/logotiporunawaythief.png';
 import Jugar from '../../assets/MenuPrincipal/Jugar.png'
@@ -16,15 +17,14 @@ export default class MenuScene extends Phaser.Scene {
     }
     preload(){
        
-        this.load.image('backgroundPixelado',BackgroudPixelado );
+        this.load.image('MenuPpal',MenuPrincipal );
         this.load.image('Jugar2',Jugar2);
         this.load.image('Jugar3',Jugar3);
         this.load.image('Tutorial',Tutorial);
-        this.load.image('Logo',Logo);
     }
     create(){
 
-    this.add.image(400,300,'backgroundPixelado').setOrigin(0.5);
+    this.add.image(450,365,'MenuPpal').setOrigin(0.5);
     
     /*
     this.add.text(400,100,'Runaway Thief',{
@@ -32,7 +32,6 @@ export default class MenuScene extends Phaser.Scene {
         color: '#ffffff'
     }).setOrigin(0.5);
     */
-    const VerLogo=this.add.image(600,100,'Logo').setInteractive();
     const Start=this.add.image(100,700,'Jugar2').setInteractive();
     const Jugar=this.add.image(800,700,'Tutorial').setInteractive();
 

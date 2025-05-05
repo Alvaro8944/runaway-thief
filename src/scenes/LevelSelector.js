@@ -1,3 +1,4 @@
+import MenuPrincipal from '../../assets/MenuPrincipal/MenuPpal.png';
 import BackgroudPixelado from '../../assets/MenuPrincipal/backgroundPixelado.jpg';
 import Atras from '../../assets/MenuPrincipal/BotAtras.png';
 import Ventana from '../../assets/MenuPrincipal/SelNivel.png';
@@ -15,7 +16,7 @@ export default class LevelSelector extends Phaser.Scene {
     }
     preload(){
        
-        this.load.image('backgroundPixelado',BackgroudPixelado);
+        this.load.image('MenuPpal',MenuPrincipal );
         this.load.image('Atras',Atras);
         this.load.image('Ventana',Ventana);
         this.load.image('Nivel1',Nivel1);
@@ -29,9 +30,9 @@ export default class LevelSelector extends Phaser.Scene {
 
 
 
-    this.add.image(400,300,'backgroundPixelado').setOrigin(0.5);
+      this.add.image(450,365,'MenuPpal').setOrigin(0.5);
 
-    const VentanaPost=this.add.image(700,300,'Ventana').setInteractive();
+    const VentanaPost=this.add.image(450,400,'Ventana').setInteractive();
 
    
    
@@ -41,18 +42,18 @@ export default class LevelSelector extends Phaser.Scene {
    console.log(Progreso.level1);
 
     if(Progreso.level1){
-    const JNiv1=this.add.image(700,200,'Nivel1').setInteractive();
+    const JNiv1=this.add.image(450,300,'Nivel1').setInteractive();
     JNiv1.on('pointerdown',()=>{
       gameData.setupForLevel1();
       this.scene.start('boot');
     });
 
     }else{
-      this.add.image(700,200,'Bloqueado');
+      this.add.image(450,300,'Bloqueado');
     }
     console.log(Progreso.level2);
     if(Progreso.level2){
-      const JNiv2=this.add.image(700,275,'Nivel2').setInteractive();
+      const JNiv2=this.add.image(450,375,'Nivel2').setInteractive();
     JNiv2.on('pointerdown',()=>{
       gameData.setupForLevel2();
       gameData.reset();
@@ -60,20 +61,20 @@ export default class LevelSelector extends Phaser.Scene {
     });
     
     }else{
-      this.add.image(700,275,'Bloqueado');
+      this.add.image(450,375,'Bloqueado');
     }
     if(Progreso.level3){
-    const JNiv3=this.add.image(700,350,'Nivel3').setInteractive();
+    const JNiv3=this.add.image(450,450,'Nivel3').setInteractive();
     JNiv3.on('pointerdown',()=>{
       gameData.setupForLevel3();
       this.scene.start('boot3');
     });
     }
     else{
-      this.add.image(700,350,'Bloqueado');
+      this.add.image(450,450,'Bloqueado');
     }
 
-    const Regresar=this.add.image(700,450,'Atras').setInteractive();
+    const Regresar=this.add.image(450,550,'Atras').setInteractive();
     Regresar.on('pointerdown',()=>this.scene.start('MenuScene'));
 
 

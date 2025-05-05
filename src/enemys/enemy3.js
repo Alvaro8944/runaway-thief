@@ -207,12 +207,18 @@ export class PatrollingEnemy3 extends Enemy3 {
     this.groundCheckDistance = 60;
     this.lastDirectionChange = 0;
     this.directionChangeDelay = 500;
+    this.lastPosition = { x: x, y: y };
+    this.lastMovementCheck = 0;
+
   }
 
   patrol() {
     this.state = STATE3.PATROLLING;
     const currentTime = this.scene.time.now;
-  
+    const movementCheckInterval = 1000; // cada 1 segundo
+    const stuckThreshold = 4; // si se ha movido menos de 4 píxeles
+    let atascado = false;
+
     // --- GESTIÓN DE SPRINT ---
     if (!this.isSprinting && currentTime - (this.lastSprintTime || 0) > 6000) {
       this.isSprinting = true;
@@ -226,14 +232,35 @@ export class PatrollingEnemy3 extends Enemy3 {
       this.speed = this.originalSpeed; // Vuelve a velocidad normal
     }
   
+
+    if (currentTime - this.lastMovementCheck > movementCheckInterval) {
+      const movedDistance = Phaser.Math.Distance.Between(this.x, this.y, this.lastPosition.x, this.lastPosition.y);
+ 
+      if (movedDistance < stuckThreshold) {
+       atascado = true;
+      }
+ 
+      this.lastPosition = { x: this.x, y: this.y };
+      this.lastMovementCheck = currentTime;
+    }  
+
     // --- PATROLLING ---
-    if (!this.patrolTarget || Phaser.Math.Distance.Between(this.x, this.y, this.patrolTarget.x, this.patrolTarget.y) < 10) {
+    if (!this.patrolTarget || Phaser.Math.Distance.Between(this.x, this.y, this.patrolTarget.x, this.patrolTarget.y) < 10 || atascado) {
       const offsetX = Phaser.Math.Between(-this.patrolOffset * 3, this.patrolOffset * 3);
       const offsetY = Phaser.Math.Between(-this.patrolOffset, this.patrolOffset);
   
       this.patrolTarget = {
         x: this.originPosition.x + offsetX,
         y: this.originPosition.y + offsetY
+      };
+    }
+
+
+    if((this.body.blocked.left || this.body.blocked.right)){
+
+      this.patrolTarget = {
+        x: this.originPosition.x,
+        y: this.originPosition.y
       };
     }
   
@@ -263,12 +290,18 @@ export class AttackingEnemy3 extends Enemy3 {
     this.directionChangeDelay = 500;
     this.damage = DAMAGE_ENEMY * 5;
     this.setTint(0xFF4500);
+    this.lastPosition = { x: x, y: y };
+    this.lastMovementCheck = 0;
   }
 
   patrol() {
     this.state = STATE3.PATROLLING;
     const currentTime = this.scene.time.now;
-  
+    const movementCheckInterval = 1000; // cada 1 segundo
+    const stuckThreshold = 4; // si se ha movido menos de 4 píxeles
+    let atascado = false;
+
+
     // --- GESTIÓN DE SPRINT ---
     if (!this.isSprinting && currentTime - (this.lastSprintTime || 0) > 6000) {
       this.isSprinting = true;
@@ -282,8 +315,19 @@ export class AttackingEnemy3 extends Enemy3 {
       this.speed = this.originalSpeed; // Vuelve a velocidad normal
     }
   
+    if (currentTime - this.lastMovementCheck > movementCheckInterval) {
+      const movedDistance = Phaser.Math.Distance.Between(this.x, this.y, this.lastPosition.x, this.lastPosition.y);
+ 
+      if (movedDistance < stuckThreshold) {
+       atascado = true;
+      }
+ 
+      this.lastPosition = { x: this.x, y: this.y };
+      this.lastMovementCheck = currentTime;
+    }  
+
     // --- PATROLLING ---
-    if (!this.patrolTarget || Phaser.Math.Distance.Between(this.x, this.y, this.patrolTarget.x, this.patrolTarget.y) < 10) {
+    if (!this.patrolTarget || Phaser.Math.Distance.Between(this.x, this.y, this.patrolTarget.x, this.patrolTarget.y) < 10 || atascado) {
       const offsetX = Phaser.Math.Between(-this.patrolOffset * 3, this.patrolOffset * 3);
       const offsetY = Phaser.Math.Between(-this.patrolOffset, this.patrolOffset);
   
@@ -292,6 +336,16 @@ export class AttackingEnemy3 extends Enemy3 {
         y: this.originPosition.y + offsetY
       };
     }
+
+
+    if((this.body.blocked.left || this.body.blocked.right)){
+
+      this.patrolTarget = {
+        x: this.originPosition.x,
+        y: this.originPosition.y
+      };
+    }
+  
   
     const dx = this.patrolTarget.x - this.x;
     const dy = this.patrolTarget.y - this.y;
@@ -430,6 +484,9 @@ export class AttackingEnemy3 extends Enemy3 {
       // Umbral de detección de balas (en píxeles)
       this.bulletDodgeRange        = 200;
       this.setTint(0x556FFF);
+
+      this.lastPosition = { x: x, y: y };
+      this.lastMovementCheck = 0;
    
     }
   
@@ -438,6 +495,10 @@ export class AttackingEnemy3 extends Enemy3 {
       if (!this.checkBullets()){
       this.state = STATE3.PATROLLING;
       const currentTime = this.scene.time.now;
+      const movementCheckInterval = 1000; // cada 1 segundo
+      const stuckThreshold = 4; // si se ha movido menos de 4 píxeles
+      let atascado = false;
+
       // --- GESTIÓN DE SPRINT ---
       if (!this.isSprinting && currentTime - (this.lastSprintTime || 0) > 6000) {
         this.isSprinting = true;
@@ -451,14 +512,36 @@ export class AttackingEnemy3 extends Enemy3 {
         this.speed = this.originalSpeed; // Vuelve a velocidad normal
       }
     
+
+      if (currentTime - this.lastMovementCheck > movementCheckInterval) {
+        const movedDistance = Phaser.Math.Distance.Between(this.x, this.y, this.lastPosition.x, this.lastPosition.y);
+   
+        if (movedDistance < stuckThreshold) {
+         atascado = true;
+        }
+   
+        this.lastPosition = { x: this.x, y: this.y };
+        this.lastMovementCheck = currentTime;
+      }  
+  
+
+
       // --- PATROLLING ---
-      if (!this.patrolTarget || Phaser.Math.Distance.Between(this.x, this.y, this.patrolTarget.x, this.patrolTarget.y) < 10) {
+      if (!this.patrolTarget || Phaser.Math.Distance.Between(this.x, this.y, this.patrolTarget.x, this.patrolTarget.y) < 10 || atascado) {
         const offsetX = Phaser.Math.Between(-this.patrolOffset * 3, this.patrolOffset * 3);
         const offsetY = Phaser.Math.Between(-this.patrolOffset, this.patrolOffset);
     
         this.patrolTarget = {
           x: this.originPosition.x + offsetX,
           y: this.originPosition.y + offsetY
+        };
+      }
+
+      if((this.body.blocked.left || this.body.blocked.right)){
+
+        this.patrolTarget = {
+          x: this.originPosition.x,
+          y: this.originPosition.y
         };
       }
     

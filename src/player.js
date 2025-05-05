@@ -56,14 +56,14 @@ export const PLAYER_CONFIG = {
   CLIMB_SOUND_DELAY: 980, // ms entre sonidos de escalera
   
   // Duración de los power-ups
-  SHIELD_DURATION: 10000,       // 10 segundos de escudo
+  SHIELD_DURATION: 5000,        // 5 segundos de escudo
+  SHIELD_COOLDOWN: 8000,        // 8 segundos de cooldown
   SPEED_BOOST_DURATION: 15000   // 15 segundos de velocidad aumentada
 };
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
     timer = 300000;
     remainingtime;
-    timerText;
   
   constructor(scene, x, y) {
     super(scene, x, y, 'player');
@@ -130,12 +130,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.explosiveBullets = [];
 
     // ====COSAS DEL ESCUDO=====
-    this.hasUnlockedShield = false;  // El escudo está bloqueado inicialmente
-    this.hasEscudo = false;          // Sin escudo activo al inicio
-    this.escudoActive = false;       // Para controlar si el escudo está activado
-    this.escudoDuration = PLAYER_CONFIG.SHIELD_DURATION; // Duración del escudo
-    this.escudoStartTime = 0;        // Tiempo de inicio del escudo
-    this.escudoWarningShown = false; // Para controlar mensaje de escudo por acabarse
+    this.hasUnlockedShield = false;    // El escudo está bloqueado inicialmente
+    this.shieldActive = false;         // Sin escudo activo al inicio
+    this.shieldDuration = PLAYER_CONFIG.SHIELD_DURATION; // Duración del escudo
+    this.shieldStartTime = 0;          // Tiempo de inicio del escudo
+    this.shieldWarningShown = false;   // Para controlar mensaje de escudo por acabarse
+    this.shieldCooldown = PLAYER_CONFIG.SHIELD_COOLDOWN; // Cooldown del escudo
+    this.shieldLastUsed = 0;           // Última vez que se usó el escudo
+    this.shieldCooldownActive = false; // Indica si el escudo está en cooldown
 
     // ====VARIABLES DE OBJETOS ESPECIALES====
     this.hasJetpack = false;     // Sin jetpack al inicio
@@ -204,12 +206,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Referencia al arma activa (inicialmente ninguna)
     this.weapon = null;
 
-    // Escudo
-    this.escudo = scene.physics.add.sprite(this.x, this.y, 'escudo').setOrigin(1, 0.5);
-    this.escudo.setSize(20, 25);
-    this.escudo.body.setEnable(false);
-    this.escudo.setVisible(false);
-
     // Paracaídas
     this.parachute = scene.add.sprite(this.x, this.y, 'parachute').setOrigin(0.57, 1.1);
     this.parachute.setDepth(this.depth - 3);
@@ -256,50 +252,31 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       callbackScope: this,
       loop: true
     });
-    this.timerText = this.scene.add.text(0, 0, "Tiempo Restante:" + this.remainingtime / 1000);
-    this.timerText.setScrollFactor(0);
 
     // Punto de respawn
     this.respawnX = x;
     this.respawnY = y;
     this.hasRespawnPoint = false;
+
+    // Escudo (ahora será un efecto visual circular alrededor del jugador)
+    this.shieldEffect = scene.add.graphics();
+    this.shieldEffect.setVisible(false);
+    this.shieldEffectRadius = 40; // Radio de la cúpula
   }
 
   // === MÉTODOS DE INTERFAZ ===
   
   // Crear los elementos de la interfaz
   createUI() {
-    // Contenedor principal para todos los elementos de UI
-    this.uiContainer = this.scene.add.container(10, 30);
-    this.uiContainer.setScrollFactor(0); // Fijar a la cámara
-    
-    // Barra de salud
-    this.healthBar = this.scene.add.graphics();
-    this.uiContainer.add(this.healthBar);
-    
-    // Indicador de munición
-    this.ammoText = this.scene.add.text(0, 30, 'Munición: ' + this.ammo + '/' + this.maxAmmo, { 
-      fontSize: '16px', 
-      fill: '#fff',
-      stroke: '#000',
-      strokeThickness: 2
-    });
-    this.uiContainer.add(this.ammoText);
-    
-    // Indicador de puntuación
-    this.scoreText = this.scene.add.text(0, 55, 'Puntuación: ' + this.score, { 
-      fontSize: '16px', 
-      fill: '#fff',
-      stroke: '#000',
-      strokeThickness: 2
-    });
-    this.uiContainer.add(this.scoreText);
-    
-    // Actualizar la UI inicialmente
-    this.updateUI();
+    // La UI ahora se maneja desde GameUI.js
+    // Esta función se mantiene vacía por compatibilidad
   }
-
-
+  
+  // Actualizar todos los elementos de la interfaz
+  updateUI() {
+    // La UI ahora se maneja desde GameUI.js
+    // Esta función se mantiene vacía por compatibilidad
+  }
 
   
 // Dentro de tu clase Player
@@ -339,77 +316,8 @@ updateBullets() {
   
   // Actualizar todos los elementos de la interfaz
   updateUI() {
-    // Actualizar barra de salud
-    this.healthBar.clear();   
-    // Borde de la barra
-    this.healthBar.lineStyle(2, 0x000000, 1);
-    this.healthBar.strokeRect(0, 0, 150, 20);
-    
-    // Fondo rojo
-    this.healthBar.fillStyle(0xff0000, 1);
-    this.healthBar.fillRect(0, 0, 150, 20);
-    
-    // Parte verde proporcional a la salud actual
-    const healthPercent = this.health / this.maxHealth;
-    this.healthBar.fillStyle(0x00ff00, 1);
-    this.healthBar.fillRect(0, 0, 150 * healthPercent, 20);
-    
-    // Texto de salud
-    if (this.healthText) {
-      this.healthText.destroy();
-    }
-    this.healthText = this.scene.add.text(75, 10, `${this.health}/${this.maxHealth}`, { 
-      fontSize: '14px', 
-      fill: '#fff',
-      stroke: '#000',
-      strokeThickness: 2
-    }).setOrigin(0.5);
-    this.uiContainer.add(this.healthText);
-    
-    // Actualizar texto de munición
-    let ammoText = "";
-    
-    // Si tenemos un arma equipada, mostrar su información
-    if (this.activeWeapon !== 'none') {
-      let weaponName = "";
-      switch (this.activeWeapon) {
-        case 'rifle':
-          weaponName = "Rifle";
-          break;
-        case 'shotgun':
-          weaponName = "Escopeta";
-          break;
-        case 'explosive':
-          weaponName = "Explosiva";
-          break;
-      }
-      
-      // Mostrar nombre del arma y munición actual/máxima
-      ammoText = `${weaponName}: ${this.ammo}/${this.maxAmmo}`;
-      
-      // Si está recargando, mostrar indicación
-      if (this.isReloading) {
-        const progress = Math.min(1, (this.scene.time.now - this.reloadStartTime) / this.reloadTime);
-        const dots = '.'.repeat(Math.floor(progress * 3) + 1);
-        ammoText = `${weaponName}: Recargando${dots}`;
-      }
-    } else if (this.hasEscudo) {
-      // Si tiene el escudo activo
-      ammoText = "Escudo activo";
-      if (this.escudoActive) {
-        // Mostrar tiempo restante si está activo
-        const remainingTime = Math.max(0, Math.ceil((this.escudoDuration - (this.scene.time.now - this.escudoStartTime)) / 1000));
-        ammoText += ` (${remainingTime}s)`;
-      }
-    } else {
-      // Sin arma equipada
-      ammoText = "Sin arma";
-    }
-    
-    this.ammoText.setText(ammoText);
-    
-    // Actualizar texto de puntuación
-    this.scoreText.setText('Puntuación: ' + this.score);
+    // La UI ahora se maneja desde GameUI.js
+    // Esta función se mantiene vacía por compatibilidad
   }
 
 
@@ -420,12 +328,13 @@ updateBullets() {
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
+    console.log(this.x + " "+  this.y);
+
     this.movimiento = false;
     //console.log(this.x + " "+  this.y);
     if (this.state === PLAYER_STATE.DEAD) return;
     
-    // Actualizar UI en cada frame
-    this.updateUI();
+    // La actualización de UI ahora se maneja desde GameUI.js
 
     //Actualizar balas explosivas
     this.updateBullets();
@@ -441,9 +350,6 @@ updateBullets() {
       
       this.isReloading = false;
       this.scene.sound.play('disparo', { volume: 0.2, detune: -600 });
-      
-      // Actualizar UI con la nueva munición
-      this.updateUI();
     }
 
     // Actualizar invulnerabilidad
@@ -452,70 +358,40 @@ updateBullets() {
       this.alpha = 1;
     }
 
+    // Actualizar el efecto visual del escudo
+    if (this.shieldActive) {
+      this.updateShieldEffect();
+    }
+
     // Comprobar si el escudo ha expirado
-    if (this.escudoActive && time - this.escudoStartTime >= this.escudoDuration) {
+    if (this.shieldActive && time - this.shieldStartTime >= this.shieldDuration) {
       // Desactivar el escudo
-      this.escudoActive = false;
-      this.hasEscudo = false;
-      
-      // Efecto visual de desactivación
-      this.scene.tweens.add({
-        targets: this.escudo,
-        alpha: 0,
-        scale: 1.2,
-        duration: 500,
-        onComplete: () => {
-          // Ocultar el escudo
-          this.escudo.setVisible(false);
-          this.escudo.body.setEnable(false);
-          this.escudo.setAlpha(1);
-          this.escudo.setScale(1);
-          
-          // Notificar al jugador que se acabó el escudo
-          const text = this.scene.add.text(this.x, this.y - 50, "¡Escudo desactivado!", {
-            fontSize: '16px',
-            fontStyle: 'bold',
-            fill: '#aaaaff',
-            stroke: '#000000',
-            strokeThickness: 3
-          }).setOrigin(0.5);
-          
-          this.scene.tweens.add({
-            targets: text,
-            y: this.y - 80,
-            alpha: 0,
-            duration: 1500,
-            onComplete: () => {
-              text.destroy();
-            }
-          });
-        }
-      });
-    } 
+      this.deactivateShield();
+    }
     // Mostrar advertencia cuando el escudo está por expirar
-    else if (this.escudoActive && !this.escudoWarningShown && 
-      time - this.escudoStartTime >= this.escudoDuration * 0.75) {
-      // Mostrar advertencia
+    else if (this.shieldActive && !this.shieldWarningShown &&
+      time - this.shieldStartTime >= this.shieldDuration * 0.75) {
+      
       const text = this.scene.add.text(this.x, this.y - 50, "¡Escudo por expirar!", {
-        fontSize: '14px',
-        fontStyle: 'bold',
-        fill: '#aaaaff',
-        stroke: '#000000',
-        strokeThickness: 3
+        fontFamily: 'Arial',
+        fontSize: '18px',
+        color: '#aaaaff',
+        stroke: '#000',
+        strokeThickness: 4,
+        align: 'center'
       }).setOrigin(0.5);
       
       this.scene.tweens.add({
         targets: text,
-        y: this.y - 70,
+        y: text.y - 30,
         alpha: 0,
-        duration: 1000,
+        duration: 1500,
         onComplete: () => {
           text.destroy();
         }
       });
       
-      // Marcar que ya mostramos la advertencia
-      this.escudoWarningShown = true;
+      this.shieldWarningShown = true;
     }
 
     // Comprobar si el boost de velocidad ha expirado
@@ -698,9 +574,9 @@ updateBullets() {
         this.updateWeaponType();
         
         // Desactivar escudo si estaba activo
-        this.hasEscudo = false;
-        this.escudo.setVisible(false);
-        this.escudo.body.setEnable(false);
+        this.shieldActive = false;
+        this.shieldEffect.setVisible(false);
+        this.shieldCooldownActive = false;
       } else {
         // Mostrar mensaje de que no tiene esta arma
         const text = this.scene.add.text(this.x, this.y - 50, "¡Arma no disponible!", {
@@ -730,9 +606,9 @@ updateBullets() {
         this.updateWeaponType();
         
         // Desactivar escudo si estaba activo
-        this.hasEscudo = false;
-        this.escudo.setVisible(false);
-        this.escudo.body.setEnable(false);
+        this.shieldActive = false;
+        this.shieldEffect.setVisible(false);
+        this.shieldCooldownActive = false;
       } else {
         // Mostrar mensaje de que no tiene esta arma
         const text = this.scene.add.text(this.x, this.y - 50, "¡Arma no disponible!", {
@@ -762,9 +638,9 @@ updateBullets() {
         this.updateWeaponType();
         
         // Desactivar escudo si estaba activo
-        this.hasEscudo = false;
-        this.escudo.setVisible(false);
-        this.escudo.body.setEnable(false);
+        this.shieldActive = false;
+        this.shieldEffect.setVisible(false);
+        this.shieldCooldownActive = false;
       } else {
         // Mostrar mensaje de que no tiene esta arma sin cambiar el arma activa
         const text = this.scene.add.text(this.x, this.y - 50, "¡Rifle no disponible!", {
@@ -792,32 +668,47 @@ updateBullets() {
     // ACTIVAR escudo (tecla 4)
     if (Phaser.Input.Keyboard.JustDown(this.scene.keys.sacarEscudo)) {
       if (this.hasUnlockedShield) {
-        // Desactivar arma actual
-        this.activeWeapon = 'none';
-        this.updateWeaponType();
-        
-        // Activar escudo
-        this.hasEscudo = true;
-        this.hasObject = true;
-        this.escudo.setVisible(true);
-        this.hand.setVisible(true);
-        this.escudo.body.setEnable(true);
-        this.escudo.body.reset(this.x, this.y);
+        if (!this.shieldActive && !this.shieldCooldownActive) {
+          this.activateShield();
+        }
+        else if (this.shieldCooldownActive) {
+          // Mostrar mensaje de cooldown
+          const remainingCooldown = Math.ceil((this.shieldCooldown - (time - this.shieldLastUsed)) / 1000);
+          const text = this.scene.add.text(this.x, this.y - 50, `Escudo en recarga: ${remainingCooldown}s`, {
+            fontFamily: 'Arial',
+            fontSize: '18px',
+            color: '#aaaaff',
+            stroke: '#000',
+            strokeThickness: 4,
+            align: 'center'
+          }).setOrigin(0.5);
+          
+          this.scene.tweens.add({
+            targets: text,
+            y: text.y - 30,
+            alpha: 0,
+            duration: 1500,
+            onComplete: () => {
+              text.destroy();
+            }
+          });
+        }
       } else {
         // Mostrar mensaje de que no tiene el escudo
         const text = this.scene.add.text(this.x, this.y - 50, "¡Escudo no disponible!", {
-          fontSize: '14px',
-          fontStyle: 'bold',
-          fill: '#aaaaff',
-          stroke: '#000000',
-          strokeThickness: 3
+          fontFamily: 'Arial',
+          fontSize: '18px',
+          color: '#ff0000',
+          stroke: '#000',
+          strokeThickness: 4,
+          align: 'center'
         }).setOrigin(0.5);
         
         this.scene.tweens.add({
           targets: text,
-          y: this.y - 70,
+          y: text.y - 30,
           alpha: 0,
-          duration: 1000,
+          duration: 1500,
           onComplete: () => {
             text.destroy();
           }
@@ -1025,7 +916,39 @@ updateBullets() {
       this.highestY = null; // Resetea cuando toca el suelo
     }
 
+    // En el método update(), añadir después de la parte donde ya actualiza el estado del escudo
 
+    // Actualizar estado del cooldown
+    if (this.shieldCooldownActive && time - this.shieldLastUsed >= this.shieldCooldown) {
+      this.shieldCooldownActive = false;
+      
+      // Notificar al jugador que el escudo está disponible nuevamente
+      if (this.hasUnlockedShield) {
+        const text = this.scene.add.text(this.x, this.y - 50, "¡Escudo listo!", {
+          fontFamily: 'Arial',
+          fontSize: '18px',
+          color: '#aaaaff',
+          stroke: '#000',
+          strokeThickness: 4,
+          align: 'center'
+        }).setOrigin(0.5);
+        
+        this.scene.tweens.add({
+          targets: text,
+          y: text.y - 30,
+          alpha: 0,
+          duration: 1500,
+          onComplete: () => {
+            text.destroy();
+          }
+        });
+      }
+    }
+
+    // Actualizar la posición del efecto de escudo si está activo
+    if (this.shieldActive) {
+      this.shieldEffect.setPosition(this.x, this.y);
+    }
     
   }
 
@@ -1261,27 +1184,6 @@ updateBullets() {
       this.weapon.setPosition(this.hand.x, this.hand.y);
       this.weapon.setRotation(this.hand.rotation);
     } 
-    // Si tenemos un escudo activo
-    else if (this.hasEscudo) {
-      this.escudo.setRotation(this.hand.rotation);
-
-      // Simulamos la "rotación" del hitbox calculando el offset inverso
-      let angle = this.hand.rotation;
-      let distancia; // La distancia desde el centro que quieras
-      let offsetX, offsetY;
-
-      if (!this.flipX) {
-        distancia = 10;
-        offsetX = Math.cos(angle + Math.PI) * distancia + 33;
-        offsetY = -Math.sin(angle + Math.PI) * distancia;
-      } else {
-        distancia = 10;
-        offsetX = Math.cos(angle + Math.PI) * distancia + 15;
-        offsetY = Math.sin(angle + Math.PI) * distancia;
-      }
-
-      this.escudo.body.setOffset(offsetX, offsetY);
-    }
   }
 
   ajustarDireccion() {
@@ -1289,10 +1191,6 @@ updateBullets() {
 
     if (this.activeWeapon !== 'none' && this.weapon) {
       this.weapon.setScale(!this.flipX ? -1 : 1, 1);
-    }
-    else if (this.hasEscudo) {
-      this.escudo.setScale(!this.flipX ? -1 : 1, 1);
-      this.escudo.body.reset(this.hand.x, this.hand.y);
     }
   }
 
@@ -1337,8 +1235,7 @@ updateBullets() {
       }
     });
 
-    // Actualizar la UI
-    this.updateUI();
+    // La UI ahora se actualiza desde GameUI.js
 
     // Reproducir sonido de daño
     this.scene.sound.play('damage');
@@ -1484,7 +1381,6 @@ updateBullets() {
     if (this.remainingtime <= 0) {
       this.die();
     }
-    this.timerText.setText("Tiempo Restante:" + this.remainingtime / 1000);
   }
 
   // === MÉTODOS DE UI ===
@@ -1497,8 +1393,7 @@ updateBullets() {
     // Incrementar la puntuación
     this.score += value;
     
-    // Actualizar la UI
-    this.updateUI();
+    // La UI ahora se actualiza desde GameUI.js
     
     // Efecto visual opcional (por ejemplo, brillo alrededor del jugador)
     this.scene.tweens.add({
@@ -1767,49 +1662,34 @@ updateBullets() {
   updateWeaponType() {
     // Ocultar todas las armas
     this.mainWeapon.setVisible(false);
-    this.explosiveWeapon.setVisible(false);
     this.shotgunWeapon.setVisible(false);
-
-    // Si estábamos usando un arma antes, guardar su munición actual
-    if (this.weapon && this.activeWeapon !== 'none') {
-      this.weaponAmmo[this.activeWeapon] = this.ammo;
-    }
-
-    // Mostrar el arma seleccionada según activeWeapon
+    this.explosiveWeapon.setVisible(false);
+    
+    // Mostrar la correspondiente al arma activa
     switch (this.activeWeapon) {
-      case 'none':
-        this.weapon = null;
-        this.hand.setVisible(false);
-        this.hasObject = false;
-        this.hasWeapon = false; // Actualizar para compatibilidad
-        // No hay munición para mostrar
-        this.ammo = 0;
-        this.maxAmmo = 0;
-        break;
-      case 'shotgun':
-        this.weapon = this.shotgunWeapon;
-        this.shotgunWeapon.setVisible(true);
-        this.shotCooldown = PLAYER_CONFIG.SHOT_COOLDOWN * 4;
-        this.damage = PLAYER_CONFIG.DAMAGE * 2;
-        this.hand.setVisible(true);
-        this.hasObject = true;
-        this.hasWeapon = true;
-        this.reloadTime = PLAYER_CONFIG.RELOAD_TIME * 2;
-        // Restaurar la munición de la escopeta
-        this.ammo = this.weaponAmmo.shotgun;
-        this.maxAmmo = this.weaponMaxAmmo.shotgun;
-        break;
       case 'rifle':
         this.weapon = this.mainWeapon;
         this.mainWeapon.setVisible(true);
-        this.shotCooldown = PLAYER_CONFIG.SHOT_COOLDOWN * 0.8; // Más rápido para el rifle
-        this.damage = PLAYER_CONFIG.DAMAGE * 1.5; // Daño aumentado
+        this.shotCooldown = PLAYER_CONFIG.SHOT_COOLDOWN; // Normal
+        this.damage = PLAYER_CONFIG.DAMAGE;
         this.hand.setVisible(true);
         this.hasObject = true;
         this.hasWeapon = true; // Actualizar para compatibilidad
         // Restaurar la munición del rifle
         this.ammo = this.weaponAmmo.rifle;
         this.maxAmmo = this.weaponMaxAmmo.rifle;
+        break;
+      case 'shotgun':
+        this.weapon = this.shotgunWeapon;
+        this.shotgunWeapon.setVisible(true);
+        this.shotCooldown = PLAYER_CONFIG.SHOT_COOLDOWN * 1.5; // Más lento
+        this.damage = PLAYER_CONFIG.DAMAGE * 1.5; // Más daño
+        this.hand.setVisible(true);
+        this.hasObject = true;
+        this.hasWeapon = true; // Actualizar para compatibilidad
+        // Restaurar la munición de la escopeta
+        this.ammo = this.weaponAmmo.shotgun;
+        this.maxAmmo = this.weaponMaxAmmo.shotgun;
         break;
       case 'explosive':
         this.weapon = this.explosiveWeapon;
@@ -1837,31 +1717,33 @@ updateBullets() {
       this.weapon.setDepth(this.hand.depth - 1);
     }
 
-    // Actualizar la UI para mostrar la munición correcta
-    this.updateUI();
+    // La UI ahora se actualiza desde GameUI.js
   }
 
   /**
    * Da al jugador la habilidad de usar el escudo
    */
   darEscudo() {
-    //this.scene.sound.play('take_item', { volume: 0.7 });
+    console.log("Dando escudo al jugador");
     
     // Desbloquear el escudo
     this.hasUnlockedShield = true;
+    // Eliminar esta línea ya que unlockedAbilities no existe
+    // this.unlockedAbilities.shield = true;
     
-    // Mostrar un mensaje informativo
+    // Mostrar mensaje de instrucción
     const text = this.scene.add.text(this.x, this.y - 60, "¡Usa el escudo con la tecla 4!", {
-      fontSize: '14px',
-      fontStyle: 'bold',
-      fill: '#aaaaff',
-      stroke: '#000000',
-      strokeThickness: 3
+      fontFamily: 'Arial',
+      fontSize: '18px',
+      color: '#aaaaff',
+      stroke: '#000',
+      strokeThickness: 4,
+      align: 'center'
     }).setOrigin(0.5);
     
     this.scene.tweens.add({
       targets: text,
-      y: this.y - 90,
+      y: text.y - 30,
       alpha: 0,
       duration: 2000,
       onComplete: () => {
@@ -1901,42 +1783,6 @@ updateBullets() {
         text.destroy();
       }
     });
-  }
-
-  /**
-   * Activa un escudo protector temporal
-   * @param {number} duration - Duración en milisegundos
-   */
-  activarEscudo(duration = PLAYER_CONFIG.SHIELD_DURATION) {
-    //this.scene.sound.play('take_item', { volume: 0.7 });
-    
-    // Desactivar arma actual temporalmente y guardar referencia
-    const weaponActivo = this.activeWeapon; // Guardamos el arma activa para restaurarla después
-    this.activeWeapon = 'none';
-    this.updateWeaponType();
-    
-    // Activar el escudo
-    this.hasEscudo = true;
-    this.hasObject = true;
-    this.escudo.setVisible(true);
-    this.escudo.body.setEnable(true);
-    this.hand.setVisible(true);
-    
-    // Guardar el tiempo de inicio
-    this.escudoActive = true;
-    this.escudoStartTime = this.scene.time.now;
-    
-    // Efecto visual de activación
-    this.scene.tweens.add({
-      targets: this.escudo,
-      alpha: { from: 0.4, to: 0.8 },
-      scale: { from: 0.8, to: 1 },
-      duration: 500,
-      yoyo: true,
-      repeat: 2
-    });
-    
-    // El escudo se desactivará en preUpdate después de que pase el tiempo
   }
 
   /**
@@ -2011,5 +1857,133 @@ updateBullets() {
         text.destroy();
       }
     });
+  }
+
+  /**
+   * Activa el escudo protector
+   */
+  activateShield() {
+    this.shieldActive = true;
+    this.shieldStartTime = this.scene.time.now;
+    this.shieldWarningShown = false;
+    
+    // Mostrar efecto visual
+    this.shieldEffect.setVisible(true);
+    this.shieldEffect.setAlpha(0);
+    
+    // Efecto de aparición
+    this.scene.tweens.add({
+      targets: this.shieldEffect,
+      alpha: 1,
+      scale: { from: 0.2, to: 1 },
+      duration: 300,
+      ease: 'Back.easeOut'
+    });
+    
+    // Mensaje de activación
+    const text = this.scene.add.text(this.x, this.y - 50, "¡Escudo activado!", {
+      fontFamily: 'Arial',
+      fontSize: '18px',
+      color: '#aaaaff',
+      stroke: '#000',
+      strokeThickness: 4,
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    this.scene.tweens.add({
+      targets: text,
+      y: text.y - 30,
+      alpha: 0,
+      duration: 1500,
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+    
+    // Sonido de activación (si existe)
+    if (this.scene.sound.get('shield_activate')) {
+      this.scene.sound.play('shield_activate');
+    }
+  }
+
+  /**
+   * Desactiva el escudo protector
+   */
+  deactivateShield() {
+    // Marcar como inactivo
+    this.shieldActive = false;
+    
+    // Iniciar cooldown
+    this.shieldLastUsed = this.scene.time.now;
+    this.shieldCooldownActive = true;
+    
+    // Crear un efecto de explosión del escudo
+    this.scene.tweens.add({
+      targets: this.shieldEffect,
+      alpha: 0,
+      scale: 1.5,
+      duration: 300,
+      ease: 'Back.easeIn',
+      onComplete: () => {
+        this.shieldEffect.setVisible(false);
+        this.shieldEffect.setScale(1);
+        this.shieldEffect.clear(); // Limpiar gráficos
+      }
+    });
+    
+    // Notificar al jugador que se acabó el escudo
+    const text = this.scene.add.text(this.x, this.y - 50, "¡Escudo desactivado!", {
+      fontFamily: 'Arial',
+      fontSize: '18px',
+      color: '#aaaaff',
+      stroke: '#000',
+      strokeThickness: 4,
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    this.scene.tweens.add({
+      targets: text,
+      y: text.y - 30,
+      alpha: 0,
+      duration: 1500,
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+    
+    // Sonido de desactivación (si existe)
+    if (this.scene.sound.get('shield_deactivate')) {
+      this.scene.sound.play('shield_deactivate');
+    }
+  }
+
+  /**
+   * Actualiza el efecto visual del escudo
+   */
+  updateShieldEffect() {
+    if (!this.shieldActive) return;
+    
+    // Limpiar gráficos anteriores
+    this.shieldEffect.clear();
+    
+    // Calculamos un valor de pulsación basado en el tiempo
+    const pulseValue = Math.sin(this.scene.time.now / 200) * 0.1 + 0.9;
+    const radius = this.shieldEffectRadius * pulseValue;
+    
+    // Dibujamos la cúpula semi-transparente
+    this.shieldEffect.fillStyle(0x4488ff, 0.3);
+    this.shieldEffect.fillCircle(0, 0, radius);
+    
+    // Añadimos un borde brillante
+    this.shieldEffect.lineStyle(3, 0x88aaff, 0.8);
+    this.shieldEffect.strokeCircle(0, 0, radius);
+    
+    // Añadimos un segundo borde para profundidad
+    this.shieldEffect.lineStyle(1, 0xaaddff, 0.6);
+    this.shieldEffect.strokeCircle(0, 0, radius + 3);
+    
+    // Posicionamos el escudo en las coordenadas del jugador
+    this.shieldEffect.x = this.x;
+    this.shieldEffect.y = this.y;
   }
 }

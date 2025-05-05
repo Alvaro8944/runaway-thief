@@ -9,6 +9,8 @@ import BolaGrande from '../gameObjects/BolaGrande.js';
 import Diamante from '../gameObjects/Diamante.js';
 import Barril from '../gameObjects/Barril.js';
 import RocaDestructible from '../gameObjects/RocaDestructible.js';
+import gameData from '../data/GameData';
+import GameUI from '../UI/GameUI';
 
 const SPIKE_DAMAGE = 20;
 
@@ -28,6 +30,9 @@ export default class Level3 extends Phaser.Scene {
     this.player = new Player(this, 0, 0);
     this.player.setPosition(100, 750); // Posición inicial
     
+    // Cargar estado guardado del nivel anterior
+    gameData.loadPlayerState(this.player);
+    
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)
     this.createGameObjects();
     
@@ -37,6 +42,9 @@ export default class Level3 extends Phaser.Scene {
     // Configurar cámara y controles
     this.setupCameraAndControls();
     
+    // Crear el sistema de UI
+    this.gameUI = new GameUI(this, this.player);
+    
     // A intervalos aleatorios, crear bolas que caen (lluvia de bolas)
     this.time.addEvent({
       delay: 20000, // Cada 20 segundos
@@ -44,8 +52,6 @@ export default class Level3 extends Phaser.Scene {
       callbackScope: this,
       loop: true
     });
-
-
 
 
     this.events.on('bulletReachedTarget',
@@ -57,30 +63,24 @@ export default class Level3 extends Phaser.Scene {
       }
     );
 
+    // En create()
+    const bgFar = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'CaveBackground')
+    .setOrigin(0)
+    .setDepth(-20)
+    .setScale(1.2)
+    .setScrollFactor(0);  // fijado a cámara
+    const bgNear = this.add.tileSprite(0, 30, this.scale.width, this.scale.height, 'CaveBackgroundFirst')
+    .setOrigin(0)
+    .setDepth(-10)
+    .setScale(1)
+    .setScrollFactor(0);
 
-
-
-// En create()
-const bgFar = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'CaveBackground')
-.setOrigin(0)
-.setDepth(-20)
-.setScale(1.2)
-.setScrollFactor(0);  // fijado a cámara
-const bgNear = this.add.tileSprite(0, 30, this.scale.width, this.scale.height, 'CaveBackgroundFirst')
-.setOrigin(0)
-.setDepth(-10)
-.setScale(1)
-.setScrollFactor(0);
-
-// guardamos referencias:
-this.bgFar = bgFar;
-this.bgNear = bgNear;
-
+    // guardamos referencias:
+    this.bgFar = bgFar;
+    this.bgNear = bgNear;
   }
-  
 
-
-   /**
+  /**
  * Hace daño a todos los enemigos que caigan dentro de un radio
  * @param {number} x 
  * @param {number} y 
@@ -150,16 +150,26 @@ damageArea(x, y, radius, damage) {
     this.enemies = this.add.group();
     this.createEnemies();
     
-    // Buscar zona de final de nivel si existe
-    const finNivelLayer = this.map.getObjectLayer('FinNivel');
-    if (finNivelLayer && finNivelLayer.objects && finNivelLayer.objects.length > 0) {
-      this.finNivel = this.add.zone(0, 0, 32, 64);
-      this.physics.world.enable(this.finNivel);
-      const finNivelObj = finNivelLayer.objects[0];
-      this.finNivel.setPosition(finNivelObj.x, finNivelObj.y);
-      this.finNivel.body.setAllowGravity(false);
-      this.finNivel.body.moves = false;
-    }
+    // Crear manualmente una zona de fin de nivel en la parte alta del mapa
+    // Esto reemplaza la búsqueda de la capa 'FinNivel' que no existe en el JSON
+    // La zona se coloca donde estaba la escalera más alta
+    const ZONE_WIDTH = 64;  // Ancho suficiente para detectar al jugador
+    const ZONE_HEIGHT = 32; // Altura pequeña para activarse solo en la parte superior
+    
+    // Posición aproximada donde debería estar el fin del nivel
+    // Ajusta estas coordenadas según la ubicación correcta en tu mapa para el nivel 3
+    const END_POSITION_X = 5700; 
+    const END_POSITION_Y = 100;
+    
+    this.finNivel = this.add.zone(END_POSITION_X, END_POSITION_Y, ZONE_WIDTH, ZONE_HEIGHT);
+    this.physics.world.enable(this.finNivel);
+    this.finNivel.body.setAllowGravity(false);
+    this.finNivel.body.moves = false;
+    
+    // Añadir un sprite visible (solo para debug) que muestre dónde está la zona
+    // Puedes comentar o eliminar estas líneas en producción
+    // const debugSprite = this.add.rectangle(END_POSITION_X, END_POSITION_Y, ZONE_WIDTH, ZONE_HEIGHT, 0xff0000, 0.3);
+    // debugSprite.setDepth(100);
   }
   
   setupBulletGroups() {
@@ -605,25 +615,38 @@ damageArea(x, y, radius, damage) {
       );
     }
     
-    // Colisión jugador-balas enemigas
+    // Cambiar la colisión jugador-balas enemigas para manejar el escudo como protección general
     if (this.enemyBullets) {
-      this.physics.add.overlap(
-        this.player.escudo,
-        this.enemyBullets,
-        (escudo, enemyBullet) => {
-          if (!enemyBullet) return;
-          enemyBullet.destroy(); 
-        },
-        null,
-        this
-      );
-
       this.physics.add.overlap(
         this.player,
         this.enemyBullets,
         (player, enemyBullet) => {
           if (!player || !enemyBullet) return;
-          if (!player.isInvulnerable) {
+          
+          // Si el escudo está activo, las balas son destruidas sin dañar al jugador
+          if (player.shieldActive) {
+            // Crear un pequeño efecto de impacto en el escudo
+            const impactX = enemyBullet.x;
+            const impactY = enemyBullet.y;
+            
+            const impact = this.add.sprite(impactX, impactY, 'escudo')
+              .setScale(0.5)
+              .setAlpha(0.8)
+              .setTint(0x88ffff);
+            
+            this.tweens.add({
+              targets: impact,
+              scale: 0.1,
+              alpha: 0,
+              duration: 200,
+              onComplete: () => impact.destroy()
+            });
+            
+            // Destruir la bala enemiga
+            enemyBullet.destroy();
+          }
+          // Si no tiene escudo y no es invulnerable, recibe daño
+          else if (!player.isInvulnerable) {
             player.takeDamage(enemyBullet.damage, enemyBullet.owner);
             enemyBullet.destroy();
           }
@@ -646,22 +669,22 @@ damageArea(x, y, radius, damage) {
           // Evitar múltiples transiciones
           if (this.isTransitioning) return;
           this.isTransitioning = true;
-          console.log('Iniciando transición al nivel 3');
+          console.log('Iniciando transición al nivel 31');
           
           // Desactivar controles del jugador
           this.player.body.setVelocity(0, 0);
           this.player.body.allowGravity = false;
           
+          // Guardar el estado completo del jugador
+          gameData.savePlayerState(this.player);
+          
           // Efecto de fade out
           this.cameras.main.fadeOut(1000, 0, 0, 0);
           
-          // Transición al boot2
+          // Transición al boot31
           this.time.delayedCall(1000, () => {
             console.log('Cambiando a escena boot31');
-            this.scene.start('boot31', { 
-              playerHealth: this.player.health,
-              playerScore: this.player.score 
-            });
+            this.scene.start('boot31');
           });
         },
         null,
@@ -696,12 +719,10 @@ damageArea(x, y, radius, damage) {
       right: Phaser.Input.Keyboard.KeyCodes.D,
       jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
       cambiarWeapon: Phaser.Input.Keyboard.KeyCodes.X,
-      sacarEscudo: Phaser.Input.Keyboard.KeyCodes.ONE,
-      sacarArmaOne: Phaser.Input.Keyboard.KeyCodes.TWO,
-      sacarArmaTwo: Phaser.Input.Keyboard.KeyCodes.THREE,
-      sacarArmaThree: Phaser.Input.Keyboard.KeyCodes.FOUR
-      
-
+      sacarEscudo: Phaser.Input.Keyboard.KeyCodes.FOUR,     // Tecla 4: Escudo
+      sacarArmaOne: Phaser.Input.Keyboard.KeyCodes.ONE,     // Tecla 1: Rifle (arma principal)
+      sacarArmaTwo: Phaser.Input.Keyboard.KeyCodes.TWO,     // Tecla 2: Escopeta
+      sacarArmaThree: Phaser.Input.Keyboard.KeyCodes.THREE  // Tecla 3: Arma explosiva
     });
   }
 
@@ -736,6 +757,11 @@ damageArea(x, y, radius, damage) {
             bola.update();
           }
         });
+      }
+      
+      // Actualizar UI
+      if (this.gameUI) {
+        this.gameUI.update();
       }
     } catch (error) {
       console.error('Error en update:', error);

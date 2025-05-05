@@ -238,11 +238,61 @@ export class Boss extends BaseEnemy {
    // Timer para finalizar el ataque
    this.scene.time.delayedCall(this.specialDuration, () => {
     this.finishSpecial();
-    this.spawnEnemies();
+    
+    if (Phaser.Math.Between(0, 1) === 0) {
+      this.spawnEnemies(); 
+    } else {
+      this.crearLluviaLocalBolas();
+    }
+    
    });
 
   }
 
+  crearLluviaLocalBolas() {
+    const numBolas = 5;
+    const distanciaEntreBolas = 100;
+    const alturaSpawn = 250;
+    const bolas = this.scene.physics.add.group();
+  
+    const inicioX = this.x - ((numBolas - 1) * distanciaEntreBolas) / 2;
+    const y = this.y - alturaSpawn;
+  
+  
+    const explosionEmitterManager = this.scene.add.particles('blue_particle', {
+      speed: { min: 50, max: 150 },
+      scale: { start: 0.5, end: 0 },
+      alpha: { start: 1, end: 0 },
+      lifespan: 500,
+      blendMode: 'ADD',
+      quantity: 10,
+      emitting: false
+    });
+  
+    for (let i = 0; i < numBolas; i++) {
+      const x = inicioX + i * distanciaEntreBolas;
+      const bola = bolas.create(x, y, 'bola_grande');
+      bola.setVelocityY(200);
+      bola.setBounce(0.5);
+      bola.setScale(0.3);
+      bola.setCollideWorldBounds(true);
+  
+      const explotar = () => {
+        explosionEmitterManager.emitParticleAt(bola.x, bola.y, 10);
+        bola.destroy();
+      };
+  
+      this.scene.physics.add.collider(bola, this.scene.layerSuelo, explotar);
+      this.scene.physics.add.overlap(this.scene.player, bola, (player, bola) => {
+        if (bola.doDamage) {
+          bola.doDamage(player);
+        }
+        explotar();
+      });
+    }
+  }
+  
+  
   
 
   spawnEnemies(){

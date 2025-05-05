@@ -113,6 +113,8 @@ export default class Level extends Phaser.Scene {
       }
     });
   }
+  
+
 
   setupMap() {
     const map = this.make.tilemap({ key: 'map' });

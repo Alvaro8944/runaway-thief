@@ -140,6 +140,11 @@ import Jump from '../../assets/Sounds/Jump.flac';
 import Escaleras from '../../assets/Sounds/Escaleras.wav';
 import Shootgun from '../../assets/Sounds/Shootgun.wav';
 import Diamante from '../../assets/Sounds/DiamanteCogido.wav';
+import Caida from '../../assets/Sounds/DanioCaida.mp3';
+import Explosion from '../../assets/Sounds/Explosion.mp3';
+import Pasos from '../../assets/Sounds/Pasos1.mp3';
+import Jetpack from '../../assets/Sounds/Jetpack.mp3';
+import Paracaidas from '../../assets/Sounds/Paracaidas.mp3';
 //BackGround
 import CaveBackground from '../../assets/Background/Cave.png';
 import CaveBackgroundFirst from '../../assets/Background/caveFirst.png';
@@ -447,6 +452,11 @@ export function loadSoundAssets(scene) {
   scene.load.audio('escaleras', Escaleras);
   scene.load.audio('shootgun', Shootgun);
   scene.load.audio('DiamanteAudio', Diamante);
+  scene.load.audio('DanioCaida', Caida);
+  scene.load.audio('Explosion', Explosion);
+  scene.load.audio('Pasos', Pasos);
+  scene.load.audio('Jetpack', Jetpack);
+  scene.load.audio('Paracaidas', Paracaidas);
 } 
 
 export function loadBackgroundSprites(scene){

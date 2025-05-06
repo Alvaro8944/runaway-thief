@@ -308,7 +308,7 @@ export default class Level extends Phaser.Scene {
 
 
     const bossPosition = [
-      { x: 300, y: 700}
+      //{ x: 300, y: 700}
     ];
 
     

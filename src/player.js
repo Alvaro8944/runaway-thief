@@ -54,6 +54,15 @@ export const PLAYER_CONFIG = {
   
   // Escaleras
   CLIMB_SOUND_DELAY: 980, // ms entre sonidos de escalera
+
+  // Pasos
+  WALK_SOUND_DELAY: 700, // ms entre sonidos de pasos
+
+  // Jetpack
+  JETPACK_SOUND_DELAY: 500, // ms entre sonidos de jetpack
+
+  // Paracaidas
+  PARACHUTE_SOUND_DELAY: 700, // ms entre sonidos de pasos
   
   // Duración de los power-ups
   SHIELD_DURATION: 5000,        // 5 segundos de escudo
@@ -178,6 +187,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.movimiento = false;
     this.lastClimbSoundTime = 0;
     this.climbSoundDelay = PLAYER_CONFIG.CLIMB_SOUND_DELAY;
+
+    // ===== Atributos para el sonido de andar =====
+    this.lastWalkSoundTime = 0;
+
+    // ===== Atributos para el sonido de jetpack =====
+    this.lastJetpackSoundTime = 0;
+
+    // ===== Atributos para el sonido de paracaidas =====
+    this.parachuteSoundActivated = false;
 
     // ===== Interfaz =====
     this.createUI();
@@ -452,7 +470,14 @@ updateBullets() {
     if (this.hasFloatingObject) {
 
       // Ajustar velocidad cuando se usa el paracaídas
-      if(this.parachuteActivated) this.speed = this.floatingSpeed;
+      if(!this.parachuteActivated){
+        this.parachuteSoundActivated = false;
+        //this.scene.sound.play('Diamante');
+      } 
+      if(this.parachuteActivated){
+        this.speed = this.floatingSpeed;
+        this.Parachute_sound();
+      } 
 
       else if(this.jetpackActivated) {
         
@@ -499,7 +524,9 @@ updateBullets() {
       // Control vertical con paracaídas
       if (this.parachuteActivated) {
         this.setVelocityY(this.speed); 
+        //this.scene.sound.play('Paracaidas');
       } else if (this.jetpackActivated) {
+        this.Jetpack_sound()
         this.setVelocityY(-this.speed); 
       } else {
         this.setVelocityY(0); // Mantiene posición cuando no se pulsa nada
@@ -798,6 +825,8 @@ updateBullets() {
       this.setVelocityX(-this.speed);
       if (this.body.onFloor()) {
         this.anims.play(runAnim, true);
+        this.Walk_sound();
+        //this.scene.sound.play('Pasos');
       }
       //this.setFlipX(true);
 
@@ -807,6 +836,7 @@ updateBullets() {
       this.setVelocityX(this.speed);
       if (this.body.onFloor()) {
         this.anims.play(runAnim, true);
+        this.Walk_sound();
       }
       //this.setFlipX(false);
     } else {
@@ -994,6 +1024,9 @@ updateBullets() {
                 duration: 1000,
                 onComplete: () => text.destroy()
               });
+
+              // Sonido de aterrizaje forzado
+              this.scene.sound.play('DanioCaida');
               
               // Aplicar el daño
               this.takeDamage(damage);
@@ -1158,6 +1191,8 @@ updateBullets() {
           bullet.targetX = worldPointer.x;
           bullet.targetY = worldPointer.y;
         }
+
+        //this.scene.sound.play('Explosion');
         // En este caso, meterla en la lista de balas explosivas
         this.explosiveBullets.push(bullet);
         // Gasta (-3) de munición
@@ -1562,6 +1597,45 @@ updateBullets() {
       
       this.lastClimbSoundTime = currentTime;
     }
+  }
+
+  Walk_sound() {
+    // Verificar si ha pasado suficiente tiempo desde el último sonido
+    const currentTime = this.scene.time.now;
+    if (currentTime - this.lastWalkSoundTime >= PLAYER_CONFIG.WALK_SOUND_DELAY) {
+      // En vez de intentar modificar el volumen del sonido retornado por play()
+      // configuramos el volumen directamente en la llamada a play()
+      this.scene.sound.play('Pasos', {
+        volume: 1
+      });
+      
+      this.lastWalkSoundTime = currentTime;
+    }
+  }
+
+  Jetpack_sound() {
+    // Verificar si ha pasado suficiente tiempo desde el último sonido
+    const currentTime = this.scene.time.now;
+    if (currentTime - this.lastJetpackSoundTime >= PLAYER_CONFIG.JETPACK_SOUND_DELAY) {
+      // En vez de intentar modificar el volumen del sonido retornado por play()
+      // configuramos el volumen directamente en la llamada a play()
+      this.scene.sound.play('Jetpack', {
+        volume: 1
+      });
+      
+      this.lastJetpackSoundTime = currentTime;
+    }
+  }
+
+  Parachute_sound() {
+    // Verificar si ha pasado suficiente tiempo desde el último sonido
+    //const currentTime = this.scene.time.now;
+    if(this.parachuteSoundActivated == false){
+      this.scene.sound.play('Paracaidas', {
+        volume: 1
+      });
+    }
+    this.parachuteSoundActivated = true
   }
   
   // === MÉTODOS DE TEMPORIZADOR ===

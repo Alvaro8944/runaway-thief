@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import BolaGrande from '../gameObjects/BolaGrande.js';
 import { BaseEnemy, ENEMY_STATE } from './enemy';
 
 // Exportamos STATEBOSS como alias de ENEMY_STATE para mantener compatibilidad
@@ -239,12 +240,15 @@ export class Boss extends BaseEnemy {
    this.scene.time.delayedCall(this.specialDuration, () => {
     this.finishSpecial();
     
+   
     if (Phaser.Math.Between(0, 1) === 0) {
       this.spawnEnemies(); 
     } else {
       this.crearLluviaLocalBolas();
     }
-    
+   
+
+ 
    });
 
   }
@@ -258,7 +262,6 @@ export class Boss extends BaseEnemy {
     const inicioX = this.x - ((numBolas - 1) * distanciaEntreBolas) / 2;
     const y = this.y - alturaSpawn;
   
-  
     const explosionEmitterManager = this.scene.add.particles('blue_particle', {
       speed: { min: 50, max: 150 },
       scale: { start: 0.5, end: 0 },
@@ -271,7 +274,13 @@ export class Boss extends BaseEnemy {
   
     for (let i = 0; i < numBolas; i++) {
       const x = inicioX + i * distanciaEntreBolas;
-      const bola = bolas.create(x, y, 'bola_grande');
+  
+      // Usar tu clase personalizada con daño
+      const bola = new BolaGrande(this.scene, x, y, 'bola_grande', true, 30);
+      this.scene.add.existing(bola);
+      this.scene.physics.add.existing(bola);
+      bolas.add(bola);
+  
       bola.setVelocityY(200);
       bola.setBounce(0.5);
       bola.setScale(0.3);
@@ -291,6 +300,7 @@ export class Boss extends BaseEnemy {
       });
     }
   }
+  
   
   
   

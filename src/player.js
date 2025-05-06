@@ -1429,11 +1429,43 @@ updateBullets() {
    * @returns {boolean} True si el jugador aún tiene vidas, false si ha perdido todas
    */
   decrementLives() {
-    this.lives--;
+    // Decrementar vidas, pero nunca por debajo de 0
+    this.lives = Math.max(0, this.lives - 1);
     console.log(`[Player] Vidas restantes: ${this.lives}`);
     
-    // Si el jugador se queda sin vidas, devuelve false
-    return this.lives > 0;
+    // Si el jugador se queda sin vidas, emitir evento de game over
+    if (this.lives <= 0) {
+      console.log('[Player] Sin vidas. Emitiendo evento gameOver');
+      
+      // Detener cualquier acción del jugador inmediatamente
+      this.setVelocity(0, 0);
+      this.body.setAllowGravity(false);
+      this.isDying = true;
+      this.state = PLAYER_STATE.DEAD;
+      
+      // Detener todas las animaciones en curso
+      this.anims.stop();
+      
+      // Ocultar cualquier elemento visual asociado al jugador
+      if (this.weapon) this.weapon.setVisible(false);
+      if (this.hand) this.hand.setVisible(false);
+      if (this.jetpack) this.jetpack.setVisible(false);
+      if (this.parachute) this.parachute.setVisible(false);
+      
+      // Esperar un momento muy breve antes de emitir el evento gameOver
+      // para permitir que el ciclo de actualización actual termine
+      setTimeout(() => {
+        // Verificar que la escena siga existiendo antes de emitir el evento
+        if (this.scene && this.scene.events) {
+          console.log('[Player] Emitiendo gameOver.');
+          this.scene.events.emit('gameOver');
+        }
+      }, 50);
+      
+      return false;
+    }
+    
+    return true;
   }
 
   /**
@@ -1446,25 +1478,30 @@ updateBullets() {
     console.log(`[Player] Método die() llamado.`);
     this.state = PLAYER_STATE.DEAD;
     this.isDying = true; // Marcar que está en proceso de morir
+    
+    // Detener el movimiento
+    this.setVelocity(0, 0);
+    
+    // Decrementar las vidas y verificar si se acabaron
+    const hasRemainingLives = this.decrementLives();
+    
+    // Si no tiene más vidas, el evento gameOver ya fue emitido en decrementLives
+    // Por lo tanto, simplemente retornamos para evitar más procesamiento
+    if (!hasRemainingLives) {
+      this.isDying = false;
+      return;
+    }
+    
+    // Solo continuar con animación de muerte si aún tiene vidas
     this.play('player_death', true);
-    this.setVelocity(0);
     this.body.setAllowGravity(false);
     
     this.once('animationcomplete-player_death', () => {
       console.log(`[Player] Animación de muerte completada.`);
       
-      // Decrementar las vidas del jugador
-      const hasRemainingLives = this.decrementLives();
-      
-      // Si el jugador todavía tiene vidas, respawnear
-      if (hasRemainingLives) {
-        console.log(`[Player] Respawneando en coordenadas (${this.respawnX}, ${this.respawnY})`);
-        this.respawn();
-      } else {
-        // Si no tiene más vidas, emitir evento de game over
-        console.log(`[Player] Sin vidas restantes, emitiendo evento gameOver`);
-        this.scene.events.emit('gameOver');
-      }
+      // Respawnear ya que tiene vidas restantes
+      console.log(`[Player] Respawneando en coordenadas (${this.respawnX}, ${this.respawnY})`);
+      this.respawn();
       
       // Resetear la bandera de morir después de completar todo el proceso
       this.isDying = false;
@@ -1485,24 +1522,20 @@ updateBullets() {
     // Detener cualquier movimiento para evitar seguir cayendo
     this.setVelocity(0, 0);
     
-    // Decrementar las vidas del jugador
+    // Decrementar las vidas y verificar si se acabaron
     const hasRemainingLives = this.decrementLives();
     
-    // Si el jugador todavía tiene vidas, respawnear sin animación
-    if (hasRemainingLives) {
-      // Usar el método respawn con opciones específicas para silentDie
-      this.respawn({ silent: true, fadeIn: true });
-    } else {
-      // Si no tiene más vidas, emitir evento de game over
-      console.log(`[Player] Sin vidas restantes, emitiendo evento gameOver`);
-      this.scene.events.emit('gameOver');
+    // Si no tiene más vidas, el evento gameOver ya fue emitido en decrementLives
+    if (!hasRemainingLives) {
+      this.isDying = false;
+      return;
     }
     
-    // Resetear la bandera de morir después de completar todo el proceso
-    // Importante: Hacerlo después de un pequeño retraso para evitar problemas
-    this.scene.time.delayedCall(100, () => {
-      this.isDying = false;
-    });
+    // Respawnear ya que tiene vidas restantes
+    this.respawn({ silent: true, fadeIn: true });
+    
+    // Resetear la bandera de morir
+    this.isDying = false;
   }
 
   hurt() {

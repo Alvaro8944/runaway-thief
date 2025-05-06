@@ -23,6 +23,9 @@ export default class Level extends Phaser.Scene {
   }
 
   create() {
+    // Restablecer la bandera de gameover al inicio de la escena
+    this.isGameOver = false;
+    
     // Inicializar el mapa y capas
     this.setupMap();
     
@@ -803,25 +806,59 @@ export default class Level extends Phaser.Scene {
     
     // Evento de game over (cuando se acaban las vidas)
     this.events.on('gameOver', () => {
-      console.log('[Level2] Evento gameOver recibido. Todas las vidas perdidas.');
+      console.log('[Level2] Evento gameOver recibido. Cambiando a GameOverScene.');
       
-      // Desactivar input para evitar interacciones
-      this.input.keyboard.enabled = false;
+      // Desactivar controles del jugador
+      this.player.body.setVelocity(0, 0);
+      this.player.body.allowGravity = false;
       
-      // Fade out para transición suave
+      // Efecto de fade out
       this.cameras.main.fadeOut(1000, 0, 0, 0);
       
-      // Transición a pantalla de game over
+      // Transición a GameOverScene
       this.time.delayedCall(1000, () => {
-        // Limpiar escena
+        console.log('[Level2] Cambiando a escena GameOverScene');
+        // Limpiar referencias antes de cambiar de escena
+        // Desactivar actualizaciones en objetos que podrían causar problemas
         if (this.gameUI) {
           this.gameUI.update = () => {}; // Reemplazar con función vacía para evitar actualizaciones
           this.gameUI.destroy();
           this.gameUI = null;
         }
         
-        // Iniciar escena de Game Over, pasando la escena de boot correspondiente
-        this.scene.start('GameOverScene', { level: 'boot2' });
+        // Limpiar grupos y objetos que pueden causar problemas
+        if (this.enemies) {
+          this.enemies.clear(true, true);
+        }
+        
+        if (this.bolas) {
+          this.bolas.clear(true, true);
+        }
+        
+        // Limpiar otros grupos y objetos
+        ['spikes', 'ladders', 'diamantes', 'barriles', 'rocas', 'carteles'].forEach(groupName => {
+          if (this[groupName]) {
+            this[groupName].clear(true, true);
+          }
+        });
+        
+        // Eliminar al jugador y objetos relacionados
+        if (this.player) {
+          // Limpiar objetos visuales del jugador
+          if (this.player.hand) this.player.hand.destroy();
+          if (this.player.mainWeapon) this.player.mainWeapon.destroy();
+          if (this.player.explosiveWeapon) this.player.explosiveWeapon.destroy();
+          if (this.player.shotgunWeapon) this.player.shotgunWeapon.destroy();
+          
+          // Desactivar el cuerpo físico del jugador para evitar referencias circulares
+          this.player.body = null;
+        }
+        
+        // Desactivar eventos y timers
+        this.events.off('update');
+        
+        // Usar start en lugar de switch para una reinicialización completa de la escena
+        this.scene.start('GameOverScene', { level: 'level2' });
       });
     });
   }

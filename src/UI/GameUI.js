@@ -19,6 +19,7 @@ export default class GameUI {
 
     // Crear elementos de UI
     this.createHealthBar();
+    this.createLivesDisplay();
     this.createScoreDisplay();
     this.createTimeDisplay();
     this.createWeaponInventory();
@@ -54,6 +55,31 @@ export default class GameUI {
     
     // Añadir al contenedor
     this.container.add([this.healthBarBg, this.healthBar, this.healthText]);
+  }
+
+  /**
+   * Crear indicador de vidas
+   */
+  createLivesDisplay() {
+    // Fondo del contador de vidas
+    this.livesBg = this.scene.add.graphics();
+    this.livesBg.fillStyle(0x000000, 0.7);
+    this.livesBg.fillRoundedRect(230, 20, 120, 25, 5);
+    this.livesBg.lineStyle(2, 0xff44aa, 1);
+    this.livesBg.strokeRoundedRect(230, 20, 120, 25, 5);
+    
+    // Texto de vidas
+    this.livesText = this.scene.add.text(290, 32, '', {
+      fontFamily: 'Arial',
+      fontSize: '14px',
+      color: '#ff44aa',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 2
+    }).setOrigin(0.5);
+    
+    // Añadir al contenedor
+    this.container.add([this.livesBg, this.livesText]);
   }
 
   /**
@@ -324,11 +350,22 @@ export default class GameUI {
    * Actualizar todos los elementos de la UI
    */
   update() {
-    this.updateHealthBar();
-    this.updateScoreDisplay();
-    this.updateTimeDisplay();
-    this.updateWeaponInventory();
-    this.updateSpecialItemsIndicators();
+    // Verificar que el player exista y tenga propiedades válidas
+    if (!this.player || this.player.state === undefined) {
+      return; // Salir si el player no es válido
+    }
+    
+    try {
+      this.updateHealthBar();
+      this.updateLivesDisplay();
+      this.updateScoreDisplay();
+      this.updateTimeDisplay();
+      this.updateWeaponInventory();
+      this.updateSpecialItemsIndicators();
+    } catch (error) {
+      console.error('[GameUI] Error al actualizar UI:', error);
+      // No propagar el error para evitar que rompa el juego
+    }
   }
   
   /**
@@ -371,6 +408,31 @@ export default class GameUI {
     
     // Actualizar texto
     this.healthText.setText(`${Math.ceil(health)}/${maxHealth}`);
+  }
+  
+  /**
+   * Actualizar el contador de vidas
+   */
+  updateLivesDisplay() {
+    // Asegurarse de que lives sea un valor no negativo
+    const lives = Math.max(0, this.player.lives);
+    const maxLives = this.player.maxLives;
+    
+    // Asegurarse de que la diferencia no sea negativa
+    const emptyHearts = Math.max(0, maxLives - lives);
+    
+    // Actualizar texto con número de vidas y corazones
+    let heartsText = '♥'.repeat(lives) + '♡'.repeat(emptyHearts);
+    this.livesText.setText(`Vidas: ${heartsText}`);
+    
+    // Cambiar color según número de vidas restantes
+    if (lives <= 1) {
+      this.livesText.setColor('#ff0000'); // Rojo para última vida
+    } else if (lives <= 2) {
+      this.livesText.setColor('#ffaa00'); // Naranja para pocas vidas
+    } else {
+      this.livesText.setColor('#ff44aa'); // Color normal
+    }
   }
   
   /**
@@ -500,41 +562,66 @@ export default class GameUI {
   }
   
   /**
-   * Destruir la UI y limpiar recursos
+   * Destruir correctamente todos los elementos de la UI
    */
   destroy() {
     try {
-      // Detener actualizaciones para evitar errores
-      this.update = () => {};
+      // Verificar y eliminar elementos de la barra de salud
+      if (this.healthBarBg) this.healthBarBg.destroy();
+      if (this.healthBar) this.healthBar.destroy();
+      if (this.healthText) this.healthText.destroy();
       
-      // Limpiar arrays
-      if (this.weaponSlots) this.weaponSlots = [];
-      if (this.weaponIcons) this.weaponIcons = [];
-      if (this.ammoTexts) this.ammoTexts = [];
-      if (this.keyTexts) this.keyTexts = [];
-      if (this.itemIndicators) this.itemIndicators = [];
-      if (this.itemIcons) this.itemIcons = [];
-      if (this.itemCooldowns) this.itemCooldowns = [];
-      if (this.itemBindKeys) this.itemBindKeys = [];
+      // Verificar y eliminar texto de vidas
+      if (this.livesText) this.livesText.destroy();
       
-      // Destruir directamente el contenedor principal, que automáticamente destruirá todos sus hijos
-      if (this.container) {
-        this.container.removeAll(true); // true = destruir los hijos
-        this.container.destroy();
+      // Verificar y eliminar texto de puntuación
+      if (this.scoreText) this.scoreText.destroy();
+      
+      // Verificar y eliminar texto de tiempo
+      if (this.timeText) this.timeText.destroy();
+      
+      // Verificar y eliminar elementos de armas
+      if (this.weaponSlots) {
+        this.weaponSlots.forEach(slot => {
+          if (slot && slot.active) slot.destroy();
+        });
+      }
+      if (this.weaponIcons) {
+        this.weaponIcons.forEach(icon => {
+          if (icon && icon.active) icon.destroy();
+        });
+      }
+      if (this.ammoTexts) {
+        this.ammoTexts.forEach(text => {
+          if (text && text.active) text.destroy();
+        });
       }
       
-      // Destruir explícitamente el contenedor de objetos especiales si existe
+      // Verificar y eliminar elementos de objetos especiales
       if (this.specialItemsContainer) {
-        this.specialItemsContainer.removeAll(true);
+        if (this.itemIndicators) {
+          this.itemIndicators.forEach(indicator => {
+            if (indicator && indicator.active) indicator.destroy();
+          });
+        }
+        if (this.itemIcons) {
+          this.itemIcons.forEach(icon => {
+            if (icon && icon.active) icon.destroy();
+          });
+        }
+        if (this.itemCooldowns) {
+          this.itemCooldowns.forEach(cooldown => {
+            if (cooldown && cooldown.active) cooldown.destroy();
+          });
+        }
+        
         this.specialItemsContainer.destroy();
       }
       
-      // Eliminar referencias
-      this.scene = null;
-      this.player = null;
-      
+      console.log('[GameUI] UI destruida correctamente');
     } catch (error) {
-      console.warn("Error al destruir la UI:", error);
+      console.error('[GameUI] Error al destruir la UI:', error);
+      // No propagar el error para evitar que rompa el juego
     }
   }
 } 

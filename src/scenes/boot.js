@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import * as AssetLoader from '../loaders/AssetLoader.js';
 import * as AnimationCreator from '../loaders/AnimationCreator.js';
+import gameData from '../data/GameData.js';
 
 /**
  * Escena para la precarga de los assets que se usarán en el juego.
@@ -26,6 +27,17 @@ export default class Boot extends Phaser.Scene {
   create() {
     // Crear todas las animaciones utilizando el AnimationCreator
     AnimationCreator.createAllAnimations(this);
+
+    // Reinicio las vidas y estado global del jugador si es necesario
+    // Esta verificación ayudará a detectar si venimos de GameOverScene
+    if (this.game.config.gameData && this.game.config.gameData.resetPlayerState) {
+      console.log('[Boot] Reiniciando estado del jugador después de GameOver');
+      // Reiniciar datos de juego usando el módulo importado correctamente
+      gameData.resetPlayerState();
+      
+      // Restablecer la bandera
+      this.game.config.gameData.resetPlayerState = false;
+    }
 
     // Iniciar la escena del juego
     this.scene.start('level');

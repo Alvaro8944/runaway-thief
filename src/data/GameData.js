@@ -14,6 +14,7 @@ class GameData {
     // Datos del jugador
     this.playerHealth = 150;
     this.playerScore = 0;
+    this.playerLives = 5; // Número de vidas inicial
     
     // Estado de armas desbloqueadas
     this.unlockedWeapons = {
@@ -53,6 +54,7 @@ class GameData {
     // Guardar datos básicos
     this.playerHealth = player.health;
     this.playerScore = player.score;
+    this.playerLives = player.lives; // Guardar vidas
     
     // Guardar estado de armas
     this.unlockedWeapons = { ...player.unlockedWeapons };
@@ -83,6 +85,7 @@ class GameData {
     // Cargar datos básicos
     player.health = this.playerHealth;
     player.score = this.playerScore;
+    player.lives = this.playerLives; // Cargar vidas
     
     // Cargar estado de armas
     player.unlockedWeapons = { ...this.unlockedWeapons };
@@ -132,6 +135,7 @@ class GameData {
     // Ajustar la salud y puntuación para este nivel
     this.playerHealth = 150;            // PLAYER_CONFIG.MAX_HEALTH = 150
     this.playerScore = 250;             // Alguna puntuación base por haber "completado" el nivel 1
+    this.playerLives = 5;               // Empezar con todas las vidas
   }
 
   /**
@@ -159,6 +163,33 @@ class GameData {
     // Ajustar la salud y puntuación para este nivel
     this.playerHealth = 150;          // PLAYER_CONFIG.MAX_HEALTH = 150
     this.playerScore = 500;           // Una puntuación base más alta por haber "completado" los niveles anteriores
+    this.playerLives = 5;             // Empezar con todas las vidas
+  }
+
+  /**
+   * Reinicia específicamente el estado del jugador después de un Game Over
+   * Restaura la vida y las vidas, pero mantiene los objetos desbloqueados
+   */
+  resetPlayerState() {
+    console.log('[GameData] Reiniciando estado del jugador después de GameOver');
+    
+    // Reiniciar la salud a su valor máximo
+    this.playerHealth = 150; // PLAYER_CONFIG.MAX_HEALTH
+    
+    // Restaurar el número de vidas al valor inicial
+    this.playerLives = 5;
+    
+    // Reiniciar la munición para todas las armas
+    this.weaponAmmo = {
+      rifle: this.unlockedWeapons.rifle ? 10 : 0,
+      shotgun: this.unlockedWeapons.shotgun ? 12 : 0,
+      explosive: this.unlockedWeapons.explosive ? 3 : 0
+    };
+    
+    // Reiniciar la energía del jetpack
+    this.floatingEnergy = 400;
+    
+    console.log('[GameData] Estado del jugador reiniciado', this);
   }
 }
 

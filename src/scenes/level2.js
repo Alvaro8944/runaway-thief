@@ -13,6 +13,7 @@ import RocaDestructible from '../gameObjects/RocaDestructible.js';
 import Cartel from '../gameObjects/cartel.js';
 import gameData from '../data/GameData';
 import GameUI from '../UI/GameUI';
+import { PLAYER_STATE } from '../player.js';
 
 const SPIKE_DAMAGE = 20;
 
@@ -28,9 +29,21 @@ export default class Level extends Phaser.Scene {
     // Configurar grupos para proyectiles
     this.setupBulletGroups();
     
+    // Variable para controlar si el jugador está en proceso de caída
+    this.isPlayerFalling = false;
+    
     // Crear jugador
     this.player = new Player(this, 0, 0);
-    this.player.setPosition(100, 750); // Posición inicial
+    
+    // Posición inicial fija del nivel
+    const INITIAL_X = 100;
+    const INITIAL_Y = 750;
+    
+    // Posicionar al jugador y establecer el punto de respawn inicial
+    this.player.setPosition(INITIAL_X, INITIAL_Y);
+    this.player.respawnX = INITIAL_X;
+    this.player.respawnY = INITIAL_Y;
+    this.player.hasRespawnPoint = true;
     
     // Cargar estado guardado (útil cuando se inicia desde el selector de niveles)
     gameData.loadPlayerState(this.player);
@@ -129,7 +142,7 @@ export default class Level extends Phaser.Scene {
     this.layerSuelo.setCollisionByExclusion([-1], true);
     
     // Configurar los límites del mundo
-    this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels +1000);
   }
   
   createGameObjects() {
@@ -788,20 +801,28 @@ export default class Level extends Phaser.Scene {
       );
     }
     
-    // Eventos de muerte
-    this.events.on('playerDeath', () => {
-      console.log('[Level] Evento playerDeath recibido');
-      console.log('[Level] Estado del jugador al morir:', {
-        hasRespawnPoint: this.player.hasRespawnPoint,
-        respawnX: this.player.respawnX,
-        respawnY: this.player.respawnY,
-        state: this.player.state
-      });
+    // Evento de game over (cuando se acaban las vidas)
+    this.events.on('gameOver', () => {
+      console.log('[Level2] Evento gameOver recibido. Todas las vidas perdidas.');
       
-      // Solo reiniciamos la escena si el jugador no tiene un punto de respawn
-      // El respawn se maneja directamente en el método die() del jugador
-      console.log('[Level] Reiniciando la escena...');
-      this.scene.restart();
+      // Desactivar input para evitar interacciones
+      this.input.keyboard.enabled = false;
+      
+      // Fade out para transición suave
+      this.cameras.main.fadeOut(1000, 0, 0, 0);
+      
+      // Transición a pantalla de game over
+      this.time.delayedCall(1000, () => {
+        // Limpiar escena
+        if (this.gameUI) {
+          this.gameUI.update = () => {}; // Reemplazar con función vacía para evitar actualizaciones
+          this.gameUI.destroy();
+          this.gameUI = null;
+        }
+        
+        // Iniciar escena de Game Over, pasando la escena de boot correspondiente
+        this.scene.start('GameOverScene', { level: 'boot2' });
+      });
     });
   }
 
@@ -851,6 +872,9 @@ export default class Level extends Phaser.Scene {
         this.player.currentLadder = null;
       }
       
+      // Comprobar si el jugador ha caído fuera del mapa
+      this.checkPlayerFallOffMap();
+      
       // Actualizar al jugador
       this.player.update();
       
@@ -869,6 +893,39 @@ export default class Level extends Phaser.Scene {
       }
     } catch (error) {
       console.error('Error en update:', error);
+    }
+  }
+  
+  /**
+   * Comprueba si el jugador ha caído fuera del mapa y respawnea si es necesario
+   */
+  checkPlayerFallOffMap() {
+    // Aumentamos significativamente la altura del umbral de detección
+    // Ahora detecta 2000 píxeles antes del límite inferior del mundo
+    const fallThreshold = this.physics.world.bounds.height - 800;
+    
+    // Si el jugador ya está muriendo o está en transición, no hacer nada
+    if (this.player.isDying || this.player.state === PLAYER_STATE.DEAD || 
+        this.isTransitioning || this.isPlayerFalling) {
+      return;
+    }
+    
+    if (this.player.y > fallThreshold) {
+      console.log('[Level2] El jugador ha caído fuera del mapa');
+      
+      // Marcar que el jugador está cayendo para evitar llamadas múltiples
+      this.isPlayerFalling = true;
+      
+      // Detener la velocidad vertical del jugador para que no siga cayendo
+      this.player.setVelocityY(0);
+      
+      // Llamar a silentDie inmediatamente sin retraso
+      this.player.silentDie();
+      
+      // Restaurar la bandera después de un breve tiempo
+      this.time.delayedCall(500, () => {
+        this.isPlayerFalling = false;
+      });
     }
   }
   

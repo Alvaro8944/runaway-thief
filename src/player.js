@@ -156,7 +156,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.crawlTime = 0;
     this.restarcrawl = 0;
     this.maxCrawlTime = PLAYER_CONFIG.MAX_CRAWL_TIME;
-    this.fatalFallHeight = 10;
     this.state = PLAYER_STATE.IDLE;
     this.invulnerableTime = PLAYER_CONFIG.INVULNERABLE_TIME;
     this.lastHitTime = 0;
@@ -256,12 +255,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Punto de respawn
     this.respawnX = x;
     this.respawnY = y;
-    this.hasRespawnPoint = false;
+    this.hasRespawnPoint = true; // Inicializar con punto de respawn por defecto
+    
+    // Controles para prevenir múltiples muertes
+    this.isDying = false; // Bandera para controlar si está en proceso de morir
 
     // Escudo (ahora será un efecto visual circular alrededor del jugador)
     this.shieldEffect = scene.add.graphics();
     this.shieldEffect.setVisible(false);
     this.shieldEffectRadius = 40; // Radio de la cúpula
+    
+    // Vidas del jugador
+    this.lives = 5; // Número inicial de vidas
+    this.maxLives = 5; // Máximo de vidas
   }
 
   // === MÉTODOS DE INTERFAZ ===
@@ -897,23 +903,107 @@ updateBullets() {
     // ===== DAÑO POR CAÍDA =====
     // Registrar la posición más alta y calcular daño por caída
     if (!this.body.onFloor()) {
+      // Si estamos en el aire, rastreamos la posición más alta
       if (this.highestY === undefined || this.highestY === null) {
-        this.highestY = this.y; // Guarda la mayor altura alcanzada
+        this.highestY = this.y; // Inicializa con la posición actual
       } else if (this.y < this.highestY) {
         this.highestY = this.y; // Actualiza si sube más alto
       }
-    } else {
-      if (this.highestY !== undefined && this.highestY !== null) {
-        const fallDistance = Math.abs(this.highestY - this.y); // Diferencia real de caída
-        if (this.y > this.highestY && 
-            fallDistance >= this.fatalFallHeight && 
-            Math.abs(this.body.velocity.y) > this.floatingSpeed
-          && !this.jetpackActivated && !this.parachuteActivated) {
-          this.health = 0;
-          this.die();
+    } else if (this.highestY !== undefined && this.highestY !== null) {
+      // Calculamos la distancia de caída
+      const fallDistance = Math.abs(this.highestY - this.y);
+
+      console.log(`[Player] Distancia de caída: ${fallDistance.toFixed(1)}`);
+      console.log('velocidad1', Math.abs(this.body.velocity.y))
+      
+      // Configuración del sistema de daño progresivo (fuera del condicional)
+      const minDamageHeight = 150;   // Altura mínima para empezar a recibir daño
+      const maxDamageHeight = 400;   // Altura para daño máximo (muerte)
+      
+      // Solo procesamos el daño si estamos cayendo y no usando ayudas para flotar
+      if (this.y > this.highestY && 
+          Math.abs(this.body.velocity.y) > 35 &&
+          !this.isDying &&
+          !this.isInvulnerable &&
+          !this.jetpackActivated && 
+          !this.parachuteActivated) {
+
+        console.log('velocidad2', Math.abs(this.body.velocity.y))
+        
+        // Mostrar efecto de impacto para caídas significativas (incluso sin daño)
+        if (fallDistance > 100) {
+          // Efecto visual de impacto (más intenso según la altura)
+          const shakeIntensity = Math.min(0.05, fallDistance / 10000);
+          const shakeDuration = Math.min(300, fallDistance / 2);
+          this.scene.cameras.main.shake(shakeDuration, shakeIntensity);
+          
+          // Crear un efecto de impacto en el suelo
+          const impact = this.scene.add.graphics();
+          impact.fillStyle(0xcccccc, 0.7);
+          const circleSize = Math.min(25, 10 + fallDistance / 30);
+          impact.fillCircle(this.x, this.y + 20, circleSize);
+          
+          // Animar y eliminar el efecto
+          this.scene.tweens.add({
+            targets: impact,
+            alpha: 0,
+            scale: 2,
+            duration: 300,
+            onComplete: () => impact.destroy()
+          });
+          
+          // Efecto de sonido de impacto (si existe)
+          if (this.scene.sound.get('land')) {
+            const volume = Math.min(1.0, 0.3 + (fallDistance / 1000));
+            this.scene.sound.play('land', { volume: volume });
+          }
         }
-      } 
-      this.highestY = null; // Resetea cuando toca el suelo
+        
+        // Cálculo del daño basado en la altura
+        if (fallDistance >= minDamageHeight) {
+          // Daño progresivo basado en la altura
+          if (fallDistance >= maxDamageHeight) {
+            // Caída fatal - muerte instantánea
+            console.log(`[Player] Caída fatal: altura=${fallDistance.toFixed(0)}, muerte instantánea`);
+            this.health = 0;
+            this.die();
+          } else {
+            // Daño proporcional a la altura (exponencial)
+            // Fórmula: porcentaje de la distancia entre min y max altura, elevado al cuadrado
+            const damagePercent = Math.pow((fallDistance - minDamageHeight) / (maxDamageHeight - minDamageHeight), 2);
+            const maxDamage = this.maxHealth * 0.8; // Máximo 80% de la salud
+            const damage = Math.floor(damagePercent * maxDamage);
+            
+            if (damage > 0) {
+              console.log(`[Player] Daño por caída: altura=${fallDistance.toFixed(0)}, daño=${damage}`);
+              
+              // Texto de daño
+              const text = this.scene.add.text(this.x, this.y - 50, `-${damage}`, {
+                fontSize: '20px',
+                fontStyle: 'bold',
+                fill: '#ff4444',
+                stroke: '#000',
+                strokeThickness: 4
+              }).setOrigin(0.5);
+              
+              // Animar texto
+              this.scene.tweens.add({
+                targets: text,
+                y: this.y - 80,
+                alpha: 0,
+                duration: 1000,
+                onComplete: () => text.destroy()
+              });
+              
+              // Aplicar el daño
+              this.takeDamage(damage);
+            }
+          }
+        }
+      }
+      
+      // Resetear el tracking de altura al tocar suelo
+      this.highestY = null;
     }
 
     // En el método update(), añadir después de la parte donde ya actualiza el estado del escudo
@@ -1197,13 +1287,23 @@ updateBullets() {
   // === MÉTODOS DE DAÑO Y SALUD ===
   
   takeDamage(amount, attacker = null) {
-    if (this.isInvulnerable || this.state === PLAYER_STATE.DEAD) return;
-
+    if (this.isInvulnerable || this.state === PLAYER_STATE.DEAD || this.isDying) return;
+    console.log(`[Player] Recibiendo daño: ${amount}. Salud actual: ${this.health}`);
+    
     this.health -= amount;
     this.isInvulnerable = true;
     this.lastHitTime = this.scene.time.now;
+    
+    // Comprobar inmediatamente si el jugador debe morir
+    if (this.health <= 0) {
+      console.log(`[Player] Salud negativa después de daño: ${this.health}. Llamando a die()`);
+      this.die();
+      return; // Salir para evitar reproducir la animación de daño
+    }
+    
+    // Si el jugador sigue vivo, continuar con la animación de daño
     this.state = PLAYER_STATE.HURT;
-
+    
     // Efecto de parpadeo
     this.scene.tweens.add({
       targets: this,
@@ -1224,15 +1324,12 @@ updateBullets() {
         this.isKnockedBack = false;
       });
     }
-
+    
     // Reproducir animación de daño
     this.play('player_hurt', true);
     this.once('animationcomplete-player_hurt', () => {
-      if (this.health <= 0) {
-        this.die();
-      } else {
-        this.state = PLAYER_STATE.IDLE;
-      }
+      console.log('[Player] Animación de daño completada');
+      this.state = PLAYER_STATE.IDLE;
     });
 
     // La UI ahora se actualiza desde GameUI.js
@@ -1327,24 +1424,84 @@ updateBullets() {
     });
   }
 
+  /**
+   * Decrementar una vida del jugador
+   * @returns {boolean} True si el jugador aún tiene vidas, false si ha perdido todas
+   */
+  decrementLives() {
+    this.lives--;
+    console.log(`[Player] Vidas restantes: ${this.lives}`);
+    
+    // Si el jugador se queda sin vidas, devuelve false
+    return this.lives > 0;
+  }
+
+  /**
+   * Método principal de muerte del jugador
+   */
   die() {
-    console.log(`[Player] Método die() llamado. hasRespawnPoint: ${this.hasRespawnPoint}, respawnX: ${this.respawnX}, respawnY: ${this.respawnY}`);
+    // Evitar múltiples llamadas a die() mientras esté muriendo
+    if (this.isDying || this.state === PLAYER_STATE.DEAD) return;
+    
+    console.log(`[Player] Método die() llamado.`);
     this.state = PLAYER_STATE.DEAD;
+    this.isDying = true; // Marcar que está en proceso de morir
     this.play('player_death', true);
     this.setVelocity(0);
     this.body.setAllowGravity(false);
     
     this.once('animationcomplete-player_death', () => {
-      console.log(`[Player] Animación de muerte completada. hasRespawnPoint: ${this.hasRespawnPoint}`);
-      // Si tiene un punto de respawn, revivir allí en lugar de emitir el evento de muerte
-      if (this.hasRespawnPoint) {
-        console.log(`[Player] Tiene punto de respawn, llamando a respawn()`);
+      console.log(`[Player] Animación de muerte completada.`);
+      
+      // Decrementar las vidas del jugador
+      const hasRemainingLives = this.decrementLives();
+      
+      // Si el jugador todavía tiene vidas, respawnear
+      if (hasRemainingLives) {
+        console.log(`[Player] Respawneando en coordenadas (${this.respawnX}, ${this.respawnY})`);
         this.respawn();
       } else {
-        console.log(`[Player] No tiene punto de respawn, emitiendo evento playerDeath`);
-        // Emitir evento de muerte para que la escena lo maneje
-        this.scene.events.emit('playerDeath');
+        // Si no tiene más vidas, emitir evento de game over
+        console.log(`[Player] Sin vidas restantes, emitiendo evento gameOver`);
+        this.scene.events.emit('gameOver');
       }
+      
+      // Resetear la bandera de morir después de completar todo el proceso
+      this.isDying = false;
+    });
+  }
+
+  /**
+   * Método para hacer morir al jugador sin mostrar animación de muerte
+   * Se usa específicamente para las caídas fuera del mapa
+   */
+  silentDie() {
+    // Evitar múltiples llamadas a silentDie() mientras esté muriendo
+    if (this.isDying || this.state === PLAYER_STATE.DEAD) return;
+    
+    console.log(`[Player] Método silentDie() llamado.`);
+    this.isDying = true; // Marcar que está en proceso de morir
+    
+    // Detener cualquier movimiento para evitar seguir cayendo
+    this.setVelocity(0, 0);
+    
+    // Decrementar las vidas del jugador
+    const hasRemainingLives = this.decrementLives();
+    
+    // Si el jugador todavía tiene vidas, respawnear sin animación
+    if (hasRemainingLives) {
+      // Usar el método respawn con opciones específicas para silentDie
+      this.respawn({ silent: true, fadeIn: true });
+    } else {
+      // Si no tiene más vidas, emitir evento de game over
+      console.log(`[Player] Sin vidas restantes, emitiendo evento gameOver`);
+      this.scene.events.emit('gameOver');
+    }
+    
+    // Resetear la bandera de morir después de completar todo el proceso
+    // Importante: Hacerlo después de un pequeño retraso para evitar problemas
+    this.scene.time.delayedCall(100, () => {
+      this.isDying = false;
     });
   }
 
@@ -1422,35 +1579,66 @@ updateBullets() {
 
   /**
    * Revive al jugador en el último punto de respawn
+   * @param {Object} options - Opciones de personalización para el respawn
+   * @param {boolean} options.fadeIn - Si es verdadero, el jugador aparecerá con efecto fade in
    */
-  respawn() {
+  respawn(options = {}) {
+    const {fadeIn = false } = options;
+    
     console.log(`[Player] Método respawn() llamado. Posición actual: (${this.x}, ${this.y})`);
     console.log(`[Player] Respawneando en: (${this.respawnX}, ${this.respawnY})`);
+    
+    // Asegurarse de que no esté en estado de muerte
+    this.isDying = false;
     
     // Restaurar salud
     this.health = this.maxHealth;
     
     // Reposicionar en el punto de respawn
-    this.setPosition(this.respawnX, this.respawnY);
+    this.setPosition(this.respawnX, this.respawnY - 60 );
     
     // Restablecer estado y física
     this.state = PLAYER_STATE.IDLE;
     this.body.setAllowGravity(true);
     this.setCollideWorldBounds(true);
-    this.alpha = 1;
+    
+    // Ajustar visibilidad según el tipo de respawn
+    if (fadeIn) {
+      // Iniciar invisible y hacer aparecer gradualmente
+      this.alpha = 0;
+      this.scene.tweens.add({
+        targets: this,
+        alpha: 1,
+        duration: 300,
+        onComplete: () => {
+          // Efecto de parpadeo al reaparecer
+          this.scene.tweens.add({
+            targets: this,
+            alpha: 0.5,
+            duration: 100,
+            yoyo: true,
+            repeat: 5
+          });
+        }
+      });
+    } else {
+      this.alpha = 1;
+      this.scene.tweens.add({
+        targets: this,
+        alpha: 0.5,
+        duration: 100,
+        yoyo: true,
+        repeat: 10,
+        onComplete: () => {
+          // Asegurarse de que termine con visibilidad completa
+          this.alpha = 1;
+        }
+      });
+    }
     
     // Dar un período de invulnerabilidad al respawnear
     this.isInvulnerable = true;
     this.lastHitTime = this.scene.time.now;
-    
-    // Efecto de parpadeo al respawnear
-    this.scene.tweens.add({
-      targets: this,
-      alpha: 0.5,
-      duration: 100,
-      yoyo: true,
-      repeat: 10
-    });
     
     // Reproducir animación idle
     const idleAnim = this.hasObject ? 'idle_shoot' : 'idle';

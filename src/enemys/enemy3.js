@@ -4,9 +4,9 @@ import { BaseEnemy, ENEMY_STATE } from './enemy';
 // Exportamos STATE3 como alias de ENEMY_STATE para mantener compatibilidad
 export const STATE3 = ENEMY_STATE;
 
-const DAMAGE_ENEMY = 10;
+const DAMAGE_ENEMY = 20;
 const NORMAL_SPEED = 40;
-const ATTACK_SPEED = NORMAL_SPEED *3;
+const ATTACK_SPEED = NORMAL_SPEED *4;
 const AVOID_SPEED = NORMAL_SPEED *10;
 
 export class Enemy3 extends BaseEnemy {

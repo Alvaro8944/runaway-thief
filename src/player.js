@@ -43,12 +43,12 @@ export const PLAYER_CONFIG = {
   MAX_JUMPS: 2,
   
   // Agacharse
-  MAX_CRAWL_TIME: 80,
+  MAX_CRAWL_TIME: 130,
   CRAWL_HITBOX_HEIGHT: 28,
   CRAWL_HITBOX_OFFSET_Y: 20,
   
   // Invulnerabilidad
-  INVULNERABLE_TIME: 1000,
+  INVULNERABLE_TIME: 500,
   KNOCKBACK_FORCE: 200,
   KNOCKBACK_DURATION: 200,
   
@@ -235,8 +235,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.jetpack.setVisible(false); // Oculto hasta que se desbloquee
 
     // Variables para el tiempo de uso y recarga
-    this.floatingEnergy = 400; // Máxima energía
-    this.floatingEnergyMax = 400;
+    this.floatingEnergy = 600; // Máxima energía
+    this.floatingEnergyMax = 600;
     this.floatingEnergyDrainRate = 1; // Cuánto se gasta por frame
     this.floatingEnergyRechargeRate = 1; // Cuánto se recarga por frame
     this.isRecharging = false; // Indica si está recargando
@@ -984,24 +984,9 @@ updateBullets() {
         // Mostrar efecto de impacto para caídas significativas (incluso sin daño)
         if (fallDistance > 100) {
           // Efecto visual de impacto (más intenso según la altura)
-          const shakeIntensity = Math.min(0.05, fallDistance / 10000);
+          const shakeIntensity = Math.min(0.05, fallDistance / 100000);
           const shakeDuration = Math.min(300, fallDistance / 2);
           this.scene.cameras.main.shake(shakeDuration, shakeIntensity);
-          
-          // Crear un efecto de impacto en el suelo
-          const impact = this.scene.add.graphics();
-          impact.fillStyle(0xcccccc, 0.7);
-          const circleSize = Math.min(25, 10 + fallDistance / 30);
-          impact.fillCircle(this.x, this.y + 20, circleSize);
-          
-          // Animar y eliminar el efecto
-          this.scene.tweens.add({
-            targets: impact,
-            alpha: 0,
-            scale: 2,
-            duration: 300,
-            onComplete: () => impact.destroy()
-          });
           
           // Efecto de sonido de impacto (si existe)
           if (this.scene.sound.get('land')) {
@@ -1049,8 +1034,30 @@ updateBullets() {
               // Sonido de aterrizaje forzado
               this.scene.sound.play('DanioCaida');
               
+
+               // Crear un efecto de impacto en el suelo
+              const impact = this.scene.add.graphics();
+              impact.fillStyle(0xcccccc, 0.7);
+              const circleSize = Math.min(25, 10 + fallDistance / 30);
+              impact.fillCircle(this.x, this.y + 20, circleSize);
+          
+              // Animar y eliminar el efecto
+              this.scene.tweens.add({
+              targets: impact,
+              alpha: 0,
+              scale: 2,
+              duration: 300,
+              onComplete: () => impact.destroy()
+             });
+
+
               // Aplicar el daño
               this.takeDamage(damage);
+
+
+
+
+
             }
           }
         }

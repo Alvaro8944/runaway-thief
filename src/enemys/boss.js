@@ -12,11 +12,11 @@ export class Boss extends BaseEnemy {
     const config = {
       spriteKey: 'boss',
       speed: 10, // Velocidad original
-      health: 500, // Salud original
+      health: 1500, // Salud original
       damage: DAMAGE_ENEMY,
       detectionRange: 500,
       attackRange: 500,
-      attackCooldown: 4000, // Cooldown aumentado a 1.5 segundos (era 200ms)
+      attackCooldown: 2000,
       verticalTolerance: 180,
       attackDuration: 400, // Duración original
       hitboxWidth: 35, // Hitbox original
@@ -35,7 +35,7 @@ export class Boss extends BaseEnemy {
     this.bulletSpeed = 300; // Velocidad original
     this.bulletDamage = DAMAGE_ENEMY;
     this.lastBulletTime = 0;
-    this.bulletCooldown = 4000; // Cooldown aumentado 
+    this.bulletCooldown = 2000; // Cooldown aumentado 
     this.attackAnim1 = 'boss_attack1';
     this.attackAnim2 = 'boss_attack2';
     this.specialAnim = 'boss_special';
@@ -43,7 +43,7 @@ export class Boss extends BaseEnemy {
 
 
     this.lastSpecialTime =  0; 
-    this.specialCoolDown = 10000;
+    this.specialCoolDown = 8000;
     this.specialDuration = 1200;
     this.enemys3 = ['smart', 'attacking', 'patrolling'];
      
@@ -233,11 +233,10 @@ export class Boss extends BaseEnemy {
    this.state = ENEMY_STATE.ATTACKING;
    this.setVelocityX(0);
    this.play(this.specialAnim, true);
-   this.scene.cameras.main.shake(200, 0.005);
 
 
    // Timer para finalizar el ataque
-   this.scene.time.delayedCall(this.specialDuration, () => {
+    this.scene.time.delayedCall(this.specialDuration, () => {
     this.finishSpecial();
     
    
@@ -247,6 +246,7 @@ export class Boss extends BaseEnemy {
       this.crearLluviaLocalBolas();
     }
    
+    this.scene.cameras.main.shake(200, 0.005);
 
  
    });
@@ -254,7 +254,7 @@ export class Boss extends BaseEnemy {
   }
 
   crearLluviaLocalBolas() {
-    const numBolas = 5;
+    const numBolas = 10;
     const distanciaEntreBolas = 100;
     const alturaSpawn = 250;
     const bolas = this.scene.physics.add.group();
@@ -305,17 +305,19 @@ export class Boss extends BaseEnemy {
   
   
 
-  spawnEnemies(){
-
-    let enemy3Positions = this.enemys3.map(type => ({
-        x: this.x + Phaser.Math.Between(-30, 30),
-        y: this.y + Phaser.Math.Between(-30, 30),
-        type
-      }));
+  spawnEnemies() {
+    const cantidad = Phaser.Math.Between(1, 3); // número aleatorio entre 1 y 3
+    const tiposAleatorios = Phaser.Utils.Array.Shuffle(this.enemys3).slice(0, cantidad);
+  
+    let enemy3Positions = tiposAleatorios.map(type => ({
+      x: this.x + Phaser.Math.Between(-30, 30),
+      y: this.y + Phaser.Math.Between(-30, 30),
+      type
+    }));
+  
     enemy3Positions.forEach(pos => this.scene.createEnemy3(pos));
-
-
   }
+  
  
 
   finishSpecial(){

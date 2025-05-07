@@ -156,19 +156,23 @@ export class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   chase() {
+    if(this.state != ENEMY_STATE.DEAD ){
     this.state = ENEMY_STATE.CHASING;
     const direction = this.player.x < this.x ? -1 : 1;
     this.setVelocityX(this.speed * direction);
     this.setFlipX(direction === -1);
     this.setOffset(direction === -1 ? 23 : 0, 13);
     this.play(this.config.walkAnim, true);
+    }
   }
 
   patrol() {
+    if(this.state != ENEMY_STATE.DEAD ){
     this.state = ENEMY_STATE.PATROLLING;
     this.setVelocityX(this.speed * this.direction);
     this.setFlipX(this.direction === -1);
     this.setOffset(this.direction === -1 ? 23 : 0, 13);
+    }
   }
 
   takeDamage(amount) {

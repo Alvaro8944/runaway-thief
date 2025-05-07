@@ -1,4 +1,5 @@
 import Boot from './scenes/boot.js';
+import BootPrueba from './scenes/bootPrueba.js';
 import Boot2 from './scenes/boot2.js';
 import Boot3 from './scenes/boot3.js';
 import Boot31 from './scenes/boot31.js';
@@ -7,6 +8,7 @@ import End from './scenes/end.js';
 import GameOverScene from './scenes/GameOverScene.js';
 import HowToPlay from './scenes/HowToPlay.js';
 import LevelSelector from './scenes/LevelSelector.js';
+import LevelPrueba from './scenes/levelPrueba.js';
 import Level from './scenes/level.js';
 import Level2 from './scenes/level2.js';
 import Level3 from './scenes/level3.js';
@@ -30,7 +32,7 @@ let config = {
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
     pixelArt: true,
-    scene: [MenuScene,Boot,Boot2,Boot3,Boot31,Boot32, Level,Level2, Level3,Level31,Level32,HowToPlay, LevelSelector, GameOverScene],
+    scene: [MenuScene,BootPrueba, Boot, Boot2,Boot3,Boot31,Boot32, LevelPrueba, Level,Level2, Level3,Level31,Level32,HowToPlay, LevelSelector, GameOverScene],
     physics: {
         default: 'arcade',
         arcade: {

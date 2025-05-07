@@ -26,7 +26,7 @@ export const PLAYER_CONFIG = {
   // Arma y munición
   RIFLE_AMMO: 10,       // munición para el rifle 
   SHOTGUN_AMMO: 12,     // munición para la escopeta
-  EXPLOSIVE_AMMO: 3,   // munición para arma explosiva
+  EXPLOSIVE_AMMO: 6,   // munición para arma explosiva
   SHOT_COOLDOWN: 350,   // ms entre disparos
   RELOAD_TIME: 1500,    // ms para recargar
   BULLET_SPEED: 800,    // velocidad de las balas
@@ -109,7 +109,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       explosive: false // Arma explosiva inicialmente bloqueada
     };
     this.activeWeapon = 'none';   // Comenzar sin arma
-    
+    this.armaPreEscudo = this.activeWeapon;
+
     // Variable para compatibilidad con código antiguo
     this.hasWeapon = false;       // Se actualizará cuando cambie activeWeapon
 
@@ -606,10 +607,17 @@ updateBullets() {
         this.activeWeapon = 'shotgun';
         this.updateWeaponType();
         
+
+        
+        if(this.shieldActive){
+          // Iniciar cooldown
+          this.shieldLastUsed = this.scene.time.now;
+          this.shieldCooldownActive = true;
+        }
+        
         // Desactivar escudo si estaba activo
         this.shieldActive = false;
         this.shieldEffect.setVisible(false);
-        this.shieldCooldownActive = false;
       } else {
         // Mostrar mensaje de que no tiene esta arma
         const text = this.scene.add.text(this.x, this.y - 50, "¡Arma no disponible!", {
@@ -638,10 +646,16 @@ updateBullets() {
         this.activeWeapon = 'explosive';
         this.updateWeaponType();
         
+
+        if(this.shieldActive){
+        // Iniciar cooldown
+        this.shieldLastUsed = this.scene.time.now;
+        this.shieldCooldownActive = true;
+        }
         // Desactivar escudo si estaba activo
         this.shieldActive = false;
         this.shieldEffect.setVisible(false);
-        this.shieldCooldownActive = false;
+
       } else {
         // Mostrar mensaje de que no tiene esta arma
         const text = this.scene.add.text(this.x, this.y - 50, "¡Arma no disponible!", {
@@ -670,10 +684,17 @@ updateBullets() {
         this.activeWeapon = 'rifle';
         this.updateWeaponType();
         
+
+        if(this.shieldActive){
+          // Iniciar cooldown
+          this.shieldLastUsed = this.scene.time.now;
+          this.shieldCooldownActive = true;
+        }
+
         // Desactivar escudo si estaba activo
         this.shieldActive = false;
         this.shieldEffect.setVisible(false);
-        this.shieldCooldownActive = false;
+
       } else {
         // Mostrar mensaje de que no tiene esta arma sin cambiar el arma activa
         const text = this.scene.add.text(this.x, this.y - 50, "¡Rifle no disponible!", {
@@ -2162,6 +2183,12 @@ updateBullets() {
     this.shieldStartTime = this.scene.time.now;
     this.shieldWarningShown = false;
     
+    //QUITA EL ARMA ACTUAL
+    this.armaPreEscudo = this.activeWeapon;
+    this.activeWeapon = 'none';
+    this.updateWeaponType();
+
+
     // Mostrar efecto visual
     this.shieldEffect.setVisible(true);
     this.shieldEffect.setAlpha(0);
@@ -2208,6 +2235,10 @@ updateBullets() {
     // Marcar como inactivo
     this.shieldActive = false;
     
+        //DEVUELVE EL ARMA QUE TENÍA ANTES
+        this.activeWeapon = this.armaPreEscudo;
+        this.updateWeaponType();
+
     // Iniciar cooldown
     this.shieldLastUsed = this.scene.time.now;
     this.shieldCooldownActive = true;

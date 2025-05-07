@@ -41,6 +41,7 @@ export default class LevelSelector extends Phaser.Scene {
    console.log(Progreso);
    console.log(Progreso.level1);
 
+
     if(Progreso.level1){
     const JNiv1=this.add.image(450,300,'Nivel1').setInteractive();
     JNiv1.on('pointerdown',()=>{

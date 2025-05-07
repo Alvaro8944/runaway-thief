@@ -196,6 +196,7 @@ export class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
     this.state = ENEMY_STATE.DEAD;
     this.play(this.config.dieAnim);
     this.once(`animationcomplete-${this.config.dieAnim}`, () => {
+      this.scene.events.emit('enemyMuerto', this);
       this.destroy();
     });
   }

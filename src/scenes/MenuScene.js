@@ -8,7 +8,10 @@ import Phaser from 'phaser';
 import Jugar2 from '../../assets/MenuPrincipal/BotJugar.png'
 import Jugar3 from '../../assets/MenuPrincipal/BotJugarPressed.png'
 import Tutorial from '../../assets/MenuPrincipal/BotTutorial.png'
+import NivelPrueba from '../../assets/MenuPrincipal/BotPrueba.png'
 import Atras from '../../assets/MenuPrincipal/Jugar.png'
+import gameData from '../data/GameData';
+
 //import ComoJugar from '../../assets/MenuPrincipal/Tutorial.png'
 export default class MenuScene extends Phaser.Scene {
 
@@ -21,6 +24,7 @@ export default class MenuScene extends Phaser.Scene {
         this.load.image('Jugar2',Jugar2);
         this.load.image('Jugar3',Jugar3);
         this.load.image('Tutorial',Tutorial);
+        this.load.image('NivelPrueba',NivelPrueba);
     }
     create(){
 
@@ -34,9 +38,12 @@ export default class MenuScene extends Phaser.Scene {
     */
     const Start=this.add.image(100,700,'Jugar2').setInteractive();
     const Jugar=this.add.image(800,700,'Tutorial').setInteractive();
+    const Prueba =this.add.image(450,700,'NivelPrueba').setInteractive();
 
-
-
+   Prueba.on('pointerdown',()=>{
+      gameData.setupForLevel1();
+      this.scene.start('bootPrueba');
+    });
     
 
     Start.on('pointerdown',()=>this.scene.start('LevelSelector'));

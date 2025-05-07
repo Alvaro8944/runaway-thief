@@ -17,15 +17,17 @@ import { PLAYER_STATE } from '../player.js';
 
 const SPIKE_DAMAGE = 20;
 
-export default class Level extends Phaser.Scene {
+export default class LevelPrueba extends Phaser.Scene {
   constructor() {
-    super({ key: 'level' });
+    super({ key: 'levelPrueba' });
   }
 
   create() {
+
+
     // Restablecer la bandera de gameover al inicio de la escena
     this.isGameOver = false;
-    
+    this.respawneoPrueba = true;
     // Inicializar el mapa y capas
     this.setupMap();
     
@@ -49,7 +51,7 @@ export default class Level extends Phaser.Scene {
     this.player.hasRespawnPoint = true;
     
     // Cargar estado guardado (útil cuando se inicia desde el selector de niveles)
-    gameData.setupForLevel1();
+    gameData.setupForLevelPrueba();
     gameData.loadPlayerState(this.player);
     
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)
@@ -89,6 +91,27 @@ export default class Level extends Phaser.Scene {
         this.damageArea(x, y, 50, 15);  // p.ej. radio=100, daño=50
       }
     );
+
+    this.events.on('enemyMuerto', (enemy) => {
+        if (enemy instanceof Enemy1 && this.respawneoPrueba) {
+          this.createEnemy2({ x: 400, y: 800, type: 'patrolling' });
+        }
+        else if(enemy instanceof Enemy2 && this.respawneoPrueba) {
+            this.createEnemy3({ x: 500, y: 700, type: 'patrolling' });
+        }
+        else if(enemy instanceof PatrollingEnemy3 && this.respawneoPrueba) {
+            this.createEnemy3({ x: 500, y: 700, type: 'attacking' });
+        }
+        else if(enemy instanceof AttackingEnemy3 && this.respawneoPrueba) {
+            this.createEnemy3({ x: 500, y: 700, type: 'smart' });
+        }
+        else if(enemy instanceof SmartEnemy3 && this.respawneoPrueba) {
+            this.createBoss({ x: 400, y: 700});
+            this.respawneoPrueba = false;
+        }
+
+
+    });
 
     // En create()
     const bgFar = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'CaveBackground')
@@ -263,42 +286,9 @@ export default class Level extends Phaser.Scene {
   createEnemies() {
     // Posiciones de enemigos tipo 1
     const enemyPositions = [
-      { x: 2000, y: 350, type: 'patrolling' },
-      { x: 2300, y: 350, type: 'patrolling' },
-      { x: 3200, y: 300, type: 'patrolling' },
-      { x: 3940, y: 800, type: 'patrolling' },
-      { x: 4040, y: 800, type: 'patrolling' },
-      { x: 4600, y: 700, type: 'patrolling' },
-      { x: 4040, y: 400, type: 'patrolling' },
-      { x: 3900, y: 350, type: 'patrolling' },
-      { x: 4200, y: 100, type: 'patrolling' }
+      { x: 300, y: 800, type: 'patrolling' },
     ];
     
-    // Posiciones de enemigos tipo 2
-    const enemy2Positions = [
-      //{ x: 500, y: 700, type: 'normal' },
-      //{ x: 3200, y: 1150, type: 'patrolling' },
-      //{ x: 3650, y: 1250, type: 'patrolling' },
-      //{ x: 3400, y: 2000, type: 'normal' },
-      //{ x: 3500, y: 2000, type: 'normal' },
-
-      //{ x: 4403, y: 1570, type: 'patrolling' },
-      //{ x: 5111, y: 1602, type: 'patrolling' },
-      //{ x: 5628, y: 1250, type: 'patrolling' },
-      //{ x: 6303, y: 1122, type: 'patrolling' },
-
-
-      //{ x: 6461, y: 930, type: 'patrolling' },    //ESTATICO
-      //{ x: 6151, y: 930, type: 'patrolling' }   //ESTATICO
-
-      //{ x: 7134, y: 1058, type: 'patrolling' },
-      //{ x: 7134, y: 1058, type: 'patrolling' },
-      //{ x: 7734, y: 962, type: 'patrolling' }
-
-
-    ];
-
-
      // Posiciones de enemigos tipo 3
      const enemy3Positions = [
       //{ x: 500, y: 700, type: 'smart' },
@@ -317,8 +307,7 @@ export default class Level extends Phaser.Scene {
     // Crear enemigos tipo 1
     enemyPositions.forEach(pos => this.createEnemy1(pos));
 
-    // Crear enemigos tipo 2
-    enemy2Positions.forEach(pos => this.createEnemy2(pos));
+
 
     // Crear enemigos tipo 3
     enemy3Positions.forEach(pos => this.createEnemy3(pos));
@@ -572,7 +561,6 @@ export default class Level extends Phaser.Scene {
       this
     );
   }
-
 
 
   

@@ -273,7 +273,7 @@ export default class GameUI {
       },
       { 
         key: 'escudo', 
-        icon: 'escudo',
+        icon: 'ui_shield',
         property: 'hasUnlockedShield',
         cooldownProperty: 'shieldCooldownActive',
         cooldownTimeProperty: 'shieldLastUsed',

@@ -423,6 +423,7 @@ export class AttackingEnemy3 extends Enemy3 {
     if (overlap && this.state === ENEMY_STATE.ATTACKING ) {          
       this.attackDamageDealt = true;
       this.player.takeDamage(this.damage, this); 
+      //this.scene.sound.play('Explosion');
       this.die(); // El alien muere al golpear 
       return   
     }

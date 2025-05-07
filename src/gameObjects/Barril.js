@@ -1104,7 +1104,7 @@ export class BarrilObjeto extends Barril {
         color = 0x66ee66;
         break;
       case 'escudo':
-        textura = 'escudo';
+        textura = 'ui_shield';
         color = 0x44ffaa;
         break;
       case 'rifle':
@@ -1115,7 +1115,11 @@ export class BarrilObjeto extends Barril {
     
     // Crear el icono flotante sobre el barril - Ahora con tamaño mucho mayor y sin elementos de fondo
     this.iconoObjeto = this.scene.add.sprite(this.x, this.y - 45, textura);
-    this.iconoObjeto.setScale(1.6); // Aumentado aún más para compensar la falta del brillo de fondo
+    if(textura === 'ui_shield'){
+      this.iconoObjeto.setScale(0.7); // Aumentado aún más para compensar la falta del brillo de fondo
+    }else{
+      this.iconoObjeto.setScale(1.6); // Aumentado aún más para compensar la falta del brillo de fondo
+    }
     this.iconoObjeto.setAlpha(1.0); // Completamente opaco
     this.iconoObjeto.setTint(color);
     this.iconoObjeto.setDepth(this.depth + 2); // Asegurar que esté por encima del barril
@@ -1246,7 +1250,7 @@ export class BarrilObjeto extends Barril {
     });
     
     // Crear el objeto flotante que sale del barril
-    this.crearObjetoFlotante();
+    //this.crearObjetoFlotante();
     
     // Aumentar la intensidad de la luz brevemente antes de que desaparezca con el barril
     if (this.light) {
@@ -1395,7 +1399,7 @@ export class BarrilObjeto extends Barril {
         color = 0x66ee66;
         break;
       case 'escudo':
-        textura = 'escudo';
+        textura = 'ui_shield';
         color = 0x44ffaa;
         break;
       case 'rifle':

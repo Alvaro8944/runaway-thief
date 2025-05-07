@@ -175,15 +175,15 @@ export default class Cartel extends Phaser.Physics.Arcade.Sprite {
       case 'escopeta':
         return 'Has desbloqueado la ESCOPETA. Este arma causa un gran daño a corta distancia pero tiene un tiempo de recarga considerable.';
       case 'doblesalto':
-        return 'Has desbloqueado el DOBLE SALTO. Ahora puedes pulsar ESPACIO en el aire para realizar un segundo salto.';
+        return 'DOBLE SALTO. Puedes pulsar ESPACIO en el aire para realizar un segundo salto.';
       case 'jetpack':
         return 'Has desbloqueado el JETPACK. Pulsa y mantén W en el aire para elevarte durante un breve periodo de tiempo.';
       case 'escudo':
-        return 'Has desbloqueado el ESCUDO. Pulsa 1 para activarlo y protegerte de los ataques enemigos.';
+        return 'Has desbloqueado el ESCUDO. Pulsa 4 para activarlo y protegerte de los ataques enemigos.';
       case 'armaexplosiva':
         return 'Has desbloqueado el ARMA EXPLOSIVA. Este arma causa daño en área pero consume más munición.';
       case 'agacharse':
-        return 'Has desbloqueado el AGACHARSE. Pulsa S para agacharte y así reducir tu altura. Y si te agachas sprintando?';
+        return 'AGACHARSE. Pulsa S para agacharte y así reducir tu altura. Y si te agachas sprintando?';
       case 'paracaidas':
         return 'Has desbloqueado el PARACAIDAS. Pulsa S en el aire para abrir tu paracaidas y disminuir tu velocidad de caída.';
       default:
@@ -248,7 +248,7 @@ export default class Cartel extends Phaser.Physics.Arcade.Sprite {
     // Título del panel
     let titulo = 'Información';
     if (this.contenido) {
-      titulo = `¡${this.contenido.toUpperCase()} Desbloqueado!`;
+      titulo = `¡${this.contenido.toUpperCase()} DESBLOQUEADO!`;
     }
     
     const textoTitulo = this.scene.add.text(

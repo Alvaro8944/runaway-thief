@@ -65,8 +65,8 @@ export const PLAYER_CONFIG = {
   PARACHUTE_SOUND_DELAY: 700, // ms entre sonidos de pasos
   
   // Duración de los power-ups
-  SHIELD_DURATION: 5000,        // 5 segundos de escudo
-  SHIELD_COOLDOWN: 8000,        // 8 segundos de cooldown
+  SHIELD_DURATION: 4500,        // 5 segundos de escudo
+  SHIELD_COOLDOWN: 16000,        // 8 segundos de cooldown
   SPEED_BOOST_DURATION: 15000   // 15 segundos de velocidad aumentada
 };
 
@@ -235,8 +235,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.jetpack.setVisible(false); // Oculto hasta que se desbloquee
 
     // Variables para el tiempo de uso y recarga
-    this.floatingEnergy = 600; // Máxima energía
-    this.floatingEnergyMax = 600;
+    this.floatingEnergy = 400; // Máxima energía
+    this.floatingEnergyMax = 400;
     this.floatingEnergyDrainRate = 1; // Cuánto se gasta por frame
     this.floatingEnergyRechargeRate = 1; // Cuánto se recarga por frame
     this.isRecharging = false; // Indica si está recargando
@@ -1801,6 +1801,8 @@ updateBullets() {
     // Activar el rifle como arma activa
     this.activeWeapon = 'rifle';
     this.updateWeaponType();
+
+    /*
     
     // Mostrar un mensaje de información sobre cómo usar el arma
     const text = this.scene.add.text(this.x, this.y - 60, "¡Usa el rifle con LMB!", {
@@ -1820,6 +1822,8 @@ updateBullets() {
         text.destroy();
       }
     });
+    
+    */
     
     // Temporizador para mostrar un mensaje cuando la munición está baja
     this.scene.time.addEvent({
@@ -1867,6 +1871,7 @@ updateBullets() {
     this.activeWeapon = 'shotgun';
     this.updateWeaponType();
     
+    /*
     // Mostrar un mensaje de información sobre cómo usar el arma
     const text = this.scene.add.text(this.x, this.y - 60, "¡Usa la escopeta con LMB!", {
       fontSize: '14px',
@@ -1886,6 +1891,7 @@ updateBullets() {
       }
     });
     
+    */
     this.scene.time.addEvent({
       delay: 1000,
       callback: () => {
@@ -1931,6 +1937,8 @@ updateBullets() {
     this.activeWeapon = 'explosive';
     this.updateWeaponType();
     
+
+    /*
     // Mostrar un mensaje de información sobre cómo usar el arma
     const text = this.scene.add.text(this.x, this.y - 60, "¡Usa el arma explosiva con LMB!", {
       fontSize: '14px',
@@ -1949,6 +1957,7 @@ updateBullets() {
         text.destroy();
       }
     });
+    */
     
     // Temporizador para mostrar un mensaje cuando la munición está baja
     this.scene.time.addEvent({
@@ -2054,6 +2063,8 @@ updateBullets() {
     // Eliminar esta línea ya que unlockedAbilities no existe
     // this.unlockedAbilities.shield = true;
     
+    /*
+
     // Mostrar mensaje de instrucción
     const text = this.scene.add.text(this.x, this.y - 60, "¡Usa el escudo con la tecla 4!", {
       fontFamily: 'Arial',
@@ -2073,6 +2084,7 @@ updateBullets() {
         text.destroy();
       }
     });
+    */
   }
 
   /**
@@ -2088,6 +2100,7 @@ updateBullets() {
     // La energía se consumirá gradualmente en preUpdate cuando se use
     this.floatingEnergy = this.floatingEnergyMax * 2;
     
+    /*
     // Mostrar un mensaje informativo
     const text = this.scene.add.text(this.x, this.y - 60, "¡Usa el jetpack con ↑ en el aire!", {
       fontSize: '14px',
@@ -2106,6 +2119,7 @@ updateBullets() {
         text.destroy();
       }
     });
+    */
   }
 
   /**

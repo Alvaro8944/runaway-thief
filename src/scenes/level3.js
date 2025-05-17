@@ -27,7 +27,7 @@ export default class Level3 extends Phaser.Scene {
     this.setupBulletGroups();
     
     // Crear jugador
-    this.player = new Player(this, 0, 0);
+    this.player = new Player(this, 100, 750);
     this.player.setPosition(100, 750); // Posición inicial
     
     // Cargar estado guardado del nivel anterior

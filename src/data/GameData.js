@@ -125,12 +125,13 @@ class GameData {
     this.reset(); // Primero reiniciamos
     
     // Armas que normalmente se conseguirían en el nivel 1
-    this.unlockedWeapons.rifle = true;  // Rifle (arma básica)
-    this.activeWeapon = 'rifle';
-    this.weaponAmmo.rifle = 10;         // PLAYER_CONFIG.RIFLE_AMMO = 10
+    this.unlockedWeapons.shotgun = true;  // Rifle (arma básica)
+    this.activeWeapon = 'shotgun';
+    this.weaponAmmo.shotgun = 12;         // PLAYER_CONFIG.RIFLE_AMMO = 10
     
     // Otros objetos que normalmente conseguiría en el nivel 1
     this.hasParacaidas = true;
+    this.hasJetpack = true;  
     
     // Ajustar la salud y puntuación para este nivel
     this.playerHealth = 150;            // PLAYER_CONFIG.MAX_HEALTH = 150

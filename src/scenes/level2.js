@@ -49,7 +49,7 @@ export default class Level extends Phaser.Scene {
     this.player.hasRespawnPoint = true;
     
     // Cargar estado guardado (útil cuando se inicia desde el selector de niveles)
-    //gameData.setupForLevel2();
+    gameData.setupForLevel2();
     gameData.loadPlayerState(this.player);
     
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)

@@ -1111,6 +1111,10 @@ export class BarrilObjeto extends Barril {
         textura = 'weapon';
         color = 0x44aaff;
         break;
+      case 'explosiva':
+        textura = 'explosiveWeapon';
+        color = 0xff8800;
+        break;
     }
     
     // Crear el icono flotante sobre el barril - Ahora con tamaño mucho mayor y sin elementos de fondo
@@ -1389,6 +1393,10 @@ export class BarrilObjeto extends Barril {
       case 'escopeta':
         textura = 'shotgunWeapon';
         color = 0xff5544;
+        break;
+      case 'explosiva':
+        textura = 'explosiveWeapon';
+        color = 0xff8800;
         break;
       case 'jetpack':
         textura = 'jetpack';

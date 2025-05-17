@@ -38,12 +38,14 @@ export default class MenuScene extends Phaser.Scene {
     */
     const Start=this.add.image(100,700,'Jugar2').setInteractive();
     const Jugar=this.add.image(800,700,'Tutorial').setInteractive();
-    const Prueba =this.add.image(450,700,'NivelPrueba').setInteractive();
+    //const Prueba =this.add.image(450,700,'NivelPrueba').setInteractive();
 
+    /*
    Prueba.on('pointerdown',()=>{
       gameData.setupForLevel1();
       this.scene.start('bootPrueba');
     });
+    */
     
 
     Start.on('pointerdown',()=>this.scene.start('LevelSelector'));

@@ -281,13 +281,6 @@ export default class GameUI {
         activeProperty: 'shieldActive',
         bindKey: '4',
         color: 0xaaaaff
-      },
-      { 
-        key: 'velocidad', 
-        icon: 'ui_speed',
-        property: 'hasSpeedBoost',
-        activeProperty: 'speedBoostActive',
-        color: 0xffaa44
       }
     ];
     

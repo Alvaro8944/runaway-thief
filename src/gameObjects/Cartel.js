@@ -14,7 +14,7 @@ export default class Cartel extends Phaser.Physics.Arcade.Sprite {
    * @param {string} mensaje - Mensaje personalizado a mostrar (opcional)
    * @param {number} scale - Escala del cartel (opcional)
    */
-  constructor(scene, x, y, contenido = null, mensaje = 'Presiona E para ver información', scale = 1.0) {
+  constructor(scene, x, y, contenido = null, mensaje = 'Presiona E para ver información', scale = 0.7) {
     super(scene, x, y, 'Cartel');
     
     // Añadir el sprite a la escena
@@ -27,10 +27,13 @@ export default class Cartel extends Phaser.Physics.Arcade.Sprite {
     this.contenido = contenido;
     this.mensaje = mensaje;
     
-    // Establecer escala si es diferente del valor por defecto
-    if (scale !== 1.0) {
-      this.setScale(scale);
-    }
+    this.setScale(scale);
+    
+    // Ajustar la posición Y
+    const alturaOriginal = 40; // Altura original del cartel
+    const alturaNueva = alturaOriginal * scale;
+    const diferencia = alturaOriginal - alturaNueva;
+    this.y += diferencia / 2;
     
     // Configurar el cuerpo físico
     this.body.setSize(32, 40); // Ajustar el hitbox para que sea preciso
@@ -402,7 +405,7 @@ export default class Cartel extends Phaser.Physics.Arcade.Sprite {
         cartelesLayer.objects.forEach(cartel => {
           let contenido = null;
           let mensaje = 'Presiona E para ver información';
-          let scale = 1.0;
+          let scale = 0.7;
           
           // Buscar propiedades personalizadas
           if (cartel.properties && Array.isArray(cartel.properties)) {

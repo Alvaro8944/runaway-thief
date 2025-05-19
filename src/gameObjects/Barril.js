@@ -13,7 +13,7 @@ export default class Barril extends Phaser.Physics.Arcade.Sprite {
    * @param {string} tipo - Tipo de barril ('Cura', 'explosivo', 'veneno', etc.)
    * @param {number} scale - Escala del barril (opcional)
    */
-  constructor(scene, x, y, tipo = 'normal', scale = 1.0) {
+  constructor(scene, x, y, tipo = 'normal', scale = 0.75) {
     // Determinar la textura según el tipo
     const texture = Barril.getTextureByTipo(tipo);
     
@@ -29,9 +29,14 @@ export default class Barril extends Phaser.Physics.Arcade.Sprite {
     this.tipo = tipo;
     
     // Establecer escala si es diferente del valor por defecto
-    if (scale !== 1.0) {
-      this.setScale(scale);
-    }
+    this.setScale(scale);
+    
+    // Ajustar la posición Y
+    const alturaOriginal = 32;
+    const alturaNueva = alturaOriginal * scale;
+    const diferencia = alturaOriginal - alturaNueva;
+    this.y += diferencia / 2;
+
     
     // Configurar el cuerpo físico básico (será ajustado por configurarPorTipo)
     this.body.setSize(32, 32);
@@ -721,7 +726,7 @@ export class BarrilRespawn extends Barril {
     this.glowEffect = this.scene.add.sprite(this.x, this.y, 'BarrilNormal');
     this.glowEffect.setVisible(false);
     this.glowEffect.setDepth(this.depth - 1); // Por debajo del barril
-    this.glowEffect.setScale(1.2);
+    this.glowEffect.setScale(0.8);
     this.glowEffect.setAlpha(0.6);
     this.glowEffect.setTint(0x2299ff);
     
@@ -825,6 +830,7 @@ export class BarrilRespawn extends Barril {
    * @param {Player} player - El jugador que activó el punto de control
    */
   activar(player) {
+    
     if (this.activated) return; // Si ya está activado, no hacer nada
     
     this.activated = true;
@@ -853,6 +859,7 @@ export class BarrilRespawn extends Barril {
         onComplete: () => ring.destroy()
       });
     }
+    
     
     // Iniciar animación de brillo
     if (this.glowTween && !this.glowTween.isPlaying()) {
@@ -1019,7 +1026,7 @@ export class BarrilObjeto extends Barril {
     // Agregar un efecto de brillo alrededor del barril
     this.glowEffect = this.scene.add.sprite(this.x, this.y, 'BarrilNormal');
     this.glowEffect.setDepth(this.depth - 1);
-    this.glowEffect.setScale(1.2);
+    this.glowEffect.setScale(0.8);
     this.glowEffect.setAlpha(0.4);
     this.glowEffect.setTint(0xffdd44);
     
@@ -1122,7 +1129,7 @@ export class BarrilObjeto extends Barril {
     if(textura === 'ui_shield'){
       this.iconoObjeto.setScale(0.7); // Aumentado aún más para compensar la falta del brillo de fondo
     }else{
-      this.iconoObjeto.setScale(1.6); // Aumentado aún más para compensar la falta del brillo de fondo
+      this.iconoObjeto.setScale(1.4); // Aumentado aún más para compensar la falta del brillo de fondo
     }
     this.iconoObjeto.setAlpha(1.0); // Completamente opaco
     this.iconoObjeto.setTint(color);

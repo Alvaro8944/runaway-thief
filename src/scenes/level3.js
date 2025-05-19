@@ -39,8 +39,10 @@ export default class Level extends Phaser.Scene {
     this.player = new Player(this, 0, 0);
     
     // Posición inicial fija del nivel
-    const INITIAL_X = 100;
-    const INITIAL_Y = 750;
+    //const INITIAL_X = 100;
+    //const INITIAL_Y = 750;
+    const INITIAL_X = 9562;
+    const INITIAL_Y = 100;
     
     // Posicionar al jugador y establecer el punto de respawn inicial
     this.player.setPosition(INITIAL_X, INITIAL_Y);
@@ -188,18 +190,14 @@ export default class Level extends Phaser.Scene {
     
     // Posición aproximada donde debería estar el fin del nivel
     // Ajusta estas coordenadas según la ubicación correcta en tu mapa
-    const END_POSITION_X = 4570; 
-    const END_POSITION_Y = 15;
+    const END_POSITION_X = 9562; 
+    const END_POSITION_Y = 20;
     
     this.finNivel = this.add.zone(END_POSITION_X, END_POSITION_Y, ZONE_WIDTH, ZONE_HEIGHT);
     this.physics.world.enable(this.finNivel);
     this.finNivel.body.setAllowGravity(false);
     this.finNivel.body.moves = false;
     
-    // Añadir un sprite visible (solo para debug) que muestre dónde está la zona
-    // Puedes comentar o eliminar estas líneas en producción
-    // const debugSprite = this.add.rectangle(END_POSITION_X, END_POSITION_Y, ZONE_WIDTH, ZONE_HEIGHT, 0xff0000, 0.3);
-    // debugSprite.setDepth(100);
   }
   
   setupBulletGroups() {
@@ -801,7 +799,7 @@ createEnemies() {
           
           // Transición al boot2
           this.time.delayedCall(1000, () => {
-            console.log('Cambiando a escena boot2');
+            console.log('Cambiando a escena boot31');
             // Limpiar referencias antes de cambiar de escena
             // Desactivar actualizaciones en objetos que podrían causar problemas
             if (this.gameUI) {
@@ -814,7 +812,7 @@ createEnemies() {
             this.events.off('update');
             
             // Usar switch en lugar de start para una transición más limpia
-            this.scene.switch('boot2');
+            this.scene.switch('boot31');
           });
         },
         null,

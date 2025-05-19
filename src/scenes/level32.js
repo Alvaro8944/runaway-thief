@@ -256,17 +256,17 @@ export default class Level extends Phaser.Scene {
     });
   }
   
+
+
 createEnemies() {
 
-    // Crear enemigos tipo 1
-    //enemyPositions.forEach(pos => this.createEnemy1(pos));
 
-    // Crear enemigos tipo 2
-    //enemy2Positions.forEach(pos => this.createEnemy2(pos));
+  const bossPosition = [
+    { x: 500, y: 500},
 
-    // Crear enemigos tipo 3
-    //enemy3Positions.forEach(pos => this.createEnemy3(pos));
-
+  ];
+    bossPosition.forEach(pos => this.createBoss(pos));
+    
   }
 
 

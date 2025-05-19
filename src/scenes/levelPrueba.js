@@ -10,7 +10,7 @@ import BolaGrande from '../gameObjects/BolaGrande.js';
 import Diamante from '../gameObjects/Diamante.js';
 import Barril from '../gameObjects/Barril.js';
 import RocaDestructible from '../gameObjects/RocaDestructible.js';
-import Cartel from '../gameObjects/cartel.js';
+import Cartel from '../gameObjects/Cartel.js';
 import gameData from '../data/GameData';
 import GameUI from '../UI/GameUI';
 import { PLAYER_STATE } from '../player.js';

@@ -183,7 +183,7 @@ export default class Level extends Phaser.Scene {
     
     // Posición aproximada donde debería estar el fin del nivel
     // Ajusta estas coordenadas según la ubicación correcta en tu mapa
-    const END_POSITION_X = 860; 
+    const END_POSITION_X = 1000; 
     const END_POSITION_Y = 578;
     
     this.finNivel = this.add.zone(END_POSITION_X, END_POSITION_Y, ZONE_WIDTH, ZONE_HEIGHT);

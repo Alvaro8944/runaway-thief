@@ -177,6 +177,8 @@ export default class Cartel extends Phaser.Physics.Arcade.Sprite {
     switch (this.contenido.toLowerCase()) {
       case 'escopeta':
         return 'Has desbloqueado la ESCOPETA. Este arma causa un gran daño a corta distancia pero tiene un tiempo de recarga considerable.';
+      case 'fusil':
+        return 'Has desbloqueado el FUSIL. Un arma con bastante más rango que la escopeta. ¡Ideal para combatir enemigos bastante más lejanos!';
       case 'doblesalto':
         return 'DOBLE SALTO. Puedes pulsar ESPACIO en el aire para realizar un segundo salto.';
       case 'jetpack':
@@ -189,6 +191,12 @@ export default class Cartel extends Phaser.Physics.Arcade.Sprite {
         return 'AGACHARSE. Pulsa S para agacharte y así reducir tu altura. Y si te agachas sprintando?';
       case 'paracaidas':
         return 'Has desbloqueado el PARACAIDAS. Pulsa S en el aire para abrir tu paracaidas y disminuir tu velocidad de caída.';
+      case 'preboss1':
+        return 'Dicen que después de esta sala, hay un viejo robot muy poderoso que protege la salida de esta cueva...';
+      case 'preboss2':
+        return '...él está obsesionado con bloquear la salida de "su" cueva, parece que porque no se fía de nadie se lleve los diamantes... son su fuente de poder...';
+      case 'preboss3':
+        return '...Tienes dos opciones: Derrotarle y escapar con todas esas gemas que llevas (por qué vendrías si no) o descansar de chill en la cueva.';
       default:
         return this.mensaje;
     }

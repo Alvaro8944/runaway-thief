@@ -39,10 +39,10 @@ export default class Level extends Phaser.Scene {
     this.player = new Player(this, 0, 0);
     
     // Posición inicial fija del nivel
-    //const INITIAL_X = 100;
-    //const INITIAL_Y = 750;
-    const INITIAL_X = 9562;
-    const INITIAL_Y = 100;
+    const INITIAL_X = 100;
+    const INITIAL_Y = 750;
+    //const INITIAL_X = 9562;
+    //const INITIAL_Y = 100;
     
     // Posicionar al jugador y establecer el punto de respawn inicial
     this.player.setPosition(INITIAL_X, INITIAL_Y);

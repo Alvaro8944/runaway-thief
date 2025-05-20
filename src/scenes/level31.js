@@ -45,6 +45,7 @@ export default class Level extends Phaser.Scene {
     this.player.respawnX = INITIAL_X;
     this.player.respawnY = INITIAL_Y;
     this.player.hasRespawnPoint = true;
+    this.enemies = this.add.group();
     
     // Cargar estado guardado (útil cuando se inicia desde el selector de niveles)
     gameData.setupForAllUnlocked();

@@ -106,7 +106,7 @@ export default class GameOverScene extends Phaser.Scene {
           bootScene = 'boot31';
           break;
         case 'level32':
-          bootScene = 'boot32';
+          bootScene = 'boot31';
           break;
         default:
           bootScene = 'boot';

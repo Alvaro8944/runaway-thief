@@ -194,6 +194,32 @@ class GameData {
     this.playerLives = 5;             // Empezar con todas las vidas
   }
 
+    setupForAllUnlocked() {
+    this.reset(); // Primero reiniciamos
+    
+    // Desbloquear todas las armas 
+    this.unlockedWeapons.rifle = true;     
+    this.unlockedWeapons.shotgun = true;   
+    this.unlockedWeapons.explosive = true;  
+    this.activeWeapon = 'rifle';
+    
+    // Munición
+    this.weaponAmmo.rifle = 10;           // PLAYER_CONFIG.RIFLE_AMMO = 10
+    this.weaponAmmo.shotgun = 12;         // PLAYER_CONFIG.SHOTGUN_AMMO = 12
+    this.weaponAmmo.explosive = 6;         
+
+
+    // Objetos 
+    this.hasParacaidas = true;        
+    this.hasJetpack = true;           
+    this.hasUnlockedShield = true;    
+    this.hasSpeedBoost = true;        
+    
+    // Ajustar la salud y puntuación para este nivel
+    this.playerHealth = 150;          // PLAYER_CONFIG.MAX_HEALTH = 150
+    this.playerScore = 500;           // Una puntuación base más alta por haber "completado" los niveles anteriores
+    this.playerLives = 5;             // Empezar con todas las vidas
+  }
 
   /**
    * Reinicia específicamente el estado del jugador después de un Game Over

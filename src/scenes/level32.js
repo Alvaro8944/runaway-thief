@@ -39,7 +39,7 @@ export default class Level extends Phaser.Scene {
     this.player = new Player(this, 0, 0);
     
     // Posición inicial fija del nivel
-    const INITIAL_X = 918;
+    const INITIAL_X = 100;
     const INITIAL_Y = 800;
     
     // Posicionar al jugador y establecer el punto de respawn inicial
@@ -49,7 +49,7 @@ export default class Level extends Phaser.Scene {
     this.player.hasRespawnPoint = true;
     
     // Cargar estado guardado (útil cuando se inicia desde el selector de niveles)
-    gameData.setupForLevel3();
+    gameData.setupForAllUnlocked();
     gameData.loadPlayerState(this.player);
     
     // Crear objetos del juego (después del jugador para que las referencias sean correctas)

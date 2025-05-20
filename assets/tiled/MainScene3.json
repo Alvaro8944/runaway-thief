@@ -151,7 +151,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -4769,7 +4769,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -4840,7 +4840,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -5504,15 +5504,291 @@
                  "width":32,
                  "x":7136,
                  "y":128
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":398,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":832,
+                 "y":320
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":399,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":1792,
+                 "y":768
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":400,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":2976,
+                 "y":768
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":401,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":2816,
+                 "y":896
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":402,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":4416,
+                 "y":832
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":403,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":4544,
+                 "y":832
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":404,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":5312,
+                 "y":672
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":405,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":6368,
+                 "y":512
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":406,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":7104,
+                 "y":128
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":407,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":7712,
+                 "y":384
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":408,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":8032,
+                 "y":384
+                }, 
+                {
+                 "gid":28,
+                 "height":32,
+                 "id":410,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"cura",
+                         "type":"int",
+                         "value":20
+                        }, 
+                        {
+                         "name":"tipo",
+                         "type":"string",
+                         "value":"cura"
+                        }],
+                 "rotation":0,
+                 "type":"Barril",
+                 "visible":true,
+                 "width":32,
+                 "x":9248,
+                 "y":224
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }],
  "nextlayerid":8,
- "nextobjectid":398,
+ "nextobjectid":411,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

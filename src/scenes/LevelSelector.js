@@ -42,19 +42,43 @@ export default class LevelSelector extends Phaser.Scene {
    console.log(Progreso.level1);
 
 
+      // Texto clicable encima del Nivel 1
+    const tutorial1 = this.add.text(450, 280, 'Nivel 1-2 tutorial', {
+      fontSize: '18px',
+      fill: '#00f',
+      fontStyle: 'bold'
+    }).setOrigin(0.5).setInteractive();
+
+    tutorial1.on('pointerdown', () => {
+      window.open('https://youtu.be/O2EISzAshN8', '_blank');
+    });
+
+
+     // Texto clicable encima del Nivel 3
+    const tutorial3 = this.add.text(450, 300, 'Boss tutorial', {
+      fontSize: '18px',
+      fill: '#00f',
+      fontStyle: 'bold'
+    }).setOrigin(0.5).setInteractive();
+
+    tutorial3.on('pointerdown', () => {
+      window.open('https://youtu.be/ShYPd-o6oZs', '_blank');
+    });
+
+
     if(Progreso.level1){
-    const JNiv1=this.add.image(450,300,'Nivel1').setInteractive();
+    const JNiv1=this.add.image(450,350,'Nivel1').setInteractive();
     JNiv1.on('pointerdown',()=>{
       gameData.setupForLevel1();
       this.scene.start('boot');
     });
 
     }else{
-      this.add.image(450,300,'Bloqueado');
+      this.add.image(450,350,'Bloqueado');
     }
     console.log(Progreso.level2);
     if(Progreso.level2){
-      const JNiv2=this.add.image(450,375,'Nivel2').setInteractive();
+      const JNiv2=this.add.image(450,425,'Nivel2').setInteractive();
     JNiv2.on('pointerdown',()=>{
       gameData.setupForLevel2();
       gameData.reset();
@@ -62,20 +86,22 @@ export default class LevelSelector extends Phaser.Scene {
     });
     
     }else{
-      this.add.image(450,375,'Bloqueado');
+      this.add.image(450,425,'Bloqueado');
     }
     if(Progreso.level3){
-    const JNiv3=this.add.image(450,450,'Nivel3').setInteractive();
+    const JNiv3=this.add.image(450,500,'Nivel3').setInteractive();
     JNiv3.on('pointerdown',()=>{
       gameData.setupForLevel3();
       this.scene.start('boot3');
     });
+
     }
     else{
-      this.add.image(450,450,'Bloqueado');
+      this.add.image(450,500,'Bloqueado');
     }
 
-    const Regresar=this.add.image(450,550,'Atras').setInteractive();
+
+    const Regresar=this.add.image(450,560,'Atras').setInteractive();
     Regresar.on('pointerdown',()=>this.scene.start('MenuScene'));
 
 
